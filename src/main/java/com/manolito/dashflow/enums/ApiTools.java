@@ -1,4 +1,4 @@
-package com.manolito.dashflow.ETL.Model;
+package com.manolito.dashflow.enums;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
