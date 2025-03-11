@@ -5,7 +5,7 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public enum ProjectManagementTools {
+public enum ProjectManagementTool {
 
     TAIGA("https://api.taiga.io", TaigaEndpoints.class);
 
