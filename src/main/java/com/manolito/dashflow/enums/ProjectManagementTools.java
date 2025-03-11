@@ -7,7 +7,7 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum ProjectManagementTools {
 
-    TAIGA("https://api.taiga.io", TaigaEndpoints.class),;
+    TAIGA("https://api.taiga.io", TaigaEndpoints.class);
 
     private final String baseUrl;
     private final Class<? extends Enum<?>> endpointsClass;
