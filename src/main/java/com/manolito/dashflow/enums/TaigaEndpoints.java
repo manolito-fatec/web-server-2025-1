@@ -25,4 +25,13 @@ public enum TaigaEndpoints{
     PROJECT_MEMBERS("/api/v1/projects/{project_id}/members");
 
     private final String path;
+    
+    public static TaigaEndpoints identifyObject(String endpointPath) {
+        for (TaigaEndpoints endpoint : values()) {
+            if (endpointPath.startsWith(endpoint.getPath())) {
+                return endpoint;
+            }
+        }
+        return null;
+    }
 }
