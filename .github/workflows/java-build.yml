@@ -11,6 +11,15 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:latest
+        env:
+          POSTGRES_USER: ${{ secrets.DB_USERNAME }}
+          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          POSTGRES_DB: dashflow
+        ports:
+          - 5432:5432
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -24,3 +33,7 @@ jobs:
 
     - name: Build with Maven
       run: mvn -B clean package
+      env:
+        SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/dashflow
+        SPRING_DATASOURCE_USERNAME: ${{ secrets.DB_USERNAME }}
+        SPRING_DATASOURCE_PASSWORD: ${{ secrets.DB_PASSWORD }}
