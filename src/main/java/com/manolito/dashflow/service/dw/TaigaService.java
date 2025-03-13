@@ -33,7 +33,6 @@ public class TaigaService {
         return fetchDataAsDataFrame(TAIGA.name() + TASKS.name());
     }
 
-
     public Dataset<Row> handleIssues() {
         return fetchDataAsDataFrame(TAIGA.name() + ISSUES.name());
     }
