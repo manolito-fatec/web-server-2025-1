@@ -1,6 +1,5 @@
 package com.manolito.dashflow.enums;
 
-import com.manolito.dashflow.service.EndpointService;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 

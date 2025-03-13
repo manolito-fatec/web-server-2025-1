@@ -1,6 +1,5 @@
 package com.manolito.dashflow.handlers.tools;
 
-
 import com.manolito.dashflow.enums.TaigaEndpoints;
 import com.manolito.dashflow.service.dw.TaigaService;
 import lombok.RequiredArgsConstructor;

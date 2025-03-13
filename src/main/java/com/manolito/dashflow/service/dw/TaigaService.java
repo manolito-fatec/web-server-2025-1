@@ -1,7 +1,5 @@
 package com.manolito.dashflow.service.dw;
 
-import com.manolito.dashflow.enums.ProjectManagementTool;
-import com.manolito.dashflow.enums.TaigaEndpoints;
 import com.manolito.dashflow.util.SparkUtils;
 import lombok.RequiredArgsConstructor;
 import org.apache.spark.sql.Dataset;
