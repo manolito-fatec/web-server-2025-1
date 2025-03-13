@@ -31,12 +31,14 @@ jobs:
         distribution: 'temurin'
         cache: maven
 
-    - name: Install Apache Spark
-      run: |
-        wget -qO - https://dlcdn.apache.org/spark/spark-3.5.1/spark-3.5.1-bin-hadoop3.tgz | tar -xvz -C /opt
-        sudo ln -s /opt/spark-3.5.1-bin-hadoop3 /opt/spark
-        echo "SPARK_HOME=/opt/spark" >> $GITHUB_ENV
-        echo "PATH=\$PATH:/opt/spark/bin" >> $GITHUB_ENV
+    - name: Set up Apache Spark
+      uses: vemonet/setup-spark@v1
+      with:
+        spark-version: '3.5.1'
+        hadoop-version: '3'
+        scala-version: '2.13'
+        log-level: 'debug'
+        install-folder: '/home/runner/work'
 
     - name: Build with Maven
       run: mvn -B clean package
@@ -44,5 +46,8 @@ jobs:
         SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/dashflow
         SPRING_DATASOURCE_USERNAME: ${{ secrets.DB_USERNAME }}
         SPRING_DATASOURCE_PASSWORD: ${{ secrets.DB_PASSWORD }}
-        SPARK_HOME: ${{ env.SPARK_HOME }}
+        SPARK_HOME: /home/runner/work/spark
         JAVA_OPTS: "--add-exports java.base/sun.nio.ch=ALL-UNNAMED"
+
+    - name: Verify Spark Installation
+      run: spark-submit --version
