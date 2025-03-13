@@ -1,10 +1,12 @@
 package com.manolito.dashflow.util;
 
 import com.manolito.dashflow.enums.ProjectManagementTool;
+import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.Map;
 
+@Component
 public class ProjectManagementToolUtils {
 
     private static final Map<String, ProjectManagementTool> toolMapping = new HashMap<>();
