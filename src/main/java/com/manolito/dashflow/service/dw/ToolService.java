@@ -6,7 +6,6 @@ import com.manolito.dashflow.handlers.tools.ToolHandlerFactory;
 import com.manolito.dashflow.service.EndpointService;
 import com.manolito.dashflow.util.ProjectManagementToolUtils;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
