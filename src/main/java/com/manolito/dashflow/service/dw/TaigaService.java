@@ -35,6 +35,27 @@ public class TaigaService {
         return fetchDataAsDataFrame(TAIGA.name() + TASKS.name());
     }
 
+
+    public Dataset<Row> handleIssues() {
+        return fetchDataAsDataFrame(TAIGA.name() + ISSUES.name());
+    }
+
+    public Dataset<Row> handleUsersStoriesStatus() {
+        return fetchDataAsDataFrame(TAIGA.name() + USER_STORY_STATUSES.name());
+    }
+
+    public Dataset<Row> handleEpics() {
+        return fetchDataAsDataFrame(TAIGA.name() + EPICS.name());
+    }
+
+    public Dataset<Row> handleRoles() {
+        return fetchDataAsDataFrame(TAIGA.name() + ROLES.name());
+    }
+
+    public Dataset<Row> handleProjectMembers() {
+        return fetchDataAsDataFrame(TAIGA.name() + PROJECT_MEMBERS.name());
+    }
+
     private Dataset<Row> fetchDataAsDataFrame(String url) {
         String jsonResponse = utils.fetchDataFromEndpoint(url);
         return spark.read().json(spark.createDataset(List.of(jsonResponse), Encoders.STRING()));
