@@ -5,6 +5,19 @@ SET search_path TO dw_tasks;
 
 ----------------------------------------
 
+CREATE TABLE IF NOT EXISTS tools(
+    tool_id SERIAL PRIMARY KEY,
+    seq INT NOT NULL,
+    tool_name VARCHAR(255) NOT NULL,
+    start_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    end_date DATE DEFAULT NULL,
+    is_active BOOLEAN NOT NULL,
+    is_current BOOLEAN NOT NULL DEFAULT TRUE,
+    CONSTRAINT unique_tool_seq UNIQUE (tool_id, seq)
+);
+
+----------------------------------------
+
 CREATE OR REPLACE FUNCTION manage_scd2()
     RETURNS TRIGGER AS $$
 DECLARE
@@ -49,14 +62,14 @@ BEGIN
     -- Max seq for a given tool name
     SELECT COALESCE(MAX(seq), 0)
     INTO max_seq
-    FROM tools
+    FROM dw_tasks.tools
     WHERE tool_name = NEW.tool_name;
 
 -- Set the newest max seq
     NEW.seq := max_seq + 1;
 
     -- Update the previous row (set end_date and is_current = FALSE)
-    UPDATE tools
+    UPDATE dw_tasks.tools
     SET end_date = CURRENT_DATE, is_current = FALSE
     WHERE tool_name = NEW.tool_name AND is_current = TRUE;
 
@@ -65,17 +78,6 @@ END;
 $$ LANGUAGE plpgsql;
 
 ---------------------------------
-
-CREATE TABLE IF NOT EXISTS tools(
-    tool_id SERIAL PRIMARY KEY,
-    seq INT NOT NULL,
-    tool_name VARCHAR(255) NOT NULL,
-    start_date DATE NOT NULL DEFAULT CURRENT_DATE,
-    end_date DATE DEFAULT NULL,
-    is_active BOOLEAN NOT NULL,
-    is_current BOOLEAN NOT NULL DEFAULT TRUE,
-    CONSTRAINT unique_tool_seq UNIQUE (tool_id, seq)
-);
 
 CREATE OR REPLACE TRIGGER tools_scd2_trigger
     BEFORE INSERT ON tools
