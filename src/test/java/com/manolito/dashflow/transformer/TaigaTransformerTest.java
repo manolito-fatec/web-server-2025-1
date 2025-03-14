@@ -65,4 +65,31 @@ public class TaigaTransformerTest {
         assertEquals(DataTypes.IntegerType, result.schema().apply("original_id").dataType());
         assertEquals(DataTypes.StringType, result.schema().apply("story_name").dataType());
     }
+
+    @Test
+    void testTransformIssues() {
+        List<Row> rawData = Arrays.asList(
+                RowFactory.create(301, 1, 5, 101, "2023-09-15", "2023-09-20", "Issue A", "Details A", false, true),
+                RowFactory.create(302, 2, 6, 102, "2023-09-10", "2023-09-18", "Issue B", "Details B", true, false)
+        );
+
+        StructType schema = new StructType()
+                .add("id", DataTypes.IntegerType)
+                .add("status", DataTypes.IntegerType)
+                .add("owner", DataTypes.IntegerType)
+                .add("project", DataTypes.IntegerType)
+                .add("created_date", DataTypes.StringType)
+                .add("modified_date", DataTypes.StringType)
+                .add("subject", DataTypes.StringType)
+                .add("description", DataTypes.StringType)
+                .add("is_blocked", DataTypes.BooleanType)
+                .add("is_closed", DataTypes.BooleanType);
+
+        Dataset<Row> df = spark.createDataFrame(rawData, schema);
+        Dataset<Row> result = transformer.transformIssues(df);
+
+        assertEquals(2, result.count());
+        assertEquals(DataTypes.IntegerType, result.schema().apply("original_id").dataType());
+        assertEquals(DataTypes.StringType, result.schema().apply("issue_name").dataType());
+    }
 }
