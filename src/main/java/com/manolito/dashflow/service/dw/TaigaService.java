@@ -2,7 +2,7 @@ package com.manolito.dashflow.service.dw;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.manolito.dashflow.dto.dw.AuthDTO;
+import com.manolito.dashflow.dto.dw.AuthDto;
 import com.manolito.dashflow.util.SparkUtils;
 import lombok.RequiredArgsConstructor;
 import org.apache.http.HttpResponse;
@@ -77,7 +77,7 @@ public class TaigaService {
             post.addHeader("Accept", "application/json");
             post.addHeader("Content-Type", "application/json");
 
-            AuthDTO authRequest = AuthDTO.builder()
+            AuthDto authRequest = AuthDto.builder()
                     .username(username)
                     .password(password)
                     .type("normal")
