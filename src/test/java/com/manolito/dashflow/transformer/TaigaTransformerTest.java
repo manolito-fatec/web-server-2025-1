@@ -92,4 +92,25 @@ public class TaigaTransformerTest {
         assertEquals(DataTypes.IntegerType, result.schema().apply("original_id").dataType());
         assertEquals(DataTypes.StringType, result.schema().apply("issue_name").dataType());
     }
+
+    @Test
+    void testTransformUserStoryStatuses() {
+        List<Row> rawData = Arrays.asList(
+                RowFactory.create(401, 101, "To Do", "#FF0000"),
+                RowFactory.create(402, 102, "Done", "#00FF00")
+        );
+
+        StructType schema = new StructType()
+                .add("id", DataTypes.IntegerType)
+                .add("project", DataTypes.IntegerType)
+                .add("name", DataTypes.StringType)
+                .add("color", DataTypes.StringType);
+
+        Dataset<Row> df = spark.createDataFrame(rawData, schema);
+        Dataset<Row> result = transformer.transformUserStoryStatuses(df);
+
+        assertEquals(2, result.count());
+        assertEquals(DataTypes.IntegerType, result.schema().apply("original_id").dataType());
+        assertEquals(DataTypes.StringType, result.schema().apply("status_name").dataType());
+    }
 }
