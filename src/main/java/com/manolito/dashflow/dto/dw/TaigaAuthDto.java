@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Data
 @Builder
-public class AuthDto {
+public class TaigaAuthDto {
     private String username;
     private String password;
     private String type;
