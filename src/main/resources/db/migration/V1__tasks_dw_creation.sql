@@ -19,34 +19,42 @@ CREATE TABLE IF NOT EXISTS tools(
 ----------------------------------------
 
 CREATE OR REPLACE FUNCTION manage_scd2()
-    RETURNS TRIGGER AS $$
+RETURNS TRIGGER AS $$
 DECLARE
     max_seq INT;
     business_key_value TEXT;
-    business_key_column TEXT := TG_ARGV[0];
+    business_key_column TEXT := TG_ARGV[0]; -- Get the business key column name from trigger argument
 BEGIN
-    -- Get business key for the new row
+    -- Get the business key value from the new row
     EXECUTE format(
-            'SELECT ($1).%I FROM %I',
-            business_key_column, TG_TABLE_NAME
-            ) INTO business_key_value USING NEW;
+        'SELECT ($1).%I',
+        business_key_column
+    ) INTO business_key_value USING NEW;
 
--- Get seq for the business key
+    -- Get the maximum sequence number for the business key
     EXECUTE format(
-            'SELECT COALESCE(MAX(seq), 0) FROM %I WHERE %I = $1 AND toold_id = $2',
-            TG_TABLE_NAME, business_key_column
-            ) INTO max_seq USING NEW.business_key_column;
+        'SELECT COALESCE(MAX(seq), 0) FROM %I WHERE %I = $1',
+        TG_TABLE_NAME, business_key_column
+    ) INTO max_seq USING business_key_value;
 
--- Set the new max seq
+    -- Set the new sequence number
     NEW.seq := max_seq + 1;
 
-    -- Update the previous row (set end_date and is_current = FALSE)
-    EXECUTE format(
+    -- If this is not the first row, update the previous row
+    IF max_seq > 0 THEN
+        EXECUTE format(
             'UPDATE %I
-            SET end_date = CURRENT_DATE, is_current = FALSE
-            WHERE %I = $1 AND tool_id = $2 AND is_current = TRUE',
+             SET end_date = CURRENT_DATE, is_current = FALSE, is_active = FALSE
+             WHERE %I = $1 AND is_current = TRUE',
             TG_TABLE_NAME, business_key_column
-            ) USING NEW.business_key_column;
+        ) USING business_key_value;
+    END IF;
+
+    -- Set start_date, end_date, is_current, and is_active for the new row
+    NEW.start_date := CURRENT_DATE;
+    NEW.end_date := NULL;
+    NEW.is_current := TRUE;
+    NEW.is_active := TRUE;
 
     RETURN NEW;
 END;
@@ -55,23 +63,31 @@ $$ LANGUAGE plpgsql;
 ---------------------------------
 
 CREATE OR REPLACE FUNCTION manage_scd2_tools()
-    RETURNS TRIGGER AS $$
+RETURNS TRIGGER AS $$
 DECLARE
     max_seq INT;
 BEGIN
-    -- Max seq for a given tool name
+    -- Get the maximum sequence number for the tool name
     SELECT COALESCE(MAX(seq), 0)
     INTO max_seq
     FROM dw_tasks.tools
     WHERE tool_name = NEW.tool_name;
 
--- Set the newest max seq
+    -- Set the new sequence number
     NEW.seq := max_seq + 1;
 
-    -- Update the previous row (set end_date and is_current = FALSE)
-    UPDATE dw_tasks.tools
-    SET end_date = CURRENT_DATE, is_current = FALSE
-    WHERE tool_name = NEW.tool_name AND is_current = TRUE;
+    -- If this is not the first row, update the previous row
+    IF max_seq > 0 THEN
+        UPDATE dw_tasks.tools
+        SET end_date = CURRENT_DATE, is_current = FALSE, is_active = FALSE
+        WHERE tool_name = NEW.tool_name AND is_current = TRUE;
+    END IF;
+
+    -- Set start_date, end_date, is_current, and is_active for the new row
+    NEW.start_date := CURRENT_DATE;
+    NEW.end_date := NULL;
+    NEW.is_current := TRUE;
+    NEW.is_active := TRUE;
 
     RETURN NEW;
 END;
