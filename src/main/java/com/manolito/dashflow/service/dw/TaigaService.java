@@ -34,35 +34,35 @@ public class TaigaService {
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     public Dataset<Row> handleProjects() {
-        return fetchDataAsDataFrame(TAIGA.name() + PROJECTS.name());
+        return fetchDataAsDataFrame(TAIGA.getBaseUrl() + PROJECTS.getPath());
     }
 
     public Dataset<Row> handleUserStories() {
-        return fetchDataAsDataFrame(TAIGA.name() + USER_STORIES.name());
+        return fetchDataAsDataFrame(TAIGA.getBaseUrl() + USER_STORIES.getPath());
     }
 
     public Dataset<Row> handleTasks() {
-        return fetchDataAsDataFrame(TAIGA.name() + TASKS.name());
+        return fetchDataAsDataFrame(TAIGA.getBaseUrl() + TASKS.getPath());
     }
 
     public Dataset<Row> handleIssues() {
-        return fetchDataAsDataFrame(TAIGA.name() + ISSUES.name());
+        return fetchDataAsDataFrame(TAIGA.getBaseUrl() + ISSUES.getPath());
     }
 
     public Dataset<Row> handleUsersStoriesStatus() {
-        return fetchDataAsDataFrame(TAIGA.name() + USER_STORY_STATUSES.name());
+        return fetchDataAsDataFrame(TAIGA.getBaseUrl() + USER_STORY_STATUSES.getPath());
     }
 
     public Dataset<Row> handleEpics() {
-        return fetchDataAsDataFrame(TAIGA.name() + EPICS.name());
+        return fetchDataAsDataFrame(TAIGA.getBaseUrl() + EPICS.getPath());
     }
 
     public Dataset<Row> handleRoles() {
-        return fetchDataAsDataFrame(TAIGA.name() + ROLES.name());
+        return fetchDataAsDataFrame(TAIGA.getBaseUrl() + ROLES.getPath());
     }
 
     public Dataset<Row> handleProjectMembers() {
-        return fetchDataAsDataFrame(TAIGA.name() + PROJECT_MEMBERS.name());
+        return fetchDataAsDataFrame(TAIGA.getBaseUrl() + PROJECT_MEMBERS.getPath());
     }
 
     private Dataset<Row> fetchDataAsDataFrame(String url) {
