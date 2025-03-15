@@ -1,7 +1,5 @@
 package com.manolito.dashflow.service.dw;
 
-import com.manolito.dashflow.util.SparkUtils;
-import lombok.RequiredArgsConstructor;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.junit.jupiter.api.Test;
@@ -13,10 +11,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @SpringBootTest
-@RequiredArgsConstructor
 class TaigaServiceTest {
-
-    private final SparkUtils utils;
 
     @Autowired
     private TaigaService taigaService;
