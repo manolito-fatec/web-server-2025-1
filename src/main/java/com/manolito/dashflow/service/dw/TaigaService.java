@@ -32,45 +32,47 @@ public class TaigaService {
     private final SparkUtils utils;
     private static final String API_URL = "https://api.taiga.io/api/v1/auth";
     private static final ObjectMapper objectMapper = new ObjectMapper();
+    private String authToken;
+
 
     public Dataset<Row> handleProjects() {
-        return fetchDataAsDataFrame(TAIGA.getBaseUrl() + PROJECTS.getPath());
+        return fetchDataAsDataFrame(TAIGA.getBaseUrl() + PROJECTS.getPath(), authToken);
     }
 
     public Dataset<Row> handleUserStories() {
-        return fetchDataAsDataFrame(TAIGA.getBaseUrl() + USER_STORIES.getPath());
+        return fetchDataAsDataFrame(TAIGA.getBaseUrl() + USER_STORIES.getPath(), authToken);
     }
 
     public Dataset<Row> handleTasks() {
-        return fetchDataAsDataFrame(TAIGA.getBaseUrl() + TASKS.getPath());
+        return fetchDataAsDataFrame(TAIGA.getBaseUrl() + TASKS.getPath(), authToken);
     }
 
     public Dataset<Row> handleIssues() {
-        return fetchDataAsDataFrame(TAIGA.getBaseUrl() + ISSUES.getPath());
+        return fetchDataAsDataFrame(TAIGA.getBaseUrl() + ISSUES.getPath(), authToken);
     }
 
     public Dataset<Row> handleUsersStoriesStatus() {
-        return fetchDataAsDataFrame(TAIGA.getBaseUrl() + USER_STORY_STATUSES.getPath());
+        return fetchDataAsDataFrame(TAIGA.getBaseUrl() + USER_STORY_STATUSES.getPath(), authToken);
     }
 
     public Dataset<Row> handleEpics() {
-        return fetchDataAsDataFrame(TAIGA.getBaseUrl() + EPICS.getPath());
+        return fetchDataAsDataFrame(TAIGA.getBaseUrl() + EPICS.getPath(), authToken);
     }
 
     public Dataset<Row> handleRoles() {
-        return fetchDataAsDataFrame(TAIGA.getBaseUrl() + ROLES.getPath());
+        return fetchDataAsDataFrame(TAIGA.getBaseUrl() + ROLES.getPath(), authToken);
     }
 
     public Dataset<Row> handleProjectMembers() {
-        return fetchDataAsDataFrame(TAIGA.getBaseUrl() + PROJECT_MEMBERS.getPath());
+        return fetchDataAsDataFrame(TAIGA.getBaseUrl() + PROJECT_MEMBERS.getPath(), authToken);
     }
 
-    private Dataset<Row> fetchDataAsDataFrame(String url) {
-        String jsonResponse = utils.fetchDataFromEndpoint(url);
+    private Dataset<Row> fetchDataAsDataFrame(String url, String authToken) {
+        String jsonResponse = utils.fetchDataFromEndpoint(url, authToken);
         return spark.read().json(spark.createDataset(List.of(jsonResponse), Encoders.STRING()));
     }
 
-    public String authenticateTaiga(String username, String password) {
+    public void authenticateTaiga(String username, String password) {
         try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
             HttpPost post = new HttpPost(API_URL);
 
@@ -97,7 +99,7 @@ public class TaigaService {
             String responseString = EntityUtils.toString(response.getEntity());
             JsonNode jsonNode = objectMapper.readTree(responseString);
 
-            return jsonNode.get("auth_token").asText();
+            authToken = jsonNode.get("auth_token").asText();
 
         } catch (Exception e) {
             throw new RuntimeException("Erro ao autenticar no Taiga", e);
