@@ -10,10 +10,11 @@ import org.springframework.stereotype.Component;
 @Component
 public class SparkUtils {
 
-    public String fetchDataFromEndpoint(String url) {
+    public String fetchDataFromEndpoint(String url, String authToken) {
         try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
-            // Create an HTTP GET request
             HttpGet request = new HttpGet(url);
+
+            request.addHeader("Authorization", "Bearer " + authToken);
             request.addHeader("Accept", "application/json");
 
             HttpResponse response = httpClient.execute(request);
