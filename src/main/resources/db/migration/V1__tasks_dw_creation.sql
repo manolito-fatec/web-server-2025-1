@@ -33,8 +33,8 @@ BEGIN
 
     -- Get the maximum sequence number for the business key
     EXECUTE format(
-        'SELECT COALESCE(MAX(seq), 0) FROM %I WHERE %I = $1',
-        TG_TABLE_NAME, business_key_column
+        'SELECT COALESCE(MAX(seq), 0) FROM %I.%I WHERE %I = $1',
+        TG_TABLE_SCHEMA, TG_TABLE_NAME, business_key_column
     ) INTO max_seq USING business_key_value;
 
     -- Set the new sequence number
@@ -43,10 +43,10 @@ BEGIN
     -- If this is not the first row, update the previous row
     IF max_seq > 0 THEN
         EXECUTE format(
-            'UPDATE %I
+            'UPDATE %I.%I
              SET end_date = CURRENT_DATE, is_current = FALSE, is_active = FALSE
              WHERE %I = $1 AND is_current = TRUE',
-            TG_TABLE_NAME, business_key_column
+            TG_TABLE_SCHEMA, TG_TABLE_NAME, business_key_column
         ) USING business_key_value;
     END IF;
 

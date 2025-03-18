@@ -1,5 +1,6 @@
 package com.manolito.dashflow.loader;
 
+import com.manolito.dashflow.util.SparkUtils;
 import lombok.RequiredArgsConstructor;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -9,6 +10,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -27,6 +32,7 @@ import static org.apache.spark.sql.functions.col;
 public class TasksDataWarehouseLoader {
 
     private final SparkSession spark;
+    private final SparkUtils sparkUtils; // Inject SparkUtils
     private Map<String, ToolMetadata> toolCache = new ConcurrentHashMap<>();
     private Dataset<Row> cachedDates;
     private Dataset<Row> cachedTools;
@@ -40,22 +46,12 @@ public class TasksDataWarehouseLoader {
     @Value("${spring.datasource.password}")
     private String dbPassword;
 
-    /**
-     * Initializes the loader by loading tools and caching common dimensions during server startup.
-     */
     @PostConstruct
     public void initialize() {
         loadAllTools();
         cacheCommonDimensions();
     }
 
-    /**
-     * Retrieves the tool ID for the specified tool name.
-     *
-     * @param toolName The name of the tool.
-     * @return The tool ID.
-     * @throws IllegalArgumentException if the tool name is not found.
-     */
     public int getToolId(String toolName) {
         ToolMetadata meta = toolCache.get(toolName.toLowerCase());
         if (meta == null) {
@@ -65,20 +61,10 @@ public class TasksDataWarehouseLoader {
         return meta.toolId;
     }
 
-    /**
-     * @return The cached tools dimension dataset.
-     */
     public Dataset<Row> getToolsDimension() {
         return cachedTools;
     }
 
-    /**
-     * Loads a specific dimension dataset filtered by the given tool name.
-     *
-     * @param tableName The name of the dimension table.
-     * @param toolName  The tool name to filter by.
-     * @return The filtered dimension dataset.
-     */
     public Dataset<Row> loadDimension(String tableName, String toolName) {
         int toolId = getToolId(toolName);
         return spark.read()
@@ -92,31 +78,26 @@ public class TasksDataWarehouseLoader {
                 .filter(col("is_current").equalTo(true));
     }
 
-    /**
-     * Saves the provided dataset to the specified table in the data warehouse.
-     *
-     * @param data      The dataset to save.
-     * @param tableName The name of the target table.
-     */
     public void save(Dataset<Row> data, String tableName) {
-        data.write()
-                .format("jdbc")
-                .option("url", jdbcUrl)
-                .option("dbtable", "dw_tasks." + tableName)
-                .option("user", dbUser)
-                .option("password", dbPassword)
-                .option("batchsize", 10000)
-                .mode(SaveMode.Append)
-                .save();
+        try {
+            List<String> tableColumns = sparkUtils.fetchTableColumns(jdbcUrl, dbUser, dbPassword, tableName);
+
+            Dataset<Row> filteredData = data.select(sparkUtils.getColumns(data, tableColumns));
+
+            filteredData.write()
+                    .format("jdbc")
+                    .option("url", jdbcUrl)
+                    .option("dbtable", "dw_tasks." + tableName)
+                    .option("user", dbUser)
+                    .option("password", dbPassword)
+                    .option("batchsize", 10000)
+                    .mode(SaveMode.Append)
+                    .save();
+        } catch (Exception e) {
+            throw new RuntimeException("Error saving data to table: " + tableName, e);
+        }
     }
 
-    /**
-     * Saves the provided dataset with retries if an error occurs during the save operation.
-     *
-     * @param data      The dataset to save.
-     * @param tableName The name of the target table.
-     * @param maxRetries The maximum number of retries in case of failure.
-     */
     public void saveWithRetries(Dataset<Row> data, String tableName, int maxRetries) {
         int attempts = 0;
         while (attempts < maxRetries) {
@@ -130,9 +111,6 @@ public class TasksDataWarehouseLoader {
         }
     }
 
-    /**
-     * A simple utility class to hold metadata information of a tool.
-     */
     private static class ToolMetadata {
         final int toolId;
         final String toolName;
@@ -145,9 +123,6 @@ public class TasksDataWarehouseLoader {
         }
     }
 
-    /**
-     * Loads all currently active tools from the "dw_tasks.tools" table, caches them, and populates the toolCache.
-     */
     private void loadAllTools() {
         Dataset<Row> tools = spark.read()
                 .format("jdbc")
@@ -170,13 +145,9 @@ public class TasksDataWarehouseLoader {
 
         if (toolCache.isEmpty()) {
             System.out.println("No tools loaded");
-//            throw new IllegalStateException("No tools found in tools table");
         }
     }
 
-    /**
-     * Caches common static dimensions (tools and dates) from the data warehouse.
-     */
     private void cacheCommonDimensions() {
         this.cachedTools = loadDimension("tools").cache();
 
@@ -190,12 +161,6 @@ public class TasksDataWarehouseLoader {
                 .cache();
     }
 
-    /**
-     * Loads a specific dimension dataset.
-     *
-     * @param tableName The name of the dimension table.
-     * @return The dimension dataset.
-     */
     private Dataset<Row> loadDimension(String tableName) {
         return spark.read()
                 .format("jdbc")

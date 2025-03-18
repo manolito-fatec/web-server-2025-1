@@ -3,6 +3,8 @@ package com.manolito.dashflow.service.dw;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.manolito.dashflow.dto.dw.TaigaAuthDto;
+import com.manolito.dashflow.loader.TasksDataWarehouseLoader;
+import com.manolito.dashflow.transformer.TaigaTransformer;
 import com.manolito.dashflow.util.SparkUtils;
 import lombok.RequiredArgsConstructor;
 import org.apache.http.HttpResponse;
@@ -12,14 +14,14 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 
+import org.apache.spark.sql.functions;
 import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
-import java.util.List;
+import java.util.Arrays;
 
 import static com.manolito.dashflow.enums.ProjectManagementTool.TAIGA;
 import static com.manolito.dashflow.enums.TaigaEndpoints.*;
@@ -30,46 +32,65 @@ public class TaigaService {
 
     private final SparkSession spark;
     private final SparkUtils utils;
+    private final TasksDataWarehouseLoader dataWarehouseLoader;
     private static final String API_URL = "https://api.taiga.io/api/v1/auth";
+    private static final String USER_ME_URL = "https://api.taiga.io/api/v1/users/me";
     private static final ObjectMapper objectMapper = new ObjectMapper();
     private String authToken;
+    private Integer userId;
+
+    /**
+     * Maps the "name" field to the appropriate column name based on the target table.
+     *
+     * @param tableName The name of the target table.
+     * @return The mapped column name for the "name" field.
+     */
+    private String mapNameField(String tableName) {
+        return switch (tableName) {
+            case "projects" -> "project_name";
+            case "issues" -> "issue_name";
+            case "status" -> "status_name";
+            case "stories" -> "story_name";
+            case "epics" -> "epic_name";
+            case "roles" -> "role_name";
+            case "users" -> "user_name";
+            case "tags" -> "tag_name";
+            case "fact_tasks" -> "task_name";
+            default -> throw new IllegalArgumentException("Unsupported table for name field mapping: " + tableName);
+        };
+    }
 
 
     public Dataset<Row> handleProjects() {
-        return fetchDataAsDataFrame(TAIGA.getBaseUrl() + PROJECTS.getPath(), authToken);
+        return fetchAndConvertToDataFrame(PROJECTS.getPath(), "projects");
     }
 
     public Dataset<Row> handleUserStories() {
-        return fetchDataAsDataFrame(TAIGA.getBaseUrl() + USER_STORIES.getPath(), authToken);
+        return fetchAndConvertToDataFrame(USER_STORIES.getPath(), "stories");
     }
 
     public Dataset<Row> handleTasks() {
-        return fetchDataAsDataFrame(TAIGA.getBaseUrl() + TASKS.getPath(), authToken);
+        return fetchAndConvertToDataFrame(TASKS.getPath(), "fact_tasks");
     }
 
     public Dataset<Row> handleIssues() {
-        return fetchDataAsDataFrame(TAIGA.getBaseUrl() + ISSUES.getPath(), authToken);
+        return fetchAndConvertToDataFrame(ISSUES.getPath(), "PLACEHOLDER");
     }
 
     public Dataset<Row> handleUsersStoriesStatus() {
-        return fetchDataAsDataFrame(TAIGA.getBaseUrl() + USER_STORY_STATUSES.getPath(), authToken);
+        return fetchAndConvertToDataFrame(USER_STORY_STATUSES.getPath(), "PLACEHOLDER");
     }
 
     public Dataset<Row> handleEpics() {
-        return fetchDataAsDataFrame(TAIGA.getBaseUrl() + EPICS.getPath(), authToken);
+        return fetchAndConvertToDataFrame(EPICS.getPath(), "epics");
     }
 
     public Dataset<Row> handleRoles() {
-        return fetchDataAsDataFrame(TAIGA.getBaseUrl() + ROLES.getPath(), authToken);
+        return fetchAndConvertToDataFrame(ROLES.getPath(), "roles");
     }
 
     public Dataset<Row> handleProjectMembers() {
-        return fetchDataAsDataFrame(TAIGA.getBaseUrl() + PROJECT_MEMBERS.getPath(), authToken);
-    }
-
-    private Dataset<Row> fetchDataAsDataFrame(String url, String authToken) {
-        String jsonResponse = utils.fetchDataFromEndpoint(url, authToken);
-        return spark.read().json(spark.createDataset(List.of(jsonResponse), Encoders.STRING()));
+        return fetchAndConvertToDataFrame(PROJECT_MEMBERS.getPath(), "PLACEHOLDER");
     }
 
     public void authenticateTaiga(String username, String password) {
@@ -100,10 +121,46 @@ public class TaigaService {
             JsonNode jsonNode = objectMapper.readTree(responseString);
 
             authToken = jsonNode.get("auth_token").asText();
+            saveUserToDatabase();
 
         } catch (Exception e) {
             throw new RuntimeException("Erro ao autenticar no Taiga", e);
         }
+    }
+
+    /**
+     * Fetches data from the specified endpoint and converts it into a DataFrame.
+     *
+     * @param endpoint The endpoint path (e.g., PROJECTS.getPath()).
+     * @return A DataFrame containing the fetched data.
+     */
+    private Dataset<Row> fetchAndConvertToDataFrame(String endpoint, String tableName) {
+        authenticateTaiga("gabguska", "aluno123");
+        String jsonResponse = utils.fetchDataFromEndpoint(TAIGA.getBaseUrl() + endpoint, authToken);
+        Dataset<Row> data = utils.fetchDataAsDataFrame(jsonResponse);
+
+        // Add tool_id = 1 to the DataFrame
+        data = data.withColumn("tool_id", functions.lit(1));
+
+        // Map the "name" field to the appropriate column name
+        String mappedNameColumn = mapNameField(tableName);
+        if (Arrays.asList(data.columns()).contains("name")) {
+            data = data.withColumnRenamed("name", mappedNameColumn);
+        }
+
+        return data;
+    }
+
+    private void saveUserToDatabase() {
+        if (authToken == null) {
+            throw new IllegalStateException("Token not acquired");
+        }
+        Dataset<Row> datesDimension = spark.emptyDataFrame();
+        TaigaTransformer transformer = new TaigaTransformer(datesDimension);
+        String jsonResponde = utils.fetchDataFromEndpoint(USER_ME_URL, authToken);
+        Dataset<Row> rawUsers = utils.fetchDataAsDataFrame(jsonResponde);
+        Dataset<Row> transformedUsers = transformer.transformUsers(rawUsers);
+        dataWarehouseLoader.save(transformedUsers, "users");
     }
 
 }
