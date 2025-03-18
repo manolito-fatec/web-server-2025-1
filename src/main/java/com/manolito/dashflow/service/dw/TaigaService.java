@@ -3,8 +3,8 @@ package com.manolito.dashflow.service.dw;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.manolito.dashflow.dto.dw.TaigaAuthDto;
-import com.manolito.dashflow.dto.dw.UserDto;
 import com.manolito.dashflow.loader.TasksDataWarehouseLoader;
+import com.manolito.dashflow.transformer.TaigaTransformer;
 import com.manolito.dashflow.util.SparkUtils;
 import lombok.RequiredArgsConstructor;
 import org.apache.http.HttpResponse;
@@ -22,7 +22,6 @@ import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.List;
 
 import static com.manolito.dashflow.enums.ProjectManagementTool.TAIGA;
 import static com.manolito.dashflow.enums.TaigaEndpoints.*;
@@ -35,6 +34,7 @@ public class TaigaService {
     private final SparkUtils utils;
     private final TasksDataWarehouseLoader dataWarehouseLoader;
     private static final String API_URL = "https://api.taiga.io/api/v1/auth";
+    private static final String USER_ME_URL = "https://api.taiga.io/api/v1/users/me";
     private static final ObjectMapper objectMapper = new ObjectMapper();
     private String authToken;
     private Integer userId;
@@ -121,6 +121,7 @@ public class TaigaService {
             JsonNode jsonNode = objectMapper.readTree(responseString);
 
             authToken = jsonNode.get("auth_token").asText();
+            saveUserToDatabase();
 
         } catch (Exception e) {
             throw new RuntimeException("Erro ao autenticar no Taiga", e);
@@ -150,16 +151,16 @@ public class TaigaService {
         return data;
     }
 
-    private void saveUserToDatabase(Integer userId, String username) {
-        UserDto userDto = new UserDto(userId, username);
-
-        Dataset<Row> userData = spark.createDataFrame(
-                List.of(userDto),
-                UserDto.class
-        );
-
-        dataWarehouseLoader.save(userData, "users");
-        System.out.println("Usuário salvo no banco de dados: " + username);
+    private void saveUserToDatabase() {
+        if (authToken == null) {
+            throw new IllegalStateException("Token not acquired");
+        }
+        Dataset<Row> datesDimension = spark.emptyDataFrame();
+        TaigaTransformer transformer = new TaigaTransformer(datesDimension);
+        String jsonResponde = utils.fetchDataFromEndpoint(USER_ME_URL, authToken);
+        Dataset<Row> rawUsers = utils.fetchDataAsDataFrame(jsonResponde);
+        Dataset<Row> transformedUsers = transformer.transformUsers(rawUsers);
+        dataWarehouseLoader.save(transformedUsers, "users");
     }
 
 }
