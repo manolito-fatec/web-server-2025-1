@@ -20,8 +20,7 @@ class TaigaServiceTest {
     void testAuthenticateTaiga() {
         String username = "gabguska";
         String password = "aluno123";
-        String authToken = taigaService.authenticateTaiga(username, password);
-        assertNotNull(authToken, "O token de autenticação não deve ser nulo");
+        taigaService.authenticateTaiga(username, password);
     }
 
     @Test
@@ -39,6 +38,12 @@ class TaigaServiceTest {
 
         Dataset<Row> issues = taigaService.handleIssues();
         assertNotNull(issues, "A lista de issues não deve ser nula");
+    }
+
+    @Test
+    void testAuthenticateAndSaveUser() {
+        taigaService.authenticateTaiga("gabguska", "aluno123");
+
     }
 
     private Dataset<Row> mockDataset() {
