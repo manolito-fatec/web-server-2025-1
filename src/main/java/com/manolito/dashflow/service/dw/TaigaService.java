@@ -3,8 +3,6 @@ package com.manolito.dashflow.service.dw;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.manolito.dashflow.dto.dw.TaigaAuthDto;
-import com.manolito.dashflow.dto.dw.UserDto;
-import com.manolito.dashflow.loader.TasksDataWarehouseLoader;
 import com.manolito.dashflow.util.SparkUtils;
 import lombok.RequiredArgsConstructor;
 import org.apache.http.HttpResponse;
@@ -32,7 +30,6 @@ public class TaigaService {
 
     private final SparkSession spark;
     private final SparkUtils utils;
-    private final TasksDataWarehouseLoader dataWarehouseLoader;
     private static final String API_URL = "https://api.taiga.io/api/v1/auth";
     private static final ObjectMapper objectMapper = new ObjectMapper();
     private String authToken;
@@ -61,12 +58,6 @@ public class TaigaService {
 
     public Dataset<Row> handleProjects() {
         return fetchAndConvertToDataFrame(PROJECTS.getPath(), "projects");
-    private Integer userId;
-
-    public Dataset<Row> handleProjects() {
-        String memberFilter = "?member=" + userId;
-        String projectsUrl = TAIGA.getBaseUrl() + PROJECTS.getPath() + memberFilter;
-        return fetchDataAsDataFrame(projectsUrl, authToken);
     }
 
     public Dataset<Row> handleUserStories() {
@@ -125,7 +116,6 @@ public class TaigaService {
             JsonNode jsonNode = objectMapper.readTree(responseString);
 
             authToken = jsonNode.get("auth_token").asText();
-            userId = jsonNode.get("id").asInt();
 
         } catch (Exception e) {
             throw new RuntimeException("Erro ao autenticar no Taiga", e);
@@ -155,15 +145,4 @@ public class TaigaService {
         return data;
     }
 
-    private void saveUserToDatabase(Integer userId, String username) {
-        UserDto userDto = new UserDto(userId, username);
-
-        Dataset<Row> userData = spark.createDataFrame(
-                List.of(userDto),
-                UserDto.class
-        );
-
-        dataWarehouseLoader.save(userData, "users");
-        System.out.println("Usuário salvo no banco de dados: " + username);
-    }
 }
