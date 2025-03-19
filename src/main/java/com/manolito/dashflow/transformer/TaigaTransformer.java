@@ -3,7 +3,6 @@ package com.manolito.dashflow.transformer;
 import lombok.RequiredArgsConstructor;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
-import org.apache.spark.sql.functions;
 
 import static org.apache.spark.sql.functions.*;
 
@@ -87,8 +86,20 @@ public class TaigaTransformer {
 
     public Dataset<Row> transformUserRole(Dataset<Row> rawUserRoles) {
         return rawUserRoles.select(
-                functions.col("members.role").as("role_id"),
-                functions.col("members.id").as("user_id")
+                col("members.role").as("role_id"),
+                col("members.id").as("user_id")
+        );
+    }
+
+    public Dataset<Row> transformEpics(Dataset<Row> rawEpics) {
+        return rawEpics.select(
+                col("id").as("original_id"),
+                lit(TOOL_ID).as("tool_id"),
+                col("project").as("project_id"),
+                col("subject").as("epic_name"),
+                col("description"),
+                col("is_closed").as("is_finished"),
+                col("assigned_to_extra_info.is_active").as("is_active")
         );
     }
 
