@@ -11,7 +11,6 @@ CREATE TABLE IF NOT EXISTS tools(
     tool_name VARCHAR(255) NOT NULL,
     start_date DATE NOT NULL DEFAULT CURRENT_DATE,
     end_date DATE DEFAULT NULL,
-    is_active BOOLEAN NOT NULL,
     is_current BOOLEAN NOT NULL DEFAULT TRUE,
     CONSTRAINT unique_tool_seq UNIQUE (tool_id, seq)
 );
@@ -44,17 +43,16 @@ BEGIN
     IF max_seq > 0 THEN
         EXECUTE format(
             'UPDATE %I.%I
-             SET end_date = CURRENT_DATE, is_current = FALSE, is_active = FALSE
+             SET end_date = CURRENT_DATE, is_current = FALSE
              WHERE %I = $1 AND is_current = TRUE',
             TG_TABLE_SCHEMA, TG_TABLE_NAME, business_key_column
         ) USING business_key_value;
     END IF;
 
-    -- Set start_date, end_date, is_current, and is_active for the new row
+    -- Set start_date, end_date and is_current for the new row
     NEW.start_date := CURRENT_DATE;
     NEW.end_date := NULL;
     NEW.is_current := TRUE;
-    NEW.is_active := TRUE;
 
     RETURN NEW;
 END;
@@ -79,15 +77,14 @@ BEGIN
     -- If this is not the first row, update the previous row
     IF max_seq > 0 THEN
         UPDATE dw_tasks.tools
-        SET end_date = CURRENT_DATE, is_current = FALSE, is_active = FALSE
+        SET end_date = CURRENT_DATE, is_current = FALSE
         WHERE tool_name = NEW.tool_name AND is_current = TRUE;
     END IF;
 
-    -- Set start_date, end_date, is_current, and is_active for the new row
+    -- Set start_date, end_date and is_current for the new row
     NEW.start_date := CURRENT_DATE;
     NEW.end_date := NULL;
     NEW.is_current := TRUE;
-    NEW.is_active := TRUE;
 
     RETURN NEW;
 END;
@@ -100,6 +97,9 @@ CREATE OR REPLACE TRIGGER tools_scd2_trigger
     FOR EACH ROW
 EXECUTE FUNCTION manage_scd2_tools();
 
+INSERT INTO dw_tasks.tools(
+    tool_name)
+VALUES ('taiga');
 ---------------------------------
 
 CREATE TABLE IF NOT EXISTS roles(
@@ -111,7 +111,6 @@ CREATE TABLE IF NOT EXISTS roles(
     description TEXT,
     start_date DATE NOT NULL DEFAULT CURRENT_DATE,
     end_date DATE DEFAULT NULL,
-    is_active BOOLEAN NOT NULL,
     is_current BOOLEAN NOT NULL DEFAULT TRUE,
 
     CONSTRAINT fk_roles_tools FOREIGN KEY (tool_id) REFERENCES tools(tool_id),
@@ -135,7 +134,6 @@ CREATE TABLE IF NOT EXISTS users(
     description TEXT,
     start_date DATE NOT NULL DEFAULT CURRENT_DATE,
     end_date DATE DEFAULT NULL,
-    is_active BOOLEAN NOT NULL,
     is_current BOOLEAN NOT NULL DEFAULT TRUE,
 
     CONSTRAINT fk_users_tools FOREIGN KEY (tool_id) REFERENCES tools(tool_id),
@@ -170,7 +168,6 @@ CREATE TABLE IF NOT EXISTS projects(
     start_date DATE NOT NULL DEFAULT CURRENT_DATE,
     end_date DATE DEFAULT NULL,
     is_finished BOOLEAN,
-    is_active BOOLEAN NOT NULL,
     is_current BOOLEAN NOT NULL DEFAULT TRUE,
 
     CONSTRAINT fk_projects_tools FOREIGN KEY (tool_id) REFERENCES tools(tool_id),
@@ -194,7 +191,6 @@ CREATE TABLE IF NOT EXISTS status(
     description TEXT,
     start_date DATE NOT NULL DEFAULT CURRENT_DATE,
     end_date DATE DEFAULT NULL,
-    is_active BOOLEAN NOT NULL,
     is_current BOOLEAN NOT NULL DEFAULT TRUE,
 
     CONSTRAINT fk_status_tools FOREIGN KEY (tool_id) REFERENCES tools(tool_id),
@@ -220,7 +216,6 @@ CREATE TABLE IF NOT EXISTS epics(
     start_date DATE NOT NULL DEFAULT CURRENT_DATE,
     end_date DATE DEFAULT NULL,
     is_finished BOOLEAN,
-    is_active BOOLEAN NOT NULL,
     is_current BOOLEAN NOT NULL DEFAULT TRUE,
 
     CONSTRAINT fk_epics_tools FOREIGN KEY (tool_id) REFERENCES tools(tool_id),
@@ -247,7 +242,6 @@ CREATE TABLE IF NOT EXISTS stories(
     start_date DATE NOT NULL DEFAULT CURRENT_DATE,
     end_date DATE DEFAULT NULL,
     is_finished BOOLEAN,
-    is_active BOOLEAN NOT NULL,
     is_current BOOLEAN NOT NULL DEFAULT TRUE,
 
     CONSTRAINT fk_story_tools FOREIGN KEY (tool_id) REFERENCES tools(tool_id),
@@ -302,7 +296,6 @@ CREATE TABLE IF NOT EXISTS tags(
     description TEXT,
     start_date DATE NOT NULL DEFAULT CURRENT_DATE,
     end_date DATE DEFAULT NULL,
-    is_active BOOLEAN NOT NULL,
     is_current BOOLEAN NOT NULL DEFAULT TRUE,
 
     CONSTRAINT fk_tags_tools FOREIGN KEY (tool_id) REFERENCES tools(tool_id),

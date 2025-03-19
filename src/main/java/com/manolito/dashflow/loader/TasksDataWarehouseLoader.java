@@ -110,12 +110,10 @@ public class TasksDataWarehouseLoader {
     private static class ToolMetadata {
         final int toolId;
         final String toolName;
-        final boolean isActive;
 
         ToolMetadata(Row row) {
             this.toolId = row.getInt(row.fieldIndex("tool_id"));
             this.toolName = row.getString(row.fieldIndex("tool_name"));
-            this.isActive = row.getBoolean(row.fieldIndex("is_active"));
         }
     }
 
