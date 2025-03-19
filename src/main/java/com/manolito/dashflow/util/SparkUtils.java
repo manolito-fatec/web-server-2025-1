@@ -124,7 +124,7 @@ public class SparkUtils {
 
         for (String dbColumn : tableColumns) {
             // Handle the "id" -> "original_id" mapping
-            String dataFrameColumn = dbColumn.equals("original_id") ? "id" : dbColumn;
+            String dataFrameColumn = dbColumn.equals("id") ? "original_id" : dbColumn;
 
             // If the DataFrame contains the column, add it to the result
             if (dataColumns.contains(dataFrameColumn)) {
