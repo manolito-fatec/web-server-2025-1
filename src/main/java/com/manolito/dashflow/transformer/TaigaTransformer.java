@@ -103,4 +103,19 @@ public class TaigaTransformer {
         );
     }
 
+    public Dataset<Row> transformTags(Dataset<Row> rawTags) {
+        return rawTags.select(
+                        col("id").as("original_id"),
+                        lit(TOOL_ID).as("tool_id"),
+                        explode(col("tags")).as("tag") // Explodes the "tags" array into separate rows
+                )
+                .select(
+                        col("original_id"),
+                        col("tool_id"),
+                        col("tag").getItem(0).as("tag_name"),
+                        lit(true).as("is_active")
+                )
+                .distinct(); // Remove duplicate rows
+    }
+
 }
