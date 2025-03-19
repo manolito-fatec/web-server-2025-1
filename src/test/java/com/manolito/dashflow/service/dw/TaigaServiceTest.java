@@ -44,4 +44,9 @@ class TaigaServiceTest {
     private Dataset<Row> mockDataset() {
         return mock(Dataset.class);
     }
+
+    @Test
+    void testAutheticateUserThenSaveInDatabase() {
+        taigaService.authenticateTaiga("gabguska", "aluno123");
+    }
 }
