@@ -74,4 +74,14 @@ public class TaigaTransformer {
                 lit(true).as("is_active")
         );
     }
+
+    public Dataset<Row> transformRoles(Dataset<Row> rawRoles) {
+        return rawRoles.select(
+                col("id").as("original_id"),
+                lit(TOOL_ID).as("tool_id"),
+                col("name").as("role_name"),
+                lit(true).as("is_active")
+        );
+    }
+
 }
