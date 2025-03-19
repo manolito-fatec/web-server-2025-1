@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.manolito.dashflow.dto.dw.TaigaAuthDto;
 import com.manolito.dashflow.loader.TasksDataWarehouseLoader;
+import com.manolito.dashflow.repository.dw.UserRepository;
 import com.manolito.dashflow.transformer.TaigaTransformer;
 import com.manolito.dashflow.util.SparkUtils;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,7 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 
 import org.apache.spark.sql.functions;
+import org.apache.spark.sql.types.LongType;
 import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
@@ -33,6 +35,7 @@ public class TaigaService {
     private final SparkSession spark;
     private final SparkUtils utils;
     private final TasksDataWarehouseLoader dataWarehouseLoader;
+    private final UserRepository userRepository;
     private static final String API_URL = "https://api.taiga.io/api/v1/auth";
     private static final String USER_ME_URL = "https://api.taiga.io/api/v1/users/me";
     private static final ObjectMapper objectMapper = new ObjectMapper();
@@ -155,12 +158,44 @@ public class TaigaService {
         if (authToken == null) {
             throw new IllegalStateException("Token not acquired");
         }
-        Dataset<Row> datesDimension = spark.emptyDataFrame();
-        TaigaTransformer transformer = new TaigaTransformer(datesDimension);
-        String jsonResponde = utils.fetchDataFromEndpoint(USER_ME_URL, authToken);
-        Dataset<Row> rawUsers = utils.fetchDataAsDataFrame(jsonResponde);
+
+        String jsonResponse = utils.fetchDataFromEndpoint(USER_ME_URL, authToken);
+        Dataset<Row> rawUsers = utils.fetchDataAsDataFrame(jsonResponse);
+
+        TaigaTransformer transformer = new TaigaTransformer(spark.emptyDataFrame());
         Dataset<Row> transformedUsers = transformer.transformUsers(rawUsers);
-        dataWarehouseLoader.save(transformedUsers, "users");
+
+        String originalId = extractOriginalIdFromDataset(transformedUsers);
+        if (originalId == null) {
+            return;
+        }
+
+        saveOrUpdateUser(transformedUsers, originalId);
+    }
+
+    private String extractOriginalIdFromDataset(Dataset<Row> transformedUsers) {
+        if (transformedUsers.isEmpty()) {
+            System.out.println("No user data to save.");
+            return null;
+        }
+
+        Row firstRow = transformedUsers.select("original_id").head();
+        if (firstRow.schema().apply("original_id").dataType() instanceof LongType) {
+            return String.valueOf(firstRow.getLong(0));
+        } else {
+            return firstRow.getString(0);
+        }
+    }
+
+    private void saveOrUpdateUser(Dataset<Row> transformedUsers, String originalId) {
+        Long userId = userRepository.getUserIdByOriginalId(originalId);
+
+        if (userId != null) {
+            System.out.println("User already exists with user_id: " + userId);
+        } else {
+            dataWarehouseLoader.save(transformedUsers, "users");
+            System.out.println("User data saved.");
+        }
     }
 
 }
