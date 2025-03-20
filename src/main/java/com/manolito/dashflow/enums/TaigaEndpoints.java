@@ -15,13 +15,9 @@ public enum TaigaEndpoints{
 
     ISSUES("/api/v1/issues"),
 
-    USER_STORY_STATUSES("/api/v1/userstory-statuses"),
-
     EPICS("/api/v1/epics"),
 
-    ROLES("/api/v1/roles"),
-
-    PROJECT_MEMBERS("/api/v1/projects/{project_id}/members");
+    ROLES("/api/v1/roles");
 
     private final String path;
     

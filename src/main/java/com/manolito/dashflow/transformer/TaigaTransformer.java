@@ -51,15 +51,6 @@ public class TaigaTransformer {
         );
     }
 
-    public Dataset<Row> transformUserStoryStatuses(Dataset<Row> rawStatuses) {
-        return rawStatuses.select(
-                col("id").as("original_id"),
-                lit(TOOL_ID).as("tool_id"),
-                col("project").as("project_id"),
-                col("name").as("status_name")
-        );
-    }
-
     public Dataset<Row> transformUsers(Dataset<Row> rawUsers) {
         return rawUsers.select(
                 col("id").as("original_id"),

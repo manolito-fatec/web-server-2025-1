@@ -78,20 +78,12 @@ public class TaigaService {
         return fetchAndConvertToDataFrame(ISSUES.getPath(), "PLACEHOLDER");
     }
 
-    public Dataset<Row> handleUsersStoriesStatus() {
-        return fetchAndConvertToDataFrame(USER_STORY_STATUSES.getPath(), "PLACEHOLDER");
-    }
-
     public Dataset<Row> handleEpics() {
         return fetchAndConvertToDataFrame(EPICS.getPath(), "epics");
     }
 
     public Dataset<Row> handleRoles() {
         return fetchAndConvertToDataFrame(ROLES.getPath(), "roles");
-    }
-
-    public Dataset<Row> handleProjectMembers() {
-        return fetchAndConvertToDataFrame(PROJECT_MEMBERS.getPath(), "PLACEHOLDER");
     }
 
     public void authenticateTaiga(String username, String password) {
