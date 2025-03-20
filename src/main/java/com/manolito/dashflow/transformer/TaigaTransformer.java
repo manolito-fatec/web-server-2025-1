@@ -19,8 +19,7 @@ public class TaigaTransformer {
                 col("name").as("project_name"),
                 col("description"),
                 current_date().as("start_date"),
-                lit(false).as("is_finished"),
-                lit(true).as("is_active")
+                lit(false).as("is_finished")
         );
     }
 
@@ -32,8 +31,7 @@ public class TaigaTransformer {
                 col("epic").as("epic_id"),
                 col("subject").as("story_name"),
                 col("description"),
-                col("is_closed").as("is_finished"),
-                lit(true).as("is_active")
+                col("is_closed").as("is_finished")
         );
     }
 
@@ -59,8 +57,7 @@ public class TaigaTransformer {
                 lit(TOOL_ID).as("tool_id"),
                 col("project").as("project_id"),
                 col("name").as("status_name"),
-                col("color").as("status_color"),
-                lit(true).as("is_active")
+                col("color").as("status_color")
         );
     }
 
@@ -70,8 +67,7 @@ public class TaigaTransformer {
                 lit(TOOL_ID).as("tool_id"),
                 col("username").as("user_name"),
                 col("email"),
-                col("bio").as("description"),
-                lit(true).as("is_active")
+                col("bio").as("description")
         );
     }
 
@@ -79,8 +75,7 @@ public class TaigaTransformer {
         return rawRoles.select(
                 col("id").as("original_id"),
                 lit(TOOL_ID).as("tool_id"),
-                col("name").as("role_name"),
-                lit(true).as("is_active")
+                col("name").as("role_name")
         );
     }
 
@@ -98,8 +93,7 @@ public class TaigaTransformer {
                 col("project").as("project_id"),
                 col("subject").as("epic_name"),
                 col("description"),
-                col("is_closed").as("is_finished"),
-                col("assigned_to_extra_info.is_active").as("is_active")
+                col("is_closed").as("is_finished")
         );
     }
 
@@ -112,8 +106,7 @@ public class TaigaTransformer {
                 .select(
                         col("original_id"),
                         col("tool_id"),
-                        col("tag").getItem(0).as("tag_name"),
-                        lit(true).as("is_active")
+                        col("tag").getItem(0).as("tag_name")
                 )
                 .distinct(); // Remove duplicate rows
     }
