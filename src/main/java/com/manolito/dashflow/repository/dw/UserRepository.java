@@ -9,5 +9,4 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("SELECT u.id FROM User u WHERE u.originalId = :originalId")
     Long getUserIdByOriginalId(@Param("originalId") String originalId);
-
 }

@@ -17,7 +17,6 @@ import org.apache.http.util.EntityUtils;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
-
 import org.apache.spark.sql.functions;
 import org.apache.spark.sql.types.LongType;
 import org.springframework.stereotype.Service;
@@ -62,7 +61,6 @@ public class TaigaService {
             default -> throw new IllegalArgumentException("Unsupported table for name field mapping: " + tableName);
         };
     }
-
 
     public Dataset<Row> handleProjects() {
         return fetchAndConvertToDataFrame(PROJECTS.getPath(), "projects");
@@ -197,5 +195,4 @@ public class TaigaService {
             System.out.println("User data saved.");
         }
     }
-
 }

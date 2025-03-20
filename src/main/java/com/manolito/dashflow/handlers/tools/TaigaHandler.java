@@ -44,7 +44,6 @@ public class TaigaHandler implements ToolHandler {
             case PROJECT_MEMBERS:
                 taigaService.handleProjectMembers();
                 break;
-                // Add more cases for other objects (e.g., issues, epics, etc.)
             default:
                 throw new RuntimeException("Unsupported Taiga Object");
         }
