@@ -73,7 +73,6 @@ public class SparkUtils {
         try (Connection connection = DriverManager.getConnection(jdbcUrl, dbUser, dbPassword);
              Statement statement = connection.createStatement()) {
 
-            // Query to fetch column names from the target table
             String query = String.format(
                     "SELECT column_name " +
                             "FROM information_schema.columns " +
@@ -105,8 +104,7 @@ public class SparkUtils {
         return columnName.equals("seq") ||
                 columnName.equals("start_date") ||
                 columnName.equals("end_date") ||
-                columnName.equals("is_current") ||
-                columnName.equals("is_active");
+                columnName.equals("is_current");
     }
 
     /**
@@ -125,7 +123,6 @@ public class SparkUtils {
             // Handle the "id" -> "original_id" mapping
             String dataFrameColumn = dbColumn.equals("id") ? "original_id" : dbColumn;
 
-            // If the DataFrame contains the column, add it to the result
             if (dataColumns.contains(dataFrameColumn)) {
                 columns.add(functions.col(dataFrameColumn).alias(dbColumn)); // Alias to match database column name
             }

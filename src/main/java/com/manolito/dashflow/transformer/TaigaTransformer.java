@@ -108,7 +108,7 @@ public class TaigaTransformer {
                         col("tool_id"),
                         col("tag").getItem(0).as("tag_name")
                 )
-                .distinct(); // Remove duplicate rows
+                .distinct();
     }
 
 }

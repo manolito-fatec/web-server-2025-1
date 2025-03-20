@@ -140,10 +140,8 @@ public class TaigaService {
         String jsonResponse = utils.fetchDataFromEndpoint(TAIGA.getBaseUrl() + endpoint, authToken);
         Dataset<Row> data = utils.fetchDataAsDataFrame(jsonResponse);
 
-        // Add tool_id = 1 to the DataFrame
         data = data.withColumn("tool_id", functions.lit(1));
 
-        // Map the "name" field to the appropriate column name
         String mappedNameColumn = mapNameField(tableName);
         if (Arrays.asList(data.columns()).contains("name")) {
             data = data.withColumnRenamed("name", mappedNameColumn);

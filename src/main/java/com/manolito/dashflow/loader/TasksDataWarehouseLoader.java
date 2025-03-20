@@ -28,7 +28,7 @@ import static org.apache.spark.sql.functions.col;
 public class TasksDataWarehouseLoader {
 
     private final SparkSession spark;
-    private final SparkUtils sparkUtils; // Inject SparkUtils
+    private final SparkUtils sparkUtils;
     private Map<String, ToolMetadata> toolCache = new ConcurrentHashMap<>();
     private Dataset<Row> cachedDates;
     private Dataset<Row> cachedTools;
