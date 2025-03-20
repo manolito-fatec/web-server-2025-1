@@ -5,35 +5,54 @@ SET search_path TO dw_tasks;
 
 ----------------------------------------
 
+CREATE TABLE IF NOT EXISTS tools(
+    tool_id SERIAL PRIMARY KEY,
+    seq INT NOT NULL,
+    tool_name VARCHAR(255) NOT NULL,
+    start_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    end_date DATE DEFAULT NULL,
+    is_current BOOLEAN NOT NULL DEFAULT TRUE,
+    CONSTRAINT unique_tool_seq UNIQUE (tool_id, seq)
+);
+
+----------------------------------------
+
 CREATE OR REPLACE FUNCTION manage_scd2()
-    RETURNS TRIGGER AS $$
+RETURNS TRIGGER AS $$
 DECLARE
     max_seq INT;
     business_key_value TEXT;
-    business_key_column TEXT := TG_ARGV[0];
+    business_key_column TEXT := TG_ARGV[0]; -- Get the business key column name from trigger argument
 BEGIN
-    -- Get business key for the new row
+    -- Get the business key value from the new row
     EXECUTE format(
-            'SELECT ($1).%I FROM %I',
-            business_key_column, TG_TABLE_NAME
-            ) INTO business_key_value USING NEW;
+        'SELECT ($1).%I',
+        business_key_column
+    ) INTO business_key_value USING NEW;
 
--- Get seq for the business key
+    -- Get the maximum sequence number for the business key
     EXECUTE format(
-            'SELECT COALESCE(MAX(seq), 0) FROM %I WHERE %I = $1 AND toold_id = $2',
-            TG_TABLE_NAME, business_key_column
-            ) INTO max_seq USING NEW.business_key_column;
+        'SELECT COALESCE(MAX(seq), 0) FROM %I.%I WHERE %I = $1',
+        TG_TABLE_SCHEMA, TG_TABLE_NAME, business_key_column
+    ) INTO max_seq USING business_key_value;
 
--- Set the new max seq
+    -- Set the new sequence number
     NEW.seq := max_seq + 1;
 
-    -- Update the previous row (set end_date and is_current = FALSE)
-    EXECUTE format(
-            'UPDATE %I
-            SET end_date = CURRENT_DATE, is_current = FALSE
-            WHERE %I = $1 AND tool_id = $2 AND is_current = TRUE',
-            TG_TABLE_NAME, business_key_column
-            ) USING NEW.business_key_column;
+    -- If this is not the first row, update the previous row
+    IF max_seq > 0 THEN
+        EXECUTE format(
+            'UPDATE %I.%I
+             SET end_date = CURRENT_DATE, is_current = FALSE
+             WHERE %I = $1 AND is_current = TRUE',
+            TG_TABLE_SCHEMA, TG_TABLE_NAME, business_key_column
+        ) USING business_key_value;
+    END IF;
+
+    -- Set start_date, end_date and is_current for the new row
+    NEW.start_date := CURRENT_DATE;
+    NEW.end_date := NULL;
+    NEW.is_current := TRUE;
 
     RETURN NEW;
 END;
@@ -42,23 +61,30 @@ $$ LANGUAGE plpgsql;
 ---------------------------------
 
 CREATE OR REPLACE FUNCTION manage_scd2_tools()
-    RETURNS TRIGGER AS $$
+RETURNS TRIGGER AS $$
 DECLARE
     max_seq INT;
 BEGIN
-    -- Max seq for a given tool name
+    -- Get the maximum sequence number for the tool name
     SELECT COALESCE(MAX(seq), 0)
     INTO max_seq
-    FROM tools
+    FROM dw_tasks.tools
     WHERE tool_name = NEW.tool_name;
 
--- Set the newest max seq
+    -- Set the new sequence number
     NEW.seq := max_seq + 1;
 
-    -- Update the previous row (set end_date and is_current = FALSE)
-    UPDATE tools
-    SET end_date = CURRENT_DATE, is_current = FALSE
-    WHERE tool_name = NEW.tool_name AND is_current = TRUE;
+    -- If this is not the first row, update the previous row
+    IF max_seq > 0 THEN
+        UPDATE dw_tasks.tools
+        SET end_date = CURRENT_DATE, is_current = FALSE
+        WHERE tool_name = NEW.tool_name AND is_current = TRUE;
+    END IF;
+
+    -- Set start_date, end_date and is_current for the new row
+    NEW.start_date := CURRENT_DATE;
+    NEW.end_date := NULL;
+    NEW.is_current := TRUE;
 
     RETURN NEW;
 END;
@@ -66,22 +92,14 @@ $$ LANGUAGE plpgsql;
 
 ---------------------------------
 
-CREATE TABLE IF NOT EXISTS tools(
-    tool_id SERIAL PRIMARY KEY,
-    seq INT NOT NULL,
-    tool_name VARCHAR(255) NOT NULL,
-    start_date DATE NOT NULL DEFAULT CURRENT_DATE,
-    end_date DATE DEFAULT NULL,
-    is_active BOOLEAN NOT NULL,
-    is_current BOOLEAN NOT NULL DEFAULT TRUE,
-    CONSTRAINT unique_tool_seq UNIQUE (tool_id, seq)
-);
-
 CREATE OR REPLACE TRIGGER tools_scd2_trigger
     BEFORE INSERT ON tools
     FOR EACH ROW
 EXECUTE FUNCTION manage_scd2_tools();
 
+INSERT INTO dw_tasks.tools(
+    tool_name)
+VALUES ('taiga');
 ---------------------------------
 
 CREATE TABLE IF NOT EXISTS roles(
@@ -93,7 +111,6 @@ CREATE TABLE IF NOT EXISTS roles(
     description TEXT,
     start_date DATE NOT NULL DEFAULT CURRENT_DATE,
     end_date DATE DEFAULT NULL,
-    is_active BOOLEAN NOT NULL,
     is_current BOOLEAN NOT NULL DEFAULT TRUE,
 
     CONSTRAINT fk_roles_tools FOREIGN KEY (tool_id) REFERENCES tools(tool_id),
@@ -117,7 +134,6 @@ CREATE TABLE IF NOT EXISTS users(
     description TEXT,
     start_date DATE NOT NULL DEFAULT CURRENT_DATE,
     end_date DATE DEFAULT NULL,
-    is_active BOOLEAN NOT NULL,
     is_current BOOLEAN NOT NULL DEFAULT TRUE,
 
     CONSTRAINT fk_users_tools FOREIGN KEY (tool_id) REFERENCES tools(tool_id),
@@ -152,7 +168,6 @@ CREATE TABLE IF NOT EXISTS projects(
     start_date DATE NOT NULL DEFAULT CURRENT_DATE,
     end_date DATE DEFAULT NULL,
     is_finished BOOLEAN,
-    is_active BOOLEAN NOT NULL,
     is_current BOOLEAN NOT NULL DEFAULT TRUE,
 
     CONSTRAINT fk_projects_tools FOREIGN KEY (tool_id) REFERENCES tools(tool_id),
@@ -176,7 +191,6 @@ CREATE TABLE IF NOT EXISTS status(
     description TEXT,
     start_date DATE NOT NULL DEFAULT CURRENT_DATE,
     end_date DATE DEFAULT NULL,
-    is_active BOOLEAN NOT NULL,
     is_current BOOLEAN NOT NULL DEFAULT TRUE,
 
     CONSTRAINT fk_status_tools FOREIGN KEY (tool_id) REFERENCES tools(tool_id),
@@ -202,7 +216,6 @@ CREATE TABLE IF NOT EXISTS epics(
     start_date DATE NOT NULL DEFAULT CURRENT_DATE,
     end_date DATE DEFAULT NULL,
     is_finished BOOLEAN,
-    is_active BOOLEAN NOT NULL,
     is_current BOOLEAN NOT NULL DEFAULT TRUE,
 
     CONSTRAINT fk_epics_tools FOREIGN KEY (tool_id) REFERENCES tools(tool_id),
@@ -229,7 +242,6 @@ CREATE TABLE IF NOT EXISTS stories(
     start_date DATE NOT NULL DEFAULT CURRENT_DATE,
     end_date DATE DEFAULT NULL,
     is_finished BOOLEAN,
-    is_active BOOLEAN NOT NULL,
     is_current BOOLEAN NOT NULL DEFAULT TRUE,
 
     CONSTRAINT fk_story_tools FOREIGN KEY (tool_id) REFERENCES tools(tool_id),
@@ -284,7 +296,6 @@ CREATE TABLE IF NOT EXISTS tags(
     description TEXT,
     start_date DATE NOT NULL DEFAULT CURRENT_DATE,
     end_date DATE DEFAULT NULL,
-    is_active BOOLEAN NOT NULL,
     is_current BOOLEAN NOT NULL DEFAULT TRUE,
 
     CONSTRAINT fk_tags_tools FOREIGN KEY (tool_id) REFERENCES tools(tool_id),

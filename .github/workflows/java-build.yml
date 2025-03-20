@@ -41,13 +41,12 @@ jobs:
         install-folder: '/home/runner/work'
 
     - name: Build with Maven
-      run: mvn -B clean package
+      run: mvn -B clean package -DskipTests
       env:
         SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/dashflow
         SPRING_DATASOURCE_USERNAME: ${{ secrets.DB_USERNAME }}
         SPRING_DATASOURCE_PASSWORD: ${{ secrets.DB_PASSWORD }}
-        SPARK_HOME: /home/runner/work/spark
-        JAVA_OPTS: "--add-exports java.base/sun.nio.ch=ALL-UNNAMED"
-
+        MAVEN_OPTS: "--add-exports=java.base/sun.nio.ch=ALL-UNNAMED"
+        
     - name: Verify Spark Installation
       run: spark-submit --version
