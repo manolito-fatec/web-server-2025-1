@@ -1,4 +1,4 @@
-package com.manolito.dashflow.repository.dw;
+package com.manolito.dashflow.repository.application;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
