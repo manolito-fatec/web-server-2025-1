@@ -62,11 +62,14 @@ public class TaigaTransformer {
     }
 
     public Dataset<Row> transformRoles(Dataset<Row> rawRoles) {
-        return rawRoles.select(
-                col("id").as("original_id"),
-                lit(TOOL_ID).as("tool_id"),
-                col("name").as("role_name")
-        );
+        return rawRoles
+                .withColumn("member", explode(col("members")))
+                .select(
+                        col("member.role").as("original_id"),
+                        lit(TOOL_ID).as("tool_id"),
+                        col("member.role_name").as("role_name")
+                )
+                .distinct();
     }
 
     public Dataset<Row> transformUserRole(Dataset<Row> rawUserRoles) {
