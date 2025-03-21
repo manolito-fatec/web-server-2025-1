@@ -30,7 +30,6 @@ public class TaigaTransformer {
                 col("project").as("project_id"),
                 col("epics").as("epic_id"),
                 col("subject").as("story_name"),
-                col("description"),
                 col("is_closed").as("is_finished")
         );
     }
