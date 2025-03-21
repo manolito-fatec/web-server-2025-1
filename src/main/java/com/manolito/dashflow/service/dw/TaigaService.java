@@ -21,6 +21,7 @@ import org.apache.spark.sql.functions;
 import org.apache.spark.sql.types.LongType;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
@@ -84,7 +85,7 @@ public class TaigaService {
     }
 
     public Dataset<Row> handleRoles() {
-        return fetchAndConvertToDataFrame(ROLES.getPath(), "roles");
+        return fetchAndConvertToDataFrame(PROJECTS.getPath() + "/" + project, "roles");
     }
 
     public void authenticateTaiga(String username, String password) {
@@ -196,5 +197,16 @@ public class TaigaService {
             dataWarehouseLoader.save(transformedUsers, "users");
             System.out.println("User data saved.");
         }
+    }
+
+    //Remove post construct annotation after login is done
+    @PostConstruct
+    public void taigaEtl() {
+        authenticateTaiga("gabguska", "aluno123");
+        TaigaTransformer transformer = new TaigaTransformer(spark.emptyDataFrame());
+
+        Dataset<Row> roles = transformer.transformRoles(handleRoles());
+
+        dataWarehouseLoader.save(roles, "roles");
     }
 }
