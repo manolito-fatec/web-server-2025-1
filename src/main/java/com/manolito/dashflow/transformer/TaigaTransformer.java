@@ -107,4 +107,15 @@ public class TaigaTransformer {
                 .distinct();
     }
 
+    public Dataset<Row> transformStatus(Dataset<Row> rawStatus) {
+        return rawStatus
+                .select(
+                        col("status").as("original_id"),
+                        lit(TOOL_ID).as("tool_id"),
+                        col("project").as("project_id"),
+                        col("status_extra_info.name").as("status_name")
+                )
+                .distinct();
+    }
+
 }
