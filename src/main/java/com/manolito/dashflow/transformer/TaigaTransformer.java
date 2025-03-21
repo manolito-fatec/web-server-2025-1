@@ -16,7 +16,7 @@ public class TaigaTransformer {
         return rawData.select(
                 col("id").as("original_id"),
                 lit(TOOL_ID).as("tool_id"),
-                col("name").as("project_name"),
+                col("description").as("project_name"),
                 col("description"),
                 current_date().as("start_date"),
                 lit(false).as("is_finished")

@@ -65,11 +65,11 @@ public class TaigaService {
     }
 
     public Dataset<Row> handleProjects() {
-        return fetchAndConvertToDataFrame(PROJECTS.getPath(), "projects");
+        return fetchAndConvertToDataFrame(PROJECTS.getPath() + "/" + project, "projects");
     }
 
     public Dataset<Row> handleUserStories() {
-        return fetchAndConvertToDataFrame(USER_STORIES.getPath(), "stories");
+        return fetchAndConvertToDataFrame(USER_STORIES.getPath() + "?project=" + project, "stories");
     }
 
     public Dataset<Row> handleTasks() {
@@ -86,6 +86,10 @@ public class TaigaService {
 
     public Dataset<Row> handleRoles() {
         return fetchAndConvertToDataFrame(PROJECTS.getPath() + "/" + project, "roles");
+    }
+
+    private Dataset<Row> handleStatus() {
+        return fetchAndConvertToDataFrame(TASKS.getPath() + "?project=" + project, "status");
     }
 
     public void authenticateTaiga(String username, String password) {
@@ -206,7 +210,12 @@ public class TaigaService {
         TaigaTransformer transformer = new TaigaTransformer(spark.emptyDataFrame());
 
         Dataset<Row> roles = transformer.transformRoles(handleRoles());
-
+//      userole
+        Dataset<Row> projects = transformer.transformProjects(handleProjects());
+        Dataset<Row> status = transformer.transformStatus(handleStatus());
+        Dataset<Row> userStories = transformer.transformUserStories(handleUserStories());
+//      tags
+//      tasks
         dataWarehouseLoader.save(roles, "roles");
     }
 }
