@@ -40,6 +40,7 @@ public class TaigaService {
     private static final ObjectMapper objectMapper = new ObjectMapper();
     private String authToken;
     private Integer userId;
+    private String project;
 
     /**
      * Maps the "name" field to the appropriate column name based on the target table.
@@ -159,6 +160,17 @@ public class TaigaService {
         }
 
         saveOrUpdateUser(transformedUsers, originalId);
+
+        String projectsResponse = utils.fetchDataFromEndpoint(TAIGA.getBaseUrl() + PROJECTS.getPath() + "?member=" + originalId, authToken);
+        Dataset<Row> projectsData = utils.fetchDataAsDataFrame(projectsResponse);
+
+        if (projectsData.isEmpty()) {
+            throw new IllegalStateException("Project not found.");
+        }
+
+        Row Project = projectsData.select("id").head();
+        long projectId = Project.getLong(0);
+        project = String.valueOf(projectId);
     }
 
     private String extractOriginalIdFromDataset(Dataset<Row> transformedUsers) {
