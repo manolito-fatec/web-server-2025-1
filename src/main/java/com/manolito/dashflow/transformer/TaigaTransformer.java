@@ -28,7 +28,7 @@ public class TaigaTransformer {
                 col("id").as("original_id"),
                 lit(TOOL_ID).as("tool_id"),
                 col("project").as("project_id"),
-                col("epic").as("epic_id"),
+                col("epics").as("epic_id"),
                 col("subject").as("story_name"),
                 col("description"),
                 col("is_closed").as("is_finished")
