@@ -14,7 +14,7 @@ import java.util.Optional;
 public class TasksService {
     private final TasksDataWarehouseRepository tasksDataWarehouseRepository;
 
-    Integer getTaskCountByOperatorId(Integer userId) {
+    public Integer getTaskCountByOperatorId(Integer userId) {
         Optional<Integer> taskCount = tasksDataWarehouseRepository.getTotalTasksByOperator(userId);
         if (taskCount.isEmpty()) {
             throw new NoSuchElementException("No tasks found");
@@ -22,7 +22,7 @@ public class TasksService {
         return taskCount.get();
     }
 
-    Integer getTaskCountByOperatorIdBetween(Integer userId, LocalDate startDate, LocalDate endDate) {
+    public Integer getTaskCountByOperatorIdBetween(Integer userId, LocalDate startDate, LocalDate endDate) {
         Optional<Integer> taskCount = tasksDataWarehouseRepository.getTotalTasksByOperatorBetween(userId, startDate, endDate);
         if (taskCount.isEmpty()) {
             throw new NoSuchElementException("No tasks found in the time period");
