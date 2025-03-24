@@ -69,4 +69,31 @@ public class TasksDataWarehouseRepository {
             return Optional.empty();
         }
     }
+
+    public Optional<Integer> getTotalProjectsByUserId(int userId) {
+        String sql = "SELECT COUNT DISTINCT(prj.original_id) AS total_project_count " +
+                "FROM dataflow_appl.users u " +
+                "LEFT JOIN dataflow_appl.accounts acc " +
+                "ON u.user_id = acc.user_id " +
+                "LEFT JOIN dw_tasks.users tu " +
+                "ON acc.account = tu.original_id " +
+                "LEFT JOIN dw_tasks.fact_tasks ft " +
+                "ON tu.user_id = ft.assignee_id " +
+                "LEFT JOIN dw_tasks.stories st " +
+                "ON ft.story_id = st.story_id " +
+                "LEFT JOIN dw_tasks.epics ep " +
+                "ON st.epic_id = ep.epic_id " +
+                "LEFT JOIN dw_tasks.projects prj " +
+                "ON ep.project_id = prj.project_id" +
+                "WHERE u.user_id = :userId GROUP BY u.user_id";
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("userId", userId);
+        try {
+            Integer result = jdbcTemplate.queryForObject(sql, params, Integer.class);
+            return Optional.ofNullable(result);
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
+    }
 }
