@@ -130,7 +130,7 @@ CREATE TABLE IF NOT EXISTS users(
     original_id TEXT NOT NULL,
     tool_id INT NOT NULL,
     user_name VARCHAR(255) NOT NULL,
-    email VARCHAR(255) NOT NULL,
+    email VARCHAR(255),
     description TEXT,
     start_date DATE NOT NULL DEFAULT CURRENT_DATE,
     end_date DATE DEFAULT NULL,
