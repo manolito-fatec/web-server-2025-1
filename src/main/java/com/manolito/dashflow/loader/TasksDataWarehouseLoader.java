@@ -34,13 +34,13 @@ public class TasksDataWarehouseLoader {
     private Dataset<Row> cachedTools;
 
     @Value("${spring.datasource.url}")
-    private String jdbcUrl;
+    public String jdbcUrl;
 
     @Value("${spring.datasource.username}")
-    private String dbUser;
+    public String dbUser;
 
     @Value("${spring.datasource.password}")
-    private String dbPassword;
+    public String dbPassword;
 
     @PostConstruct
     public void initialize() {
@@ -155,7 +155,7 @@ public class TasksDataWarehouseLoader {
                 .cache();
     }
 
-    private Dataset<Row> loadDimension(String tableName) {
+    public Dataset<Row> loadDimension(String tableName) {
         return spark.read()
                 .format("jdbc")
                 .option("url", jdbcUrl)
