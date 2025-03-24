@@ -14,19 +14,26 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
-import org.apache.spark.sql.SparkSession;
-import org.apache.spark.sql.functions;
+import org.apache.spark.sql.*;
+import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.LongType;
+import org.apache.spark.sql.types.StructField;
+import org.apache.spark.sql.types.StructType;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
+import java.lang.reflect.Array;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 import static com.manolito.dashflow.enums.ProjectManagementTool.TAIGA;
 import static com.manolito.dashflow.enums.TaigaEndpoints.*;
+import static org.apache.spark.sql.functions.col;
+import static org.apache.spark.sql.functions.explode;
 
 @Service
 @RequiredArgsConstructor
@@ -90,6 +97,10 @@ public class TaigaService {
 
     private Dataset<Row> handleStatus() {
         return fetchAndConvertToDataFrame(TASKS.getPath() + "?project=" + project, "status");
+    }
+
+    private Dataset<Row> handleUser() {
+        return fetchAndConvertToDataFrame(PROJECTS.getPath() + "/" + project, "users");
     }
 
     public void authenticateTaiga(String username, String password) {
@@ -203,19 +214,95 @@ public class TaigaService {
         }
     }
 
-    //Remove post construct annotation after login is done
     @PostConstruct
+    public void saveUserRoleToDatabase() {
+        try{
+            project = String.valueOf(1637322);
+            TaigaTransformer transformer = new TaigaTransformer(spark.emptyDataFrame());
+            Dataset<Row> jsonFromEtl = handleProjects().withColumn("member",explode(col("members")))
+                    .select(
+                            col("member.role").as("oRole_id"),
+                            col("member.id").as("oUser_id"));
+//            jsonFromEtl.show();
+            List<Long[]> userRoleSparkMap = jsonFromEtl.collectAsList().stream().map(row -> new Long[]{
+                    row.getAs("oRole_id"),
+                    row.getAs("oUser_id")
+            }).toList();
+
+            Dataset<Row> roleFromSpark = dataWarehouseLoader.loadDimension("roles","taiga");
+            List<Long[]> roleIdListFromDb = (roleFromSpark.select("role_id","original_id")).collectAsList().stream().map(row -> new Long[]{
+                    Long.valueOf(row.getAs("role_id").toString()),
+                    Long.valueOf(row.getAs("original_id").toString())
+            }).toList();
+
+            Dataset<Row> usersFromDb = dataWarehouseLoader.loadDimension("users","taiga");
+            List<Long[]> usersIdListFromDb = (usersFromDb.select("user_id","original_id")).collectAsList().stream().map(row -> new Long[]{
+                    Long.valueOf(row.getAs("user_id").toString()),
+                    Long.valueOf(row.getAs("original_id").toString())
+            }).toList();
+
+            Map<Long, Long> roleMap = roleIdListFromDb.stream()
+                    .collect(Collectors.toMap(
+                            pair -> pair[1],
+                            pair -> pair[0]
+                    ));
+
+            Map<Long, Long> userMap = usersIdListFromDb.stream()
+                    .collect(Collectors.toMap(
+                            pair -> pair[1],
+                            pair -> pair[0]
+                    ));
+
+            List<Long[]> finalList = userRoleSparkMap.stream()
+                    .map(pair -> {
+                        Long roleOriginal = pair[0];
+                        Long userOriginal = pair[1];
+
+                        Long roleIdFromDb = roleMap.get(roleOriginal);
+                        Long userIdFromDb = userMap.get(userOriginal);
+
+                        if (roleIdFromDb != null && userIdFromDb != null) {
+                            return new Long[]{ userIdFromDb, roleIdFromDb };
+                        } else {
+                            return null;
+                        }
+                    })
+                    .filter(Objects::nonNull)
+                    .toList();
+
+            List<Row> rows = finalList.stream()
+                    .map(pair -> RowFactory.create(pair[0], pair[1]))
+                    .collect(Collectors.toList());
+
+            StructType schema = DataTypes.createStructType(new StructField[]{
+                    DataTypes.createStructField("user_id", DataTypes.LongType, false),
+                    DataTypes.createStructField("role_id", DataTypes.LongType, false)
+            });
+
+            Dataset<Row> finalDataset = spark.createDataFrame(rows, schema);
+
+            dataWarehouseLoader.save(finalDataset, "user_role");
+
+
+        } catch (Exception e) {
+            System.out.println("deu ruim 👍👍👍" + e.getMessage());
+        }
+    }
+    //Remove post construct annotation after login is done
+//    @PostConstruct
     public void taigaEtl() {
         authenticateTaiga("gabguska", "aluno123");
         TaigaTransformer transformer = new TaigaTransformer(spark.emptyDataFrame());
 
         Dataset<Row> roles = transformer.transformRoles(handleRoles());
+        Dataset<Row> userRoles = transformer.transformUserRole(handleRoles());
 //      userole
-        Dataset<Row> projects = transformer.transformProjects(handleProjects());
-        Dataset<Row> status = transformer.transformStatus(handleStatus());
-        Dataset<Row> userStories = transformer.transformUserStories(handleUserStories());
+//        Dataset<Row> projects = transformer.transformProjects(handleProjects());
+//        Dataset<Row> status = transformer.transformStatus(handleStatus());
+//        Dataset<Row> userStories = transformer.transformUserStories(handleUserStories());
 //      tags
+        //        dataWarehouseLoader.save(roles, "roles");
 //      tasks
-        dataWarehouseLoader.save(roles, "roles");
+//
     }
 }
