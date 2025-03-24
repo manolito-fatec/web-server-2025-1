@@ -14,7 +14,11 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
-import org.apache.spark.sql.*;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.RowFactory;
+import org.apache.spark.sql.functions;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.LongType;
 import org.apache.spark.sql.types.StructField;
@@ -22,7 +26,6 @@ import org.apache.spark.sql.types.StructType;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
-import java.lang.reflect.Array;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
@@ -213,17 +216,23 @@ public class TaigaService {
             System.out.println("User data saved.");
         }
     }
+    private Map<Long, Long> mapFromLongList(List<Long[]> list) {
+        return list.stream()
+                .collect(Collectors.toMap(
+                        pair -> pair[1],
+                        pair -> pair[0]
+                ));
+    };
 
     @PostConstruct
     public void saveUserRoleToDatabase() {
+        project = String.valueOf(1637322);
         try{
-            project = String.valueOf(1637322);
             TaigaTransformer transformer = new TaigaTransformer(spark.emptyDataFrame());
             Dataset<Row> jsonFromEtl = handleProjects().withColumn("member",explode(col("members")))
                     .select(
                             col("member.role").as("oRole_id"),
                             col("member.id").as("oUser_id"));
-//            jsonFromEtl.show();
             List<Long[]> userRoleSparkMap = jsonFromEtl.collectAsList().stream().map(row -> new Long[]{
                     row.getAs("oRole_id"),
                     row.getAs("oUser_id")
@@ -241,17 +250,9 @@ public class TaigaService {
                     Long.valueOf(row.getAs("original_id").toString())
             }).toList();
 
-            Map<Long, Long> roleMap = roleIdListFromDb.stream()
-                    .collect(Collectors.toMap(
-                            pair -> pair[1],
-                            pair -> pair[0]
-                    ));
+            Map<Long, Long> roleMap = mapFromLongList(roleIdListFromDb);
 
-            Map<Long, Long> userMap = usersIdListFromDb.stream()
-                    .collect(Collectors.toMap(
-                            pair -> pair[1],
-                            pair -> pair[0]
-                    ));
+            Map<Long, Long> userMap = mapFromLongList(usersIdListFromDb);
 
             List<Long[]> finalList = userRoleSparkMap.stream()
                     .map(pair -> {
@@ -285,7 +286,7 @@ public class TaigaService {
 
 
         } catch (Exception e) {
-            System.out.println("deu ruim 👍👍👍" + e.getMessage());
+            System.out.println(e.getMessage());
         }
     }
     //Remove post construct annotation after login is done
