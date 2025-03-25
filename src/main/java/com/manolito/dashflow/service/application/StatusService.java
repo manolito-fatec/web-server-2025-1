@@ -14,8 +14,30 @@ import java.util.NoSuchElementException;
 public class StatusService {
     private final TasksDataWarehouseRepository tasksDataWarehouseRepository;
 
-    public List<StatusCountDto> getStatusCountGroupByStatusByUserIdAndProjectId(Integer userId, Integer projectId) {
-        List<StatusCountDto> statusCountDto = tasksDataWarehouseRepository.getStatusCountGroupByStatusByUserIdAndProjectId(
+    /**
+     * Retrieves the count of tasks grouped by status for a specific user and project.
+     * <p>
+     * This method queries the data warehouse to get the number of tasks in each status
+     * for the given user and project combination. Only the current version of tasks and statuses are considered.
+     * </p>
+     *
+     * @param userId    the ID of the user to filter tasks by (must not be null)
+     * @param projectId the ID of the project to filter tasks by (must not be null)
+     * @return a list of {@link StatusCountDto} objects containing status names and corresponding task counts
+     * @throws NoSuchElementException if no status information is found for the given user and project
+     * @throws NullPointerException if either userId or projectId is null
+     * @see StatusCountDto
+     * @see TasksDataWarehouseRepository#getTaskCountGroupByStatusByUserIdAndProjectId(int, int)
+     *
+     * @example
+     * <pre>{@code
+     * // Get status counts for user 123 in project 456
+     * List<StatusCountDto> statusCounts = statusService
+     *     .getTaskCountGroupByStatusByUserIdAndProjectId(123, 456);
+     * }</pre>
+     */
+    public List<StatusCountDto> getTaskCountGroupByStatusByUserIdAndProjectId(Integer userId, Integer projectId) {
+        List<StatusCountDto> statusCountDto = tasksDataWarehouseRepository.getTaskCountGroupByStatusByUserIdAndProjectId(
                 userId, projectId
         );
         if (statusCountDto.isEmpty()) {
