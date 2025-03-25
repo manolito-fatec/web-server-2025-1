@@ -228,6 +228,30 @@ CREATE OR REPLACE TRIGGER epics_scd2_trigger
     FOR EACH ROW
 EXECUTE FUNCTION manage_scd2('original_id');
 
+CREATE OR REPLACE FUNCTION create_epicless_epic()
+RETURNS TRIGGER AS $$
+BEGIN
+INSERT INTO dw_tasks.epics (
+    original_id,
+    project_id,
+    epic_name,
+    is_finished
+)
+
+VALUES (
+        '0',
+        NEW.project_id,
+        'epicless',
+        FALSE);
+RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_project_create_epicless
+    AFTER INSERT ON dw_tasks.projects
+    FOR EACH ROW
+    EXECUTE FUNCTION create_epicless_epic();
+
 -------------------------------------
 
 CREATE TABLE IF NOT EXISTS stories(
