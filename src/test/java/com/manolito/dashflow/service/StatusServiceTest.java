@@ -32,7 +32,6 @@ class StatusServiceTest {
 
     @Test
     void getStatusCountGroupByStatusByUserIdAndProjectId_shouldReturnStatusCounts() {
-        // Arrange
         List<StatusCountDto> expectedResults = List.of(
                 new StatusCountDto("To Do", 5),
                 new StatusCountDto("In Progress", 3),
@@ -43,11 +42,9 @@ class StatusServiceTest {
                 TEST_USER_ID, TEST_PROJECT_ID))
                 .thenReturn(expectedResults);
 
-        // Act
         List<StatusCountDto> actualResults = statusService.getStatusCountGroupByStatusByUserIdAndProjectId(
                 TEST_USER_ID, TEST_PROJECT_ID);
 
-        // Assert
         assertNotNull(actualResults);
         assertEquals(3, actualResults.size());
         assertEquals("To Do", actualResults.get(0).getStatusName());
