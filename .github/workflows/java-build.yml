@@ -41,7 +41,7 @@ jobs:
         install-folder: '/home/runner/work'
 
     - name: Build with Maven
-      run: mvn -B clean package -DskipTests
+      run: mvn -B clean package
       env:
         SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/dashflow
         SPRING_DATASOURCE_USERNAME: ${{ secrets.DB_USERNAME }}
