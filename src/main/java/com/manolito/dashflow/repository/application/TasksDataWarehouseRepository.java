@@ -1,14 +1,15 @@
 package com.manolito.dashflow.repository.application;
 
+import com.manolito.dashflow.dto.dw.StatusCountDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.sql.Date;
 import java.time.LocalDate;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -95,5 +96,38 @@ public class TasksDataWarehouseRepository {
         } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
         }
+    }
+
+    public List<StatusCountDto> getTaskCountGroupByStatusByUserIdAndProjectId(int userId, int projectId) {
+        String sql = "SELECT st.status_name, COUNT(ft.task_id) as task_count " +
+                "FROM dataflow_appl.users u " +
+                "LEFT JOIN dataflow_appl.accounts acc " +
+                "ON u.user_id = acc.user_id " +
+                "LEFT JOIN dw_tasks.users tu " +
+                "ON acc.account = tu.original_id " +
+                "LEFT JOIN dw_tasks.fact_tasks ft " +
+                "ON tu.user_id = ft.assignee_id " +
+                "LEFT JOIN dw_tasks.status st " +
+                "ON ft.status_id = st.status_id " +
+                "LEFT JOIN dw_tasks.projects prj " +
+                "ON st.project_id = proj.project_id " +
+                "WHERE u.user_id = :userId " +
+                "AND proj.original_id = :projectId " +
+                "AND st.is_current = TRUE " +
+                "AND tu.is_current = TRUE " +
+                "GROUP BY st.status_name";
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("userId", userId);
+        params.put("projectId", projectId);
+
+        return jdbcTemplate.query(
+                sql,
+                params,
+                (rs, rowNum) -> new StatusCountDto(
+                        rs.getString("status_name"),
+                        rs.getInt("task_count")
+                )
+        );
     }
 }
