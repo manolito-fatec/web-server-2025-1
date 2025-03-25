@@ -1,4 +1,4 @@
-package com.manolito.dashflow.controller;
+package com.manolito.dashflow.controller.application;
 
 import com.manolito.dashflow.service.application.StatusService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -35,12 +35,12 @@ public class StatusController {
             @ApiResponse(responseCode = "408", description = "Tempo de resposta excedido."),
             @ApiResponse(responseCode = "500", description = "Erro interno do servidor ao tentar buscar o local.")
     })
-    public ResponseEntity<?> getStatusCountGroupByStatusByUserIdAndProjectId(
+    public ResponseEntity<?> getTaskCountGroupByStatusByUserIdAndProjectId(
             @Parameter(description = "Id do usuário", required = true) @PathVariable Integer userId,
             @Parameter(description = "Id do projeto", required = true) @PathVariable Integer projectId
     ) {
         try {
-            return ResponseEntity.ok().body(statusService.getStatusCountGroupByStatusByUserIdAndProjectId(userId, projectId));
+            return ResponseEntity.ok().body(statusService.getTaskCountGroupByStatusByUserIdAndProjectId(userId, projectId));
         } catch (NoSuchElementException noSuchElementException) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         } catch (IllegalArgumentException illegalArgumentException) {
