@@ -35,8 +35,7 @@ import java.util.stream.Collectors;
 
 import static com.manolito.dashflow.enums.ProjectManagementTool.TAIGA;
 import static com.manolito.dashflow.enums.TaigaEndpoints.*;
-import static org.apache.spark.sql.functions.col;
-import static org.apache.spark.sql.functions.explode;
+import static org.apache.spark.sql.functions.*;
 
 @Service
 @RequiredArgsConstructor
@@ -51,7 +50,7 @@ public class TaigaService {
     private static final ObjectMapper objectMapper = new ObjectMapper();
     private String authToken;
     private Integer userId;
-    private String project;
+    private String project = String.valueOf(1637322);
 
     /**
      * Maps the "name" field to the appropriate column name based on the target table.
@@ -224,7 +223,7 @@ public class TaigaService {
                 ));
     };
 
-    @PostConstruct
+    //@PostConstruct
     public void saveUserRoleToDatabase() {
         project = String.valueOf(1637322);
         try{
@@ -289,20 +288,36 @@ public class TaigaService {
             System.out.println(e.getMessage());
         }
     }
+
+    public static Dataset<Row> updateStatusProjectId(Dataset<Row> statusDF, Dataset<Row> projectsDF) {
+        Dataset<Row> joined = statusDF
+                .join(projectsDF, statusDF.col("project_id").equalTo(projectsDF.col("original_id")));
+
+        return joined.select(
+                statusDF.col("original_id"),
+                statusDF.col("tool_id"),
+                statusDF.col("status_name"),
+                projectsDF.col("project_id").alias("project_id")
+        );
+    }
     //Remove post construct annotation after login is done
 //    @PostConstruct
     public void taigaEtl() {
-        authenticateTaiga("gabguska", "aluno123");
+        //authenticateTaiga("gabguska", "aluno123");
         TaigaTransformer transformer = new TaigaTransformer(spark.emptyDataFrame());
 
-        Dataset<Row> roles = transformer.transformRoles(handleRoles());
-        Dataset<Row> userRoles = transformer.transformUserRole(handleRoles());
+        //Dataset<Row> roles = transformer.transformRoles(handleRoles());
+        //Dataset<Row> userRoles = transformer.transformUserRole(handleRoles());
 //      userole
-//        Dataset<Row> projects = transformer.transformProjects(handleProjects());
-//        Dataset<Row> status = transformer.transformStatus(handleStatus());
+        //Dataset<Row> projects = transformer.transformProjects(handleProjects());
+        Dataset<Row> status = transformer.transformStatus(handleStatus());
+        status = updateStatusProjectId(status, dataWarehouseLoader.loadDimension("projects","taiga"));
+        dataWarehouseLoader.save(status, "status");
+
 //        Dataset<Row> userStories = transformer.transformUserStories(handleUserStories());
 //      tags
-        //        dataWarehouseLoader.save(roles, "roles");
+          //dataWarehouseLoader.save(projects, "projects");
+          //dataWarehouseLoader.save(status, "status");
 //      tasks
 //
     }
