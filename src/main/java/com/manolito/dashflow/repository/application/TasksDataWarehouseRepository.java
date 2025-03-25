@@ -98,7 +98,7 @@ public class TasksDataWarehouseRepository {
         }
     }
 
-    public List<StatusCountDto> getStatusCountGroupByStatusByUserIdAndProjectId(int userId, int projectId) {
+    public List<StatusCountDto> getTaskCountGroupByStatusByUserIdAndProjectId(int userId, int projectId) {
         String sql = "SELECT st.status_name, COUNT(ft.task_id) as task_count " +
                 "FROM dataflow_appl.users u " +
                 "LEFT JOIN dataflow_appl.accounts acc " +
