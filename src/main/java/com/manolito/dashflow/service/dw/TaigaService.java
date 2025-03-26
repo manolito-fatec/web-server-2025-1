@@ -279,6 +279,38 @@ public class TaigaService {
                 storiesDF.col("is_finished")
         );
     }
+
+    public static Dataset<Row> updateFactTask(Dataset<Row> tasksDF,
+                                              Dataset<Row> statusDF,
+                                              Dataset<Row> userDF,
+                                              Dataset<Row> storiesDF) {
+        Dataset<Row> joinedWithStatus = tasksDF
+                .join(statusDF,
+                        tasksDF.col("status_id").equalTo(statusDF.col("original_id")));
+
+        Dataset<Row> joinedWithUser = joinedWithStatus
+                .join(userDF,
+                        joinedWithStatus.col("user_id").equalTo(userDF.col("original_id")));
+        joinedWithUser.show();
+
+        Dataset<Row> joinedWithStories = joinedWithUser
+                .join(storiesDF,
+                        joinedWithUser.col("story_id").equalTo(storiesDF.col("original_id")));
+
+        return joinedWithStories.select(
+                tasksDF.col("original_id"),
+                statusDF.col("status_id"),
+                userDF.col("user_id").as("assignee_to"),
+                tasksDF.col("tool_id"),
+                storiesDF.col("story_id"),
+                tasksDF.col("created_at"),
+                tasksDF.col("completed_at"),
+                tasksDF.col("due_date"),
+                tasksDF.col("task_name"),
+                tasksDF.col("is_blocked"),
+                tasksDF.col("is_storyless")
+        );
+    }
     //Remove post construct annotation after login is done
     @PostConstruct
     public void taigaEtl() {
