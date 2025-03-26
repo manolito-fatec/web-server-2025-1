@@ -74,6 +74,17 @@ public class TasksDataWarehouseLoader {
                 .filter(col("is_current").equalTo(true));
     }
 
+    public Dataset<Row> loadDimensionWithoutTool(String tableName, String toolName) {
+        return spark.read()
+                .format("jdbc")
+                .option("url", jdbcUrl)
+                .option("dbtable", "dw_tasks." + tableName)
+                .option("user", dbUser)
+                .option("password", dbPassword)
+                .load()
+                .filter(col("is_current").equalTo(true));
+    }
+
     public void save(Dataset<Row> data, String tableName) {
         try {
             List<String> tableColumns = sparkUtils.fetchTableColumns(jdbcUrl, dbUser, dbPassword, tableName);
