@@ -83,6 +83,7 @@ public class TaigaService {
 
     public Dataset<Row> handleTasks() {
         return fetchAndConvertToDataFrame(TASKS.getPath(), "fact_tasks");
+        return fetchAndConvertToDataFrame(TASKS.getPath() + "?project=" + project, "fact_tasks");
     }
 
     public Dataset<Row> handleIssues() {
@@ -229,63 +230,36 @@ public class TaigaService {
 
     //@PostConstruct
     public Dataset<Row> saveUserRoleToDatabase() {
-        project = String.valueOf(1637322);
-        try{
-            Dataset<Row> jsonFromEtl = handleProjects().withColumn("member",explode(col("members")))
+        final long projectId = 1637322L;
+
+        try {
+            Dataset<Row> userRolePairs = handleProjects()
+                    .withColumn("member", explode(col("members")))
                     .select(
-                            col("member.role").as("oRole_id"),
-                            col("member.id").as("oUser_id"));
-            List<Long[]> userRoleSparkMap = jsonFromEtl.collectAsList().stream().map(row -> new Long[]{
-                    row.getAs("oRole_id"),
-                    row.getAs("oUser_id")
-            }).toList();
+                            col("member.id").cast("long").as("user_original_id"),
+                            col("member.role").cast("long").as("role_original_id")
+                    );
 
-            Dataset<Row> roleFromSpark = dataWarehouseLoader.loadDimensionWithoutTool("roles","taiga");
-            List<Long[]> roleIdListFromDb = (roleFromSpark.select("role_id","original_id")).collectAsList().stream().map(row -> new Long[]{
-                    Long.valueOf(row.getAs("role_id").toString()),
-                    Long.valueOf(row.getAs("original_id").toString())
-            }).toList();
+            Dataset<Row> roles = dataWarehouseLoader.loadDimensionWithoutTool("roles", "taiga")
+                    .select(
+                            col("role_id").cast("long").as("role_id"),
+                            col("original_id").cast("long").as("role_original_id")
+                    );
 
-            Dataset<Row> usersFromDb = dataWarehouseLoader.loadDimensionWithoutTool("users","taiga");
-            List<Long[]> usersIdListFromDb = (usersFromDb.select("user_id","original_id")).collectAsList().stream().map(row -> new Long[]{
-                    Long.valueOf(row.getAs("user_id").toString()),
-                    Long.valueOf(row.getAs("original_id").toString())
-            }).toList();
+            Dataset<Row> users = dataWarehouseLoader.loadDimensionWithoutTool("users", "taiga")
+                    .select(
+                            col("user_id").cast("long").as("user_id"),
+                            col("original_id").cast("long").as("user_original_id")
+                    );
 
-            Map<Long, Long> roleMap = mapFromLongList(roleIdListFromDb);
-
-            Map<Long, Long> userMap = mapFromLongList(usersIdListFromDb);
-
-            List<Long[]> finalList = userRoleSparkMap.stream()
-                    .map(pair -> {
-                        Long roleOriginal = pair[0];
-                        Long userOriginal = pair[1];
-
-                        Long roleIdFromDb = roleMap.get(roleOriginal);
-                        Long userIdFromDb = userMap.get(userOriginal);
-
-                        if (roleIdFromDb != null && userIdFromDb != null) {
-                            return new Long[]{ userIdFromDb, roleIdFromDb };
-                        } else {
-                            return null;
-                        }
-                    })
-                    .filter(Objects::nonNull)
-                    .toList();
-
-            List<Row> rows = finalList.stream()
-                    .map(pair -> RowFactory.create(pair[0], pair[1]))
-                    .collect(Collectors.toList());
-
-            StructType schema = DataTypes.createStructType(new StructField[]{
-                    DataTypes.createStructField("user_id", DataTypes.LongType, false),
-                    DataTypes.createStructField("role_id", DataTypes.LongType, false)
-            });
-
-            return spark.createDataFrame(rows, schema);
+            return userRolePairs
+                    .join(users, "user_original_id", "inner")
+                    .join(roles, "role_original_id", "inner")
+                    .select("user_id", "role_id");
 
         } catch (Exception e) {
             System.out.println(e.getMessage());
+            throw new RuntimeException("Failed to save user roles", e);
         }
         return null;
     }
@@ -299,6 +273,7 @@ public class TaigaService {
                 projectsDF.col("project_id").alias("project_id")
         );
     }
+    
     public static Dataset<Row> updateStoryProjectAndEpicIds(Dataset<Row> storiesDF,
                                                             Dataset<Row> projectsDF,
                                                             Dataset<Row> epicsDF) {
