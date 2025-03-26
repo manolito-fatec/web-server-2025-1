@@ -123,4 +123,20 @@ public class TaigaTransformer {
                 .distinct();
     }
 
+    public Dataset<Row> transformTasks(Dataset<Row> rawTasks) {
+        return rawTasks
+                .select(
+                        col("id").as("original_id"),
+                        col("subject").as("task_name"),
+                        col("is_blocked").as("is_blocked"),
+                        when(col("user_story").isNull(), true).otherwise(false).as("is_storyless"),
+                        col("created_date").cast("date").as("created_at"),
+                        col("finished_date").cast("date").as("completed_at"),
+                        col("due_date").as("due_date"),
+                        col("status").as("status_id"),
+                        col("assigned_to").as("user_id"),
+                        col("user_story_extra_info.id").as("story_id"),
+                        lit(TOOL_ID).as("tool_id")
+                );
+    }
 }
