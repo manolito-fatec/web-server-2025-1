@@ -54,7 +54,7 @@ public class TaigaTransformer {
         return rawUsers.select(
                 col("id").as("original_id"),
                 lit(TOOL_ID).as("tool_id"),
-                col("username").as("user_name"),
+                col("full_name").as("user_name"),
                 col("email"),
                 col("bio").as("description")
         );
