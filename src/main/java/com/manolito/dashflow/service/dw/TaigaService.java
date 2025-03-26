@@ -314,7 +314,6 @@ public class TaigaService {
         status = updateStatusProjectId(status, dataWarehouseLoader.loadDimension("projects","taiga"));
         dataWarehouseLoader.save(status, "status");
 
-//        Dataset<Row> userStories = transformer.transformUserStories(handleUserStories());
 //      tags
           //dataWarehouseLoader.save(projects, "projects");
           //dataWarehouseLoader.save(status, "status");
