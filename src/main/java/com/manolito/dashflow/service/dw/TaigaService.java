@@ -285,6 +285,7 @@ public class TaigaService {
         authenticateTaiga("gabguska", "aluno123");
         TaigaTransformer transformer = new TaigaTransformer(spark.emptyDataFrame());
         Dataset<Row> roles = transformer.transformRoles(handleRoles());
+        Dataset<Row> users = transformer.transformedUserProjects(handleUser());
         Dataset<Row> projects = transformer.transformProjects(handleProjects());
         Dataset<Row> stories = transformer.transformUserStories(handleUserStories());
         stories = updateStoryProjectAndEpicIds(stories, dataWarehouseLoader.loadDimensionWithoutTool("projects", "taiga"),
@@ -292,6 +293,7 @@ public class TaigaService {
         );
         Dataset<Row> tags = transformer.transformTags(handleTags());
         dataWarehouseLoader.save(roles,"roles");
+        dataWarehouseLoader.save(users, "users");
         Dataset<Row> userRole = saveUserRoleToDatabase();
         dataWarehouseLoader.save(userRole,"user_role");
         dataWarehouseLoader.save(projects, "projects");
