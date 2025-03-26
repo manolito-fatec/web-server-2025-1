@@ -334,9 +334,9 @@ CREATE TABLE IF NOT EXISTS fact_tasks(
     story_id INT NOT NULL,
 
     created_at INT NOT NULL,
-    started_at INT NOT NULL,
+    started_at INT,
     completed_at INT,
-    due_date INT NOT NULL,
+    due_date INT,
 
     task_name VARCHAR(255) NOT NULL,
     description TEXT,
