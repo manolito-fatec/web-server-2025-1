@@ -82,7 +82,6 @@ public class TaigaService {
     }
 
     public Dataset<Row> handleTasks() {
-        return fetchAndConvertToDataFrame(TASKS.getPath(), "fact_tasks");
         return fetchAndConvertToDataFrame(TASKS.getPath() + "?project=" + project, "fact_tasks");
     }
 
@@ -182,8 +181,6 @@ public class TaigaService {
             return;
         }
 
-        saveOrUpdateUser(transformedUsers, originalId);
-
         String projectsResponse = utils.fetchDataFromEndpoint(TAIGA.getBaseUrl() + PROJECTS.getPath() + "?member=" + originalId, authToken);
         Dataset<Row> projectsData = utils.fetchDataAsDataFrame(projectsResponse);
 
@@ -210,16 +207,6 @@ public class TaigaService {
         }
     }
 
-    private void saveOrUpdateUser(Dataset<Row> transformedUsers, String originalId) {
-        Long userId = userRepository.getUserIdByOriginalId(originalId);
-
-        if (userId != null) {
-            System.out.println("User already exists with user_id: " + userId);
-        } else {
-            dataWarehouseLoader.save(transformedUsers, "users");
-            System.out.println("User data saved.");
-        }
-    }
     private Map<Long, Long> mapFromLongList(List<Long[]> list) {
         return list.stream()
                 .collect(Collectors.toMap(
@@ -258,10 +245,8 @@ public class TaigaService {
                     .select("user_id", "role_id");
 
         } catch (Exception e) {
-            System.out.println(e.getMessage());
             throw new RuntimeException("Failed to save user roles", e);
         }
-        return null;
     }
 
     public static Dataset<Row> updateStatusProjectId(Dataset<Row> statusDF, Dataset<Row> projectsDF) {
