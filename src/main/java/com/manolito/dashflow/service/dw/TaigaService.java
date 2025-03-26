@@ -105,6 +105,10 @@ public class TaigaService {
         return fetchAndConvertToDataFrame(PROJECTS.getPath() + "/" + project, "users");
     }
 
+    private Dataset<Row> handleTags() {
+        return fetchAndConvertToDataFrame(TASKS.getPath() + "?project=" + project, "tags");
+    }
+
     public void authenticateTaiga(String username, String password) {
         try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
             HttpPost post = new HttpPost(API_URL);
@@ -326,6 +330,7 @@ public class TaigaService {
         stories = updateStoryProjectAndEpicIds(stories, dataWarehouseLoader.loadDimensionWithoutTool("projects", "taiga"),
                 dataWarehouseLoader.loadDimensionWithoutTool("epics", "taiga")
         );
+        Dataset<Row> tags = transformer.transformTags(handleTags());
         dataWarehouseLoader.save(roles,"roles");
         Dataset<Row> userRole = saveUserRoleToDatabase();
         dataWarehouseLoader.save(userRole,"user_role");
@@ -334,5 +339,6 @@ public class TaigaService {
         status = updateStatusProjectId(status, dataWarehouseLoader.loadDimensionWithoutTool("projects","taiga"));
         dataWarehouseLoader.save(status, "status");
         dataWarehouseLoader.save(stories, "stories");
+        dataWarehouseLoader.save(tags, "tags");
     }
 }
