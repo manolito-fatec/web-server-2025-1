@@ -60,6 +60,16 @@ public class TaigaTransformer {
         );
     }
 
+    public Dataset<Row> transformedUserProjects(Dataset<Row> rawUserProjects) {
+        return rawUserProjects
+                .withColumn("member", explode(col("members")))
+                .select(
+                        col("member.id").as("original_id"),
+                        lit(TOOL_ID).as("tool_id"),
+                        col("member.full_name").as("user_name")
+                );
+    }
+
     public Dataset<Row> transformRoles(Dataset<Row> rawRoles) {
         return rawRoles
                 .withColumn("role", explode(col("roles")))
