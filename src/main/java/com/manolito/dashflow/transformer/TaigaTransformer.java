@@ -10,6 +10,7 @@ import static org.apache.spark.sql.functions.*;
 public class TaigaTransformer {
 
     private static final int TOOL_ID = 1; // Change for a GET from tools table later when implemented
+    private static final int EPIC_ID = 1;
     private final Dataset<Row> datesDimension;
 
     public Dataset<Row> transformProjects(Dataset<Row> rawData) {
@@ -26,9 +27,8 @@ public class TaigaTransformer {
     public Dataset<Row> transformUserStories(Dataset<Row> rawUserStories) {
         return rawUserStories.select(
                 col("id").as("original_id"),
-                lit(TOOL_ID).as("tool_id"),
                 col("project").as("project_id"),
-                col("epics").cast("int").as("epic_id"),
+                lit(EPIC_ID).as("epic_id"),
                 col("subject").as("story_name"),
                 col("is_closed").as("is_finished")
         );
@@ -84,11 +84,8 @@ public class TaigaTransformer {
     public Dataset<Row> transformEpics(Dataset<Row> rawEpics) {
         return rawEpics.select(
                 col("id").as("original_id"),
-                lit(TOOL_ID).as("tool_id"),
-                col("project").as("project_id"),
-                col("subject").as("epic_name"),
-                col("description"),
-                col("is_closed").as("is_finished")
+                lit(1).as("project_id"),
+                col("subject").as("epic_name")
         );
     }
 
@@ -100,7 +97,6 @@ public class TaigaTransformer {
                 )
                 .select(
                         col("original_id"),
-                        col("tool_id"),
                         col("tag").getItem(0).as("tag_name")
                 )
                 .distinct();

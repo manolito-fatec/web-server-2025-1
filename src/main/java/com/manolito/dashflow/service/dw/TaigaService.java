@@ -90,7 +90,7 @@ public class TaigaService {
     }
 
     public Dataset<Row> handleEpics() {
-        return fetchAndConvertToDataFrame(EPICS.getPath(), "epics");
+        return fetchAndConvertToDataFrame(TASKS.getPath() + "?project=" + project, "epics");
     }
 
     public Dataset<Row> handleRoles() {
@@ -224,10 +224,9 @@ public class TaigaService {
     };
 
     //@PostConstruct
-    public void saveUserRoleToDatabase() {
+    public Dataset<Row> saveUserRoleToDatabase() {
         project = String.valueOf(1637322);
         try{
-            TaigaTransformer transformer = new TaigaTransformer(spark.emptyDataFrame());
             Dataset<Row> jsonFromEtl = handleProjects().withColumn("member",explode(col("members")))
                     .select(
                             col("member.role").as("oRole_id"),
@@ -237,13 +236,13 @@ public class TaigaService {
                     row.getAs("oUser_id")
             }).toList();
 
-            Dataset<Row> roleFromSpark = dataWarehouseLoader.loadDimension("roles","taiga");
+            Dataset<Row> roleFromSpark = dataWarehouseLoader.loadDimensionWithoutTool("roles","taiga");
             List<Long[]> roleIdListFromDb = (roleFromSpark.select("role_id","original_id")).collectAsList().stream().map(row -> new Long[]{
                     Long.valueOf(row.getAs("role_id").toString()),
                     Long.valueOf(row.getAs("original_id").toString())
             }).toList();
 
-            Dataset<Row> usersFromDb = dataWarehouseLoader.loadDimension("users","taiga");
+            Dataset<Row> usersFromDb = dataWarehouseLoader.loadDimensionWithoutTool("users","taiga");
             List<Long[]> usersIdListFromDb = (usersFromDb.select("user_id","original_id")).collectAsList().stream().map(row -> new Long[]{
                     Long.valueOf(row.getAs("user_id").toString()),
                     Long.valueOf(row.getAs("original_id").toString())
@@ -279,45 +278,61 @@ public class TaigaService {
                     DataTypes.createStructField("role_id", DataTypes.LongType, false)
             });
 
-            Dataset<Row> finalDataset = spark.createDataFrame(rows, schema);
-
-            dataWarehouseLoader.save(finalDataset, "user_role");
-
+            return spark.createDataFrame(rows, schema);
 
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }
+        return null;
     }
 
     public static Dataset<Row> updateStatusProjectId(Dataset<Row> statusDF, Dataset<Row> projectsDF) {
         Dataset<Row> joined = statusDF
                 .join(projectsDF, statusDF.col("project_id").equalTo(projectsDF.col("original_id")));
-
         return joined.select(
                 statusDF.col("original_id"),
-                statusDF.col("tool_id"),
                 statusDF.col("status_name"),
                 projectsDF.col("project_id").alias("project_id")
         );
     }
+    public static Dataset<Row> updateStoryProjectAndEpicIds(Dataset<Row> storiesDF,
+                                                            Dataset<Row> projectsDF,
+                                                            Dataset<Row> epicsDF) {
+        Dataset<Row> joinedWithProjects = storiesDF
+                .join(projectsDF,
+                        storiesDF.col("project_id").equalTo(projectsDF.col("original_id")));
+
+        Dataset<Row> joinedWithEpics = joinedWithProjects
+                .join(epicsDF,
+                        joinedWithProjects.col("epic_id").equalTo(epicsDF.col("original_id")),
+                        "left");
+
+        return joinedWithEpics.select(
+                storiesDF.col("original_id"),
+                projectsDF.col("project_id"),
+                storiesDF.col("epic_id").alias("epic_id"),
+                storiesDF.col("story_name"),
+                storiesDF.col("is_finished")
+        );
+    }
     //Remove post construct annotation after login is done
-//    @PostConstruct
+    @PostConstruct
     public void taigaEtl() {
-        //authenticateTaiga("gabguska", "aluno123");
+        authenticateTaiga("gabguska", "aluno123");
         TaigaTransformer transformer = new TaigaTransformer(spark.emptyDataFrame());
-
-        //Dataset<Row> roles = transformer.transformRoles(handleRoles());
-        //Dataset<Row> userRoles = transformer.transformUserRole(handleRoles());
-//      userole
-        //Dataset<Row> projects = transformer.transformProjects(handleProjects());
+        Dataset<Row> roles = transformer.transformRoles(handleRoles());
+        Dataset<Row> projects = transformer.transformProjects(handleProjects());
+        Dataset<Row> stories = transformer.transformUserStories(handleUserStories());
+        stories = updateStoryProjectAndEpicIds(stories, dataWarehouseLoader.loadDimensionWithoutTool("projects", "taiga"),
+                dataWarehouseLoader.loadDimensionWithoutTool("epics", "taiga")
+        );
+        dataWarehouseLoader.save(roles,"roles");
+        Dataset<Row> userRole = saveUserRoleToDatabase();
+        dataWarehouseLoader.save(userRole,"user_role");
+        dataWarehouseLoader.save(projects, "projects");
         Dataset<Row> status = transformer.transformStatus(handleStatus());
-        status = updateStatusProjectId(status, dataWarehouseLoader.loadDimension("projects","taiga"));
+        status = updateStatusProjectId(status, dataWarehouseLoader.loadDimensionWithoutTool("projects","taiga"));
         dataWarehouseLoader.save(status, "status");
-
-//      tags
-          //dataWarehouseLoader.save(projects, "projects");
-          //dataWarehouseLoader.save(status, "status");
-//      tasks
-//
+        dataWarehouseLoader.save(stories, "stories");
     }
 }
