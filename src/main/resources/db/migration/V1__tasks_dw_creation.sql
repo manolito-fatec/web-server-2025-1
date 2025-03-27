@@ -329,7 +329,7 @@ CREATE TABLE IF NOT EXISTS fact_tasks(
     task_id SERIAL PRIMARY KEY,
     original_id TEXT NOT NULL,
     status_id INT NOT NULL,
-    assignee_id INT NOT NULL,
+    assignee_id INT,
     tool_id INT NOT NULL,
     story_id INT NOT NULL,
 
