@@ -283,7 +283,9 @@ public class TaigaService {
     public static Dataset<Row> updateFactTask(Dataset<Row> tasksDF,
                                               Dataset<Row> statusDF,
                                               Dataset<Row> userDF,
-                                              Dataset<Row> storiesDF) {
+                                              Dataset<Row> storiesDF,
+                                              Dataset<Row> datesDF) {
+
         Dataset<Row> joinedWithStatus = tasksDF
                 .join(statusDF,
                         tasksDF.col("status_id").equalTo(statusDF.col("original_id")));
@@ -291,21 +293,44 @@ public class TaigaService {
         Dataset<Row> joinedWithUser = joinedWithStatus
                 .join(userDF,
                         joinedWithStatus.col("user_id").equalTo(userDF.col("original_id")));
-        joinedWithUser.show();
 
         Dataset<Row> joinedWithStories = joinedWithUser
                 .join(storiesDF,
                         joinedWithUser.col("story_id").equalTo(storiesDF.col("original_id")));
 
-        return joinedWithStories.select(
+        Dataset<Row> withCreatedDate = joinedWithStories
+                .join(datesDF,
+                        joinedWithStories.col("created_at").cast("date").equalTo(datesDF.col("date_date")),
+                        "left")
+                .withColumnRenamed("date_id", "created_date_id")
+                .drop("date_date", "month", "year", "quarter", "day_of_week",
+                        "day_of_month", "day_of_year", "is_weekend");
+
+        Dataset<Row> withCompletedDate = withCreatedDate
+                .join(datesDF,
+                        withCreatedDate.col("completed_at").cast("date").equalTo(datesDF.col("date_date")),
+                        "left")
+                .withColumnRenamed("date_id", "completed_date_id")
+                .drop("date_date", "month", "year", "quarter", "day_of_week",
+                        "day_of_month", "day_of_year", "is_weekend");
+
+        Dataset<Row> withDueDate = withCompletedDate
+                .join(datesDF,
+                        withCompletedDate.col("due_date").cast("date").equalTo(datesDF.col("date_date")),
+                        "left")
+                .withColumnRenamed("date_id", "due_date_id")
+                .drop("date_date", "month", "year", "quarter", "day_of_week",
+                        "day_of_month", "day_of_year", "is_weekend");
+
+        return withDueDate.select(
                 tasksDF.col("original_id"),
                 statusDF.col("status_id"),
-                userDF.col("user_id").as("assignee_to"),
+                userDF.col("user_id").as("assignee_id"),
                 tasksDF.col("tool_id"),
                 storiesDF.col("story_id"),
-                tasksDF.col("created_at"),
-                tasksDF.col("completed_at"),
-                tasksDF.col("due_date"),
+                col("created_date_id").as("created_at"),
+                col("completed_date_id").as("completed_at"),
+                col("due_date_id").as("due_date"),
                 tasksDF.col("task_name"),
                 tasksDF.col("is_blocked"),
                 tasksDF.col("is_storyless")
@@ -334,5 +359,12 @@ public class TaigaService {
         dataWarehouseLoader.save(status, "status");
         dataWarehouseLoader.save(stories, "stories");
         dataWarehouseLoader.save(tags, "tags");
+        Dataset<Row> tasks = transformer.transformTasks(handleTasks());
+        tasks = updateFactTask(tasks,
+                dataWarehouseLoader.loadDimension("status"),
+                dataWarehouseLoader.loadDimension("users"),
+                dataWarehouseLoader.loadDimension("stories"),
+                dataWarehouseLoader.loadDimensionWithoutIsCurrent("dates"));
+        dataWarehouseLoader.save(tasks, "fact_tasks");
     }
 }
