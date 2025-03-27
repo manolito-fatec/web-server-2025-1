@@ -16,6 +16,7 @@ import java.util.NoSuchElementException;
 
 @Tag(name = "Tasks Controller", description = "Endpoints para a consulta de tasks no Data Warehouse de Tasks")
 @RestController
+@CrossOrigin(origins = "http://localhost:5173")
 @RequestMapping("/tasks")
 @RequiredArgsConstructor
 public class TasksController {
