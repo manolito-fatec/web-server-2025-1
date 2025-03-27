@@ -85,7 +85,7 @@ public class TasksDataWarehouseLoader {
                 .filter(col("is_current").equalTo(true));
     }
 
-    public Dataset<Row> loadDimensionWithoutIsCurrent(String tableName) {
+    public Dataset<Row> loadDimensionWithoutIsCurrent(String tableName, String toolName) {
         return spark.read()
                 .format("jdbc")
                 .option("url", jdbcUrl)
