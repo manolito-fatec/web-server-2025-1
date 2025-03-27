@@ -12,8 +12,8 @@ import java.util.Optional;
 public class AveregeTimeService {
     private final AveregeTimeRepository averegeTimeRepository;
 
-    public Long getAveregeTimeCard() {
-        Optional<Long> averegeTimeCard = averegeTimeRepository.getAveregeTimeCard();
+    public Double getAveregeTimeCard(Integer userId) {
+        Optional<Double> averegeTimeCard = averegeTimeRepository.getAveregeTimeCard(userId);
         if (averegeTimeCard.isPresent()) {
             return averegeTimeCard.get();
         }
