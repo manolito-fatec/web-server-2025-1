@@ -11,10 +11,10 @@ import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
-public class AveregeTimeRepository {
+public class AverageTimeRepository {
     private final NamedParameterJdbcTemplate jdbcTemplate;
 
-    public Optional<Double> getAveregeTimeCard(Integer userId) {
+    public Optional<Double> getAverageTimeCard(Integer userId) {
         String sql = "SELECT AVG(completed.date_date - started.date_date) AS avarege_time " +
                 "FROM dw_tasks.fact_tasks ft " +
                 "JOIN dw_tasks.dates started ON ft.started_at = started.date_id " +
