@@ -34,13 +34,13 @@ public class TasksDataWarehouseLoader {
     private Dataset<Row> cachedTools;
 
     @Value("${spring.datasource.url}")
-    private String jdbcUrl;
+    public String jdbcUrl;
 
     @Value("${spring.datasource.username}")
-    private String dbUser;
+    public String dbUser;
 
     @Value("${spring.datasource.password}")
-    private String dbPassword;
+    public String dbPassword;
 
     @PostConstruct
     public void initialize() {
@@ -72,6 +72,27 @@ public class TasksDataWarehouseLoader {
                 .load()
                 .filter(col("tool_id").equalTo(toolId))
                 .filter(col("is_current").equalTo(true));
+    }
+
+    public Dataset<Row> loadDimensionWithoutTool(String tableName, String toolName) {
+        return spark.read()
+                .format("jdbc")
+                .option("url", jdbcUrl)
+                .option("dbtable", "dw_tasks." + tableName)
+                .option("user", dbUser)
+                .option("password", dbPassword)
+                .load()
+                .filter(col("is_current").equalTo(true));
+    }
+
+    public Dataset<Row> loadDimensionWithoutIsCurrent(String tableName, String toolName) {
+        return spark.read()
+                .format("jdbc")
+                .option("url", jdbcUrl)
+                .option("dbtable", "dw_tasks." + tableName)
+                .option("user", dbUser)
+                .option("password", dbPassword)
+                .load();
     }
 
     public void save(Dataset<Row> data, String tableName) {
@@ -155,7 +176,7 @@ public class TasksDataWarehouseLoader {
                 .cache();
     }
 
-    private Dataset<Row> loadDimension(String tableName) {
+    public Dataset<Row> loadDimension(String tableName) {
         return spark.read()
                 .format("jdbc")
                 .option("url", jdbcUrl)
