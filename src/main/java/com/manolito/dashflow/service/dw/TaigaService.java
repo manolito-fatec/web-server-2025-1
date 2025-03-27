@@ -249,6 +249,38 @@ public class TaigaService {
         }
     }
 
+    public Dataset<Row> saveTaskTagToDatabase() {
+        try {
+            Dataset<Row> taskTagPairs = handleTasks()
+                    .withColumn("tag", explode(col("tags")))
+                    .select(
+                            col("id").cast("long").as("task_original_id"),
+                            col("tag").getItem(0).as("tag_name")
+                    );
+
+            Dataset<Row> tasks = dataWarehouseLoader.loadDimensionWithoutIsCurrent("fact_tasks", "taiga")
+                    .select(
+                            col("task_id").cast("long").as("task_id"),
+                            col("original_id").cast("long").as("task_original_id")
+                    );
+
+            Dataset<Row> tags = dataWarehouseLoader.loadDimensionWithoutIsCurrent("tags", "taiga")
+                    .select(
+                            col("tag_id").cast("long").as("tag_id"),
+                            col("tag_name").as("tag_name")
+                    );
+
+            return taskTagPairs
+                    .join(tasks, "task_original_id", "inner")
+                    .join(tags, "tag_name", "inner")
+                    .select("task_id", "tag_id")
+                    .orderBy("task_id", "tag_id");
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to save task tags", e);
+        }
+    }
+
     public static Dataset<Row> updateStatusProjectId(Dataset<Row> statusDF, Dataset<Row> projectsDF) {
         Dataset<Row> joined = statusDF
                 .join(projectsDF, statusDF.col("project_id").equalTo(projectsDF.col("original_id")));
@@ -366,5 +398,7 @@ public class TaigaService {
                 dataWarehouseLoader.loadDimension("stories"),
                 dataWarehouseLoader.loadDimensionWithoutIsCurrent("dates", "taiga"));
         dataWarehouseLoader.save(tasks, "fact_tasks");
+        Dataset<Row> taskTag = saveTaskTagToDatabase();
+        dataWarehouseLoader.save(taskTag,"task_tag");
     }
 }
