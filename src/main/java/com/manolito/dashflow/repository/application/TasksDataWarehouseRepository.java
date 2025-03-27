@@ -110,16 +110,16 @@ public class TasksDataWarehouseRepository {
                 "LEFT JOIN dw_tasks.status st " +
                 "ON ft.status_id = st.status_id " +
                 "LEFT JOIN dw_tasks.projects prj " +
-                "ON st.project_id = proj.project_id " +
+                "ON st.project_id = prj.project_id " +
                 "WHERE u.user_id = :userId " +
-                "AND proj.original_id = :projectId " +
+                "AND prj.original_id = :projectId " +
                 "AND st.is_current = TRUE " +
                 "AND tu.is_current = TRUE " +
                 "GROUP BY st.status_name";
 
         Map<String, Object> params = new HashMap<>();
         params.put("userId", userId);
-        params.put("projectId", projectId);
+        params.put("projectId", String.valueOf(projectId));
 
         return jdbcTemplate.query(
                 sql,
