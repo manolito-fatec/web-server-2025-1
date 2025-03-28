@@ -19,10 +19,12 @@ public class AverageTimeRepository {
                 "FROM dw_tasks.fact_tasks ft " +
                 "JOIN dw_tasks.dates created ON ft.created_at = created.date_id " +
                 "JOIN dw_tasks.dates completed ON ft.completed_at = completed.date_id " +
+                "JOIN dw_tasks.users u ON assignee_id  = u.user_id " +
                 "WHERE ft.completed_at IS NOT NULL " +
                 "AND u.user_id = :userId";
 
         Map<String, Object> params = new HashMap<>();
+        params.put("userId", userId);
         try {
             Double result = jdbcTemplate.queryForObject(sql, params, Double.class);
             return Optional.ofNullable(result);
