@@ -101,7 +101,7 @@ public class TasksDataWarehouseRepository {
     }
 
     public Optional<Integer> getTotalProjectsByUserId(int userId) {
-        String sql = "SELECT COUNT DISTINCT(prj.original_id) AS total_project_count " +
+        String sql = "SELECT COUNT (DISTINCT prj.original_id) AS total_project_count " +
                 "FROM dataflow_appl.users u " +
                 "LEFT JOIN dataflow_appl.accounts acc " +
                 "ON u.user_id = acc.user_id " +
@@ -114,7 +114,7 @@ public class TasksDataWarehouseRepository {
                 "LEFT JOIN dw_tasks.epics ep " +
                 "ON st.epic_id = ep.epic_id " +
                 "LEFT JOIN dw_tasks.projects prj " +
-                "ON ep.project_id = prj.project_id" +
+                "ON ep.project_id = prj.project_id " +
                 "WHERE u.user_id = :userId GROUP BY u.user_id";
 
         Map<String, Object> params = new HashMap<>();
