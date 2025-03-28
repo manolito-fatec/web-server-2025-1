@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.NoSuchElementException;
 
-@Tag(name = "Average Completion Time Card Controller", description = "Endpoints para a consulta de tempo medio de conclusao de tasks do usuario")
+@Tag(name = "Average Completion Time Card Controller", description = "Endpoints para a consulta de tempo médio de conclusão de tasks do usuário")
 @RestController
 @RequestMapping("/average-time")
 @RequiredArgsConstructor
@@ -20,16 +20,16 @@ public class AverageTimeController {
     private final AverageTimeService averageTimeService;
 
     @GetMapping("/get-average/{userId}")
-    @Operation(summary = "Calcula a média de tempo de conclusão de taks", description = "Faz uma requisição no BD, retornando a média de tempo que o usuário leva para concluir suas tasks")
+    @Operation(summary = "Calcula a média de tempo de conclusão de tasks", description = "Faz uma requisição no BD, retornando a média de tempo que o usuário leva para concluir suas tasks")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Média de tempo de conclusão de tasks extraido com sucesso."),
+            @ApiResponse(responseCode = "200", description = "Média de tempo de conclusão de tasks extraída com sucesso."),
             @ApiResponse(responseCode = "400", description = "Requisição mal formulada."),
-            @ApiResponse(responseCode = "404", description = "Não há tasks concluidas."),
+            @ApiResponse(responseCode = "404", description = "Não há tasks concluídas."),
             @ApiResponse(responseCode = "408", description = "Tempo de resposta excedido."),
-            @ApiResponse(responseCode = "500", description = "Erro interno no servidor ao tentar buscar o local.")
+            @ApiResponse(responseCode = "500", description = "Erro interno no servidor ao tentar calcular a média de tempo.")
     })
     public ResponseEntity<?> getAverageByOperatorId(
-            @Parameter(description = "id do usuario", required = true) @PathVariable Integer userId
+            @Parameter(description = "id do usuário", required = true) @PathVariable Integer userId
     ) {
         try {
             return ResponseEntity.ok().body(averageTimeService.getAverageTimeCard(userId));
