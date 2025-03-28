@@ -26,7 +26,7 @@ class AverageTimeServiceTest {
     @Test
     void testGetAverageTimeCard_Success() {
         Integer userId = 1;
-        Double expectedTime = 5.5;
+        Double expectedTime = 8.67;
 
         when(averageTimeRepository.getAverageTimeCard(userId)).thenReturn(Optional.of(expectedTime));
 
