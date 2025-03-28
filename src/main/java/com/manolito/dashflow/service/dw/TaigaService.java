@@ -363,7 +363,7 @@ public class TaigaService {
         );
     }
     //Remove post construct annotation after login is done
-    @PostConstruct
+   // @PostConstruct
     public void taigaEtl() {
         authenticateTaiga("gabguska", "aluno123");
         TaigaTransformer transformer = new TaigaTransformer(spark.emptyDataFrame());
