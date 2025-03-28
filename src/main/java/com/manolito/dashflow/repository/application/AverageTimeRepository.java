@@ -15,9 +15,9 @@ public class AverageTimeRepository {
     private final NamedParameterJdbcTemplate jdbcTemplate;
 
     public Optional<Double> getAverageTimeCard(Integer userId) {
-        String sql = "SELECT AVG(completed.date_date - started.date_date) AS avarege_time " +
+        String sql = "SELECT ROUND(AVG(completed.date_date - created.date_date),2) AS average_time " +
                 "FROM dw_tasks.fact_tasks ft " +
-                "JOIN dw_tasks.dates started ON ft.started_at = started.date_id " +
+                "JOIN dw_tasks.dates created ON ft.created_at = created.date_id " +
                 "JOIN dw_tasks.dates completed ON ft.completed_at = completed.date_id " +
                 "WHERE ft.completed_at IS NOT NULL " +
                 "AND u.user_id = :userId";
