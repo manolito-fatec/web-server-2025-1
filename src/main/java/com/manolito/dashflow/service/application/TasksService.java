@@ -1,5 +1,6 @@
 package com.manolito.dashflow.service.application;
 
+import com.manolito.dashflow.dto.dw.CreatedDoneDto;
 import com.manolito.dashflow.dto.dw.StatusCountDto;
 import com.manolito.dashflow.repository.application.TasksDataWarehouseRepository;
 import lombok.RequiredArgsConstructor;
@@ -31,8 +32,8 @@ public class TasksService {
         return taskCount.get();
     }
 
-    public List<StatusCountDto> getTaskCountByStatusByOperatorIdBetween(Integer userId, LocalDate startDate, LocalDate endDate) {
-        List<StatusCountDto> taskCount = tasksDataWarehouseRepository.getTotalTasksByStatusByOperatorBetween(userId, startDate, endDate);
+    public List<CreatedDoneDto> getTaskCountByStatusByOperatorIdBetween(Integer userId, LocalDate startDate, LocalDate endDate) {
+        List<CreatedDoneDto> taskCount = tasksDataWarehouseRepository.getTotalTasksByStatusByOperatorBetween(userId, startDate, endDate);
         if (taskCount.isEmpty()) {
             throw new NoSuchElementException("No tasks found in the time period");
         }
