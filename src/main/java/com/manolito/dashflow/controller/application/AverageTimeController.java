@@ -12,14 +12,14 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.NoSuchElementException;
 
-@Tag(name = "Averege Completion Time Card Controller", description = "Endpoints para a consulta de tempo medio de conclusao de tasks do usuario")
+@Tag(name = "Average Completion Time Card Controller", description = "Endpoints para a consulta de tempo medio de conclusao de tasks do usuario")
 @RestController
 @RequestMapping("/average-time")
 @RequiredArgsConstructor
 public class AverageTimeController {
     private AverageTimeService averageTimeService;
 
-    @GetMapping("/get-avarege/{userId}")
+    @GetMapping("/get-average/{userId}")
     @Operation(summary = "Calcula a média de tempo de conclusão de taks", description = "Faz uma requisição no BD, retornando a média de tempo que o usuário leva para concluir suas tasks")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Média de tempo de conclusão de tasks extraidocom sucesso."),
@@ -28,7 +28,7 @@ public class AverageTimeController {
             @ApiResponse(responseCode = "408", description = "Tempo de resposta excedido."),
             @ApiResponse(responseCode = "500", description = "Erro interno no servidor ao tentar buscar o local.")
     })
-    public ResponseEntity<?> getAveregeByOperatorId(
+    public ResponseEntity<?> getAverageByOperatorId(
             @Parameter(description = "id do usuario", required = true) @PathVariable Integer userId
     ) {
         try {
