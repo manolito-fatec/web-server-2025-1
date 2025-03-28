@@ -17,12 +17,12 @@ import java.util.NoSuchElementException;
 @RequestMapping("/average-time")
 @RequiredArgsConstructor
 public class AverageTimeController {
-    private AverageTimeService averageTimeService;
+    private final AverageTimeService averageTimeService;
 
     @GetMapping("/get-average/{userId}")
     @Operation(summary = "Calcula a média de tempo de conclusão de taks", description = "Faz uma requisição no BD, retornando a média de tempo que o usuário leva para concluir suas tasks")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Média de tempo de conclusão de tasks extraidocom sucesso."),
+            @ApiResponse(responseCode = "200", description = "Média de tempo de conclusão de tasks extraido com sucesso."),
             @ApiResponse(responseCode = "400", description = "Requisição mal formulada."),
             @ApiResponse(responseCode = "404", description = "Não há tasks concluidas."),
             @ApiResponse(responseCode = "408", description = "Tempo de resposta excedido."),
