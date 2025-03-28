@@ -130,7 +130,7 @@ CREATE TABLE IF NOT EXISTS users(
     original_id TEXT NOT NULL,
     tool_id INT NOT NULL,
     user_name VARCHAR(255) NOT NULL,
-    email VARCHAR(255) NOT NULL,
+    email VARCHAR(255),
     description TEXT,
     start_date DATE NOT NULL DEFAULT CURRENT_DATE,
     end_date DATE DEFAULT NULL,
@@ -185,7 +185,6 @@ CREATE TABLE IF NOT EXISTS status(
     status_id SERIAL PRIMARY KEY,
     seq INT NOT NULL,
     original_id TEXT NOT NULL,
-    tool_id INT NOT NULL,
     project_id INT NOT NULL,
     status_name VARCHAR(255) NOT NULL,
     description TEXT,
@@ -193,9 +192,8 @@ CREATE TABLE IF NOT EXISTS status(
     end_date DATE DEFAULT NULL,
     is_current BOOLEAN NOT NULL DEFAULT TRUE,
 
-    CONSTRAINT fk_status_tools FOREIGN KEY (tool_id) REFERENCES tools(tool_id),
     CONSTRAINT fk_status_projects FOREIGN KEY (project_id) REFERENCES projects(project_id),
-    CONSTRAINT unique_status_seq UNIQUE (original_id, seq, tool_id)
+    CONSTRAINT unique_status_seq UNIQUE (original_id, seq, project_id)
 );
 
 CREATE OR REPLACE TRIGGER projects_scd2_trigger
@@ -209,7 +207,6 @@ CREATE TABLE IF NOT EXISTS epics(
     epic_id SERIAL PRIMARY KEY,
     seq INT NOT NULL,
     original_id TEXT NOT NULL,
-    tool_id INT NOT NULL,
     project_id INT NOT NULL,
     epic_name VARCHAR(255) NOT NULL,
     description TEXT,
@@ -218,9 +215,8 @@ CREATE TABLE IF NOT EXISTS epics(
     is_finished BOOLEAN,
     is_current BOOLEAN NOT NULL DEFAULT TRUE,
 
-    CONSTRAINT fk_epics_tools FOREIGN KEY (tool_id) REFERENCES tools(tool_id),
     CONSTRAINT fk_epics_projects FOREIGN KEY (project_id) REFERENCES projects(project_id),
-    CONSTRAINT unique_epics_seq UNIQUE (original_id, seq, tool_id)
+    CONSTRAINT unique_epics_seq UNIQUE (original_id, seq, project_id)
 );
 
 CREATE OR REPLACE TRIGGER epics_scd2_trigger
@@ -228,14 +224,36 @@ CREATE OR REPLACE TRIGGER epics_scd2_trigger
     FOR EACH ROW
 EXECUTE FUNCTION manage_scd2('original_id');
 
+CREATE OR REPLACE FUNCTION create_epicless_epic()
+RETURNS TRIGGER AS $$
+BEGIN
+INSERT INTO dw_tasks.epics (
+    original_id,
+    project_id,
+    epic_name,
+    is_finished
+)
+
+VALUES (
+        '0',
+        NEW.project_id,
+        'epicless',
+        FALSE);
+RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_project_create_epicless
+    AFTER INSERT ON dw_tasks.projects
+    FOR EACH ROW
+    EXECUTE FUNCTION create_epicless_epic();
+
 -------------------------------------
 
 CREATE TABLE IF NOT EXISTS stories(
     story_id SERIAL PRIMARY KEY,
     seq INT NOT NULL,
     original_id TEXT NOT NULL,
-    tool_id INT NOT NULL,
-    project_id INT NOT NULL,
     epic_id INT NOT NULL,
     story_name VARCHAR(255) NOT NULL,
     description TEXT,
@@ -244,10 +262,8 @@ CREATE TABLE IF NOT EXISTS stories(
     is_finished BOOLEAN,
     is_current BOOLEAN NOT NULL DEFAULT TRUE,
 
-    CONSTRAINT fk_story_tools FOREIGN KEY (tool_id) REFERENCES tools(tool_id),
-    CONSTRAINT fk_story_projects FOREIGN KEY (project_id) REFERENCES projects(project_id),
     CONSTRAINT fk_story_epics FOREIGN KEY (epic_id) REFERENCES epics(epic_id),
-    CONSTRAINT unique_stories_seq UNIQUE (original_id, seq, tool_id)
+    CONSTRAINT unique_stories_seq UNIQUE (original_id, seq, epic_id)
 );
 
 CREATE OR REPLACE TRIGGER stories_scd2_trigger
@@ -313,16 +329,14 @@ CREATE TABLE IF NOT EXISTS fact_tasks(
     task_id SERIAL PRIMARY KEY,
     original_id TEXT NOT NULL,
     status_id INT NOT NULL,
-    owner_id INT NOT NULL,
-    assignee_id INT NOT NULL,
+    assignee_id INT,
     tool_id INT NOT NULL,
-    project_id INT NOT NULL,
-    epic_id INT NOT NULL,
     story_id INT NOT NULL,
 
     created_at INT NOT NULL,
+    started_at INT,
     completed_at INT,
-    due_date INT NOT NULL,
+    due_date INT,
 
     task_name VARCHAR(255) NOT NULL,
     description TEXT,
@@ -331,13 +345,11 @@ CREATE TABLE IF NOT EXISTS fact_tasks(
     is_storyless BOOLEAN,
 
     CONSTRAINT fk_fact_tasks_status FOREIGN KEY (status_id) REFERENCES status(status_id),
-    CONSTRAINT fk_fact_tasks_owner FOREIGN KEY (owner_id) REFERENCES users(user_id),
     CONSTRAINT fk_fact_tasks_assignee FOREIGN KEY (assignee_id) REFERENCES users(user_id),
     CONSTRAINT fk_fact_tasks_tools FOREIGN KEY (tool_id) REFERENCES tools(tool_id),
-    CONSTRAINT fk_fact_tasks_projects FOREIGN KEY (project_id) REFERENCES projects(project_id),
-    CONSTRAINT fk_fact_tasks_epics FOREIGN KEY (epic_id) REFERENCES epics(epic_id),
     CONSTRAINT fk_fact_tasks_stories FOREIGN KEY (story_id) REFERENCES stories(story_id),
     CONSTRAINT fk_fact_tasks_created_at FOREIGN KEY (created_at) REFERENCES dates(date_id),
+    CONSTRAINT fk_fact_tasks_started_at FOREIGN KEY (started_at) REFERENCES dates(date_id),
     CONSTRAINT fk_fact_tasks_completed_at FOREIGN KEY (completed_at) REFERENCES dates(date_id),
     CONSTRAINT fk_fact_tasks_due_date FOREIGN KEY (due_date) REFERENCES dates(date_id)
 );
