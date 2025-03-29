@@ -16,6 +16,13 @@ import java.util.Optional;
 public class TasksService {
     private final TasksDataWarehouseRepository tasksDataWarehouseRepository;
 
+    /**
+     * Retrieves the total number of tasks assigned to a specific operator.
+     *
+     * @param userId the ID of the operator to query tasks for
+     * @return the total count of tasks assigned to the operator
+     * @throws NoSuchElementException if no tasks are found for the operator
+     */
     public Integer getTaskCountByOperatorId(Integer userId) {
         Optional<Integer> taskCount = tasksDataWarehouseRepository.getTotalTasksByOperator(userId);
         if (taskCount.isEmpty()) {
@@ -24,6 +31,15 @@ public class TasksService {
         return taskCount.get();
     }
 
+    /**
+     * Retrieves the total number of tasks assigned to a specific operator within a given date range.
+     *
+     * @param userId the ID of the operator to query tasks for
+     * @param startDate the start date of the period (inclusive)
+     * @param endDate the end date of the period (inclusive)
+     * @return the total count of tasks assigned to the operator during the specified period
+     * @throws NoSuchElementException if no tasks are found within the given date range
+     */
     public Integer getTaskCountByOperatorIdBetween(Integer userId, LocalDate startDate, LocalDate endDate) {
         Optional<Integer> taskCount = tasksDataWarehouseRepository.getTotalTasksByOperatorBetween(userId, startDate, endDate);
         if (taskCount.isEmpty()) {
@@ -32,6 +48,16 @@ public class TasksService {
         return taskCount.get();
     }
 
+    /**
+     * Retrieves a list of task counts grouped by their status for a specific operator within a given date range.
+     * Each element in the list contains the task status and the corresponding count.
+     *
+     * @param userId the ID of the operator to query tasks for
+     * @param startDate the start date of the period (inclusive)
+     * @param endDate the end date of the period (inclusive)
+     * @return a list of {@link CreatedDoneDto} objects representing task counts by status
+     * @throws NoSuchElementException if no tasks are found within the given date range
+     */
     public List<CreatedDoneDto> getTaskCountByStatusByOperatorIdBetween(Integer userId, LocalDate startDate, LocalDate endDate) {
         List<CreatedDoneDto> taskCount = tasksDataWarehouseRepository.getTotalTasksByStatusByOperatorBetween(userId, startDate, endDate);
         if (taskCount.isEmpty()) {
