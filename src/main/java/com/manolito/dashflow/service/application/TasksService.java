@@ -31,6 +31,7 @@ public class TasksService {
 
     /**
      * Busca a média de tempo que o usuário leva para completar suas tasks, calculando a média de tasks feitas por semana.
+     *
      * @param userId O id do usuário buscado para o cálculo.
      * @return valor da média calculada, em formato '0.0'
      * @throws 'No tasks completed'
