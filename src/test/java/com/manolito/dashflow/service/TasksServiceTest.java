@@ -6,8 +6,8 @@ import static org.mockito.Mockito.*;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
-import com.manolito.dashflow.repository.application.AverageTimeRepository;
-import com.manolito.dashflow.service.application.AverageTimeService;
+import com.manolito.dashflow.repository.application.TasksDataWarehouseRepository;
+import com.manolito.dashflow.service.application.TasksService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -15,38 +15,38 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class AverageTimeServiceTest {
+class TasksServiceTest {
 
     @Mock
-    private AverageTimeRepository averageTimeRepository;
+    private TasksDataWarehouseRepository tasksDataWarehouseRepository;
 
     @InjectMocks
-    private AverageTimeService averageTimeService;
+    private TasksService tasksService;
 
     @Test
     void testGetAverageTimeCard_Success() {
         Integer userId = 1;
         Double expectedTime = 8.67;
 
-        when(averageTimeRepository.getAverageTimeCard(userId)).thenReturn(Optional.of(expectedTime));
+        when(tasksDataWarehouseRepository.getAverageTimeCard(userId)).thenReturn(Optional.of(expectedTime));
 
-        Double result = averageTimeService.getAverageTimeCard(userId);
+        Double result = tasksService.getAverageTimeCard(userId);
 
         assertEquals(expectedTime, result);
-        verify(averageTimeRepository, times(1)).getAverageTimeCard(userId);
+        verify(tasksDataWarehouseRepository, times(1)).getAverageTimeCard(userId);
     }
 
     @Test
     void testGetAverageTimeCard_NoTasksCompleted() {
         Integer userId = 2;
 
-        when(averageTimeRepository.getAverageTimeCard(userId)).thenReturn(Optional.empty());
+        when(tasksDataWarehouseRepository.getAverageTimeCard(userId)).thenReturn(Optional.empty());
 
         NoSuchElementException exception = assertThrows(NoSuchElementException.class,
-                () -> averageTimeService.getAverageTimeCard(userId));
+                () -> tasksService.getAverageTimeCard(userId));
 
         assertEquals("No tasks completed", exception.getMessage());
-        verify(averageTimeRepository, times(1)).getAverageTimeCard(userId);
+        verify(tasksDataWarehouseRepository, times(1)).getAverageTimeCard(userId);
     }
 }
 
