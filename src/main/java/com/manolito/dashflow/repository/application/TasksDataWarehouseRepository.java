@@ -132,7 +132,7 @@ public class TasksDataWarehouseRepository {
     }
 
     public Optional<Double> getAverageTimeCard(Integer userId) {
-        String sql = "SELECT ROUND(AVG(completed.date_date - created.date_date),2) AS average_time " +
+        String sql = "SELECT ROUND((AVG(completed.date_date - created.date_date)/3),2) AS average_time " +
                 "FROM dw_tasks.fact_tasks ft " +
                 "JOIN dw_tasks.dates created ON ft.created_at = created.date_id " +
                 "JOIN dw_tasks.dates completed ON ft.completed_at = completed.date_id " +
