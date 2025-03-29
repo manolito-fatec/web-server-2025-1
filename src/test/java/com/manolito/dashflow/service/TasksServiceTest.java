@@ -15,7 +15,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-@DisplayName("TasksService")
 @ExtendWith(MockitoExtension.class)
 class TasksServiceTest {
 
@@ -26,6 +25,7 @@ class TasksServiceTest {
     private TasksService tasksService;
 
     @Test
+    @DisplayName("Test when tasks are successfully retrieved and average time is calculated")
     void testGetAverageTimeCard_Success() {
         Integer userId = 1;
         Double expectedTime = 8.67;
@@ -39,6 +39,7 @@ class TasksServiceTest {
     }
 
     @Test
+    @DisplayName("Test when no tasks are completed and NoSuchElementException is thrown")
     void testGetAverageTimeCard_NoTasksCompleted() {
         Integer userId = 2;
 
@@ -50,5 +51,6 @@ class TasksServiceTest {
         assertEquals("No tasks completed", exception.getMessage());
         verify(tasksDataWarehouseRepository, times(1)).getAverageTimeCard(userId);
     }
+
 }
 
