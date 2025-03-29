@@ -8,12 +8,14 @@ import java.util.Optional;
 
 import com.manolito.dashflow.repository.application.TasksDataWarehouseRepository;
 import com.manolito.dashflow.service.application.TasksService;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+@DisplayName("TasksService")
 @ExtendWith(MockitoExtension.class)
 class TasksServiceTest {
 
