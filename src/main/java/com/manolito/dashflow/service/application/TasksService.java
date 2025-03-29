@@ -28,4 +28,12 @@ public class TasksService {
         }
         return taskCount.get();
     }
+
+    public Double getAverageTimeCard(Integer userId) {
+        Optional<Double> averageTimeCard = tasksDataWarehouseRepository.getAverageTimeCard(userId);
+        if (averageTimeCard.isPresent()) {
+            return averageTimeCard.get();
+        }
+        throw new NoSuchElementException("No tasks completed");
+    }
 }
