@@ -101,7 +101,7 @@ public class TasksDataWarehouseRepository {
     }
 
     public Optional<Integer> getTotalProjectsByUserId(int userId) {
-        String sql = "SELECT COUNT DISTINCT(prj.original_id) AS total_project_count " +
+        String sql = "SELECT COUNT (DISTINCT prj.original_id) AS total_project_count " +
                 "FROM dataflow_appl.users u " +
                 "LEFT JOIN dataflow_appl.accounts acc " +
                 "ON u.user_id = acc.user_id " +
@@ -114,7 +114,7 @@ public class TasksDataWarehouseRepository {
                 "LEFT JOIN dw_tasks.epics ep " +
                 "ON st.epic_id = ep.epic_id " +
                 "LEFT JOIN dw_tasks.projects prj " +
-                "ON ep.project_id = prj.project_id" +
+                "ON ep.project_id = prj.project_id " +
                 "WHERE u.user_id = :userId GROUP BY u.user_id";
 
         Map<String, Object> params = new HashMap<>();
@@ -158,5 +158,24 @@ public class TasksDataWarehouseRepository {
                         rs.getInt("task_count")
                 )
         );
+    }
+
+    public Optional<Double> getAverageTimeCard(Integer userId) {
+        String sql = "SELECT ROUND((AVG(completed.date_date - created.date_date)/3),2) AS average_time " +
+                "FROM dw_tasks.fact_tasks ft " +
+                "JOIN dw_tasks.dates created ON ft.created_at = created.date_id " +
+                "JOIN dw_tasks.dates completed ON ft.completed_at = completed.date_id " +
+                "JOIN dw_tasks.users u ON assignee_id  = u.user_id " +
+                "WHERE ft.completed_at IS NOT NULL " +
+                "AND u.user_id = :userId";
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("userId", userId);
+        try {
+            Double result = jdbcTemplate.queryForObject(sql, params, Double.class);
+            return Optional.ofNullable(result);
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
     }
 }

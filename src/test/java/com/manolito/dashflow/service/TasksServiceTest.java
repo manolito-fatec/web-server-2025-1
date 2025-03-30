@@ -1,5 +1,11 @@
 package com.manolito.dashflow.service;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+import java.util.NoSuchElementException;
+import java.util.Optional;
+
 import com.manolito.dashflow.repository.application.TasksDataWarehouseRepository;
 import com.manolito.dashflow.service.application.TasksService;
 import org.junit.jupiter.api.DisplayName;
@@ -18,7 +24,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class TasksServiceTest {
+class TasksServiceTest {
 
     @Mock
     private TasksDataWarehouseRepository tasksDataWarehouseRepository;
@@ -42,6 +48,36 @@ public class TasksServiceTest {
 
         verify(tasksDataWarehouseRepository, times(1))
                 .getTotalTasksByStatusByOperatorBetween(TEST_USER_ID, TEST_START_DATE,TEST_END_DATE);
+    }
+
+
+
+    @Test
+    @DisplayName("Test when tasks are successfully retrieved and average time is calculated")
+    void testGetAverageTimeCard_Success() {
+        Integer userId = 1;
+        Double expectedTime = 8.67;
+
+        when(tasksDataWarehouseRepository.getAverageTimeCard(userId)).thenReturn(Optional.of(expectedTime));
+
+        Double result = tasksService.getAverageTimeCard(userId);
+
+        assertEquals(expectedTime, result);
+        verify(tasksDataWarehouseRepository, times(1)).getAverageTimeCard(userId);
+    }
+
+    @Test
+    @DisplayName("Test when no tasks are completed and NoSuchElementException is thrown")
+    void testGetAverageTimeCard_NoTasksCompleted() {
+        Integer userId = 2;
+
+        when(tasksDataWarehouseRepository.getAverageTimeCard(userId)).thenReturn(Optional.empty());
+
+        NoSuchElementException exception = assertThrows(NoSuchElementException.class,
+                () -> tasksService.getAverageTimeCard(userId));
+
+        assertEquals("No tasks completed", exception.getMessage());
+        verify(tasksDataWarehouseRepository, times(1)).getAverageTimeCard(userId);
     }
 
 }
