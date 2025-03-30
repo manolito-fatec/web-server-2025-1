@@ -1,5 +1,6 @@
 package com.manolito.dashflow.repository.application;
 
+import com.manolito.dashflow.dto.dw.CreatedDoneDto;
 import com.manolito.dashflow.dto.dw.StatusCountDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -69,6 +70,34 @@ public class TasksDataWarehouseRepository {
         } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
         }
+    }
+
+    public List<CreatedDoneDto> getTotalTasksByStatusByOperatorBetween(int userId, LocalDate startDate, LocalDate endDate) {
+        Date start = Date.valueOf(startDate);
+        Date end = Date.valueOf(endDate);
+
+        String sql = "SELECT COUNT(DISTINCT CASE WHEN created_date.date_date BETWEEN :start AND :end THEN ft.task_id END) AS created_task_count," +
+        "COUNT(DISTINCT CASE WHEN completed_date.date_date BETWEEN :start AND :end THEN ft.task_id END) AS completed_task_count " +
+        "FROM dataflow_appl.users u " +
+        "LEFT JOIN dataflow_appl.accounts acc ON u.user_id = acc.user_id "  +
+        "LEFT JOIN dw_tasks.users tu ON acc.account = tu.original_id " +
+        "LEFT JOIN dw_tasks.fact_tasks ft ON tu.user_id = ft.assignee_id " +
+        "LEFT JOIN dw_tasks.dates created_date ON ft.created_at = created_date.date_id " +
+        "LEFT JOIN dw_tasks.dates completed_date ON ft.completed_at = completed_date.date_id " +
+        "WHERE u.user_id = 1 " +
+        "GROUP BY u.user_id;";
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("userId", userId);
+        params.put("start", start);
+        params.put("end", end);
+        return jdbcTemplate.query(
+                sql,
+                params,
+                (rs, rowNum) -> new CreatedDoneDto(
+                        rs.getInt("created_task_count"),
+                        rs.getInt("completed_task_count")
+                ));
     }
 
     public Optional<Integer> getTotalProjectsByUserId(int userId) {

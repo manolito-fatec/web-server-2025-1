@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+
 import java.util.NoSuchElementException;
 
 @Tag(name = "Status Controller", description = "Endpoints para a consulta de status no Data Warehouse de Tasks")
