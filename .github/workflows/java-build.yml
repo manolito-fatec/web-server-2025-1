@@ -66,6 +66,6 @@ jobs:
           args: >
             -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_BACK_KEY}}
             -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION_KEY }}
-            -Dsonar.projectName="YOUTAN DASH"
+            -Dsonar.projectName="YOUTAN DASHBOARD"
             -Dsonar.sources=.
             -Dsonar.host.url=${{ secrets.SONAR_URL }}
