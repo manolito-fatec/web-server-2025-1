@@ -211,7 +211,6 @@ public class TaigaService {
     };
     
     public Dataset<Row> saveUserRoleToDatabase() {
-        final long projectId = 1637322L;
 
         try {
             Dataset<Row> userRolePairs = handleProjects()
