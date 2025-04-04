@@ -209,10 +209,11 @@ public class TaigaService {
                         pair -> pair[0]
                 ));
     };
-    
-    public Dataset<Row> saveUserRoleToDatabase() {
 
+    public Dataset<Row> saveUserRoleToDatabase() {
         try {
+            dataWarehouseLoader.truncateTable("user_role");
+
             Dataset<Row> userRolePairs = handleProjects()
                     .withColumn("member", explode(col("members")))
                     .select(
@@ -244,6 +245,8 @@ public class TaigaService {
 
     public Dataset<Row> saveTaskTagToDatabase() {
         try {
+            dataWarehouseLoader.truncateTable("task_tag");
+
             Dataset<Row> taskTagPairs = handleTasks()
                     .withColumn("tag", explode(col("tags")))
                     .select(
@@ -268,7 +271,6 @@ public class TaigaService {
                     .join(tags, "tag_name", "inner")
                     .select("task_id", "tag_id")
                     .orderBy("task_id", "tag_id");
-
         } catch (Exception e) {
             throw new RuntimeException("Failed to save task tags", e);
         }
