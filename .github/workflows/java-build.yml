@@ -67,5 +67,7 @@ jobs:
             -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_BACK_KEY}}
             -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION_KEY }}
             -Dsonar.projectName="YOUTAN DASHBOARD"
-            -Dsonar.sources=.
-            -Dsonar.host.url=${{ secrets.SONAR_URL }}
+            -Dsonar.sources=src/main/java/
+            -Dsonar.java.binaries=target/classes
+            -Dsonar.language=java
+            
