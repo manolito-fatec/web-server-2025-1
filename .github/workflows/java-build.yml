@@ -62,7 +62,6 @@ jobs:
         uses: SonarSource/sonarqube-scan-action@v4
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_URL }}
         with:
           args: >
             -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_BACK_KEY}}
