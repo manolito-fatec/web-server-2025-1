@@ -83,4 +83,9 @@ class StatusServiceTest {
         verify(tasksDataWarehouseRepository, never())
                 .getTaskCountGroupByStatusByUserIdAndProjectId(anyInt(), anyInt());
     }
+
+    @Test
+    void testSOnar(){
+        assertEquals(1,1);
+    }
 }
