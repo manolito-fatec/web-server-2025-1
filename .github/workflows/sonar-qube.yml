@@ -22,3 +22,4 @@ jobs:
           args: >
             -Dsonar.projectKey=${{ SONAR_PROJECT_BACK_KEY }}
             -Dsonar.organization=${{ SONAR_ORGANIZATION_KEY }}
+            -Dsonar.sources=src/main/java
