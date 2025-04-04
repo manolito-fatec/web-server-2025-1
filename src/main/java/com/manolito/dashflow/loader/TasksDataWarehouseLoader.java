@@ -115,6 +115,11 @@ public class TasksDataWarehouseLoader {
         }
     }
 
+    public void truncateTable(String tableName) {
+        String fullTableName = "dw_tasks." + tableName;
+        spark.sql("TRUNCATE TABLE " + fullTableName);
+    }
+
     public void saveWithRetries(Dataset<Row> data, String tableName, int maxRetries) {
         int attempts = 0;
         while (attempts < maxRetries) {
