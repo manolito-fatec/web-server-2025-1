@@ -50,3 +50,12 @@ jobs:
         
     - name: Verify Spark Installation
       run: spark-submit --version
+
+    - name: SonarQubeScan
+      uses: SonarSource/sonarqube-scan-action@v4
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      with:
+        args: >
+            -Dsonar.projectKey=${{ SONAR_PROJECT_BACK_KEY }}
+            -Dsonar.organization=${{ SONAR_ORGANIZATION_KEY }}
