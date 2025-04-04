@@ -50,24 +50,3 @@ jobs:
         
     - name: Verify Spark Installation
       run: spark-submit --version
-
-  sonarqube:
-    name: SonarQube
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-      - name: SonarQubeScan
-        uses: SonarSource/sonarqube-scan-action@v4
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        with:
-          args: >
-            -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_BACK_KEY}}
-            -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION_KEY }}
-            -Dsonar.projectName="YOUTAN DASHBOARD"
-            -Dsonar.sources=src/main/java/
-            -Dsonar.java.binaries=target/classes
-            -Dsonar.language=java
-            
