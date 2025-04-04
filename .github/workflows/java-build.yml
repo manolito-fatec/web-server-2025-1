@@ -62,4 +62,11 @@ jobs:
         uses: SonarSource/sonarqube-scan-action@v4
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_QUBE_URL }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_URL }}
+        with:
+          args: >
+            -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_BACK_KEY}}
+            -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION_KEY }}
+            -Dsonar.projectName="YOUTAN DASH"
+            -Dsonar.sources=.
+            -Dsonar.host.url=${{ secrets.SONAR_URL }}
