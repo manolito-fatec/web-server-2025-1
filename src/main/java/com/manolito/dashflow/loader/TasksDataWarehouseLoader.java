@@ -117,7 +117,13 @@ public class TasksDataWarehouseLoader {
 
     public void truncateTable(String tableName) {
         String fullTableName = "dw_tasks." + tableName;
-        spark.sql("TRUNCATE TABLE " + fullTableName);
+        try {
+            if (spark.catalog().tableExists("dw_tasks", tableName)) {
+                spark.sql("TRUNCATE TABLE " + fullTableName);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to truncate table " + tableName, e);
+        }
     }
 
     public void saveWithRetries(Dataset<Row> data, String tableName, int maxRetries) {
