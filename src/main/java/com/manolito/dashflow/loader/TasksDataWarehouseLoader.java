@@ -98,8 +98,9 @@ public class TasksDataWarehouseLoader {
     public void save(Dataset<Row> data, String tableName) {
         try {
             List<String> tableColumns = sparkUtils.fetchTableColumns(jdbcUrl, dbUser, dbPassword, tableName);
-
             Dataset<Row> filteredData = data.select(sparkUtils.getColumns(data, tableColumns));
+
+            SaveMode mode = isLinkTable(tableName) ? SaveMode.Overwrite : SaveMode.Append;
 
             filteredData.write()
                     .format("jdbc")
@@ -108,10 +109,25 @@ public class TasksDataWarehouseLoader {
                     .option("user", dbUser)
                     .option("password", dbPassword)
                     .option("batchsize", 10000)
-                    .mode(SaveMode.Append)
+                    .mode(mode)
                     .save();
         } catch (Exception e) {
             throw new RuntimeException("Error saving data to table: " + tableName, e);
+        }
+    }
+
+    private boolean isLinkTable(String tableName) {
+        return tableName.equals("user_role") || tableName.equals("task_tag");
+    }
+
+    public void truncateTable(String tableName) {
+        String fullTableName = "dw_tasks." + tableName;
+        try {
+            if (spark.catalog().tableExists("dw_tasks", tableName)) {
+                spark.sql("TRUNCATE TABLE " + fullTableName);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to truncate table " + tableName, e);
         }
     }
 
