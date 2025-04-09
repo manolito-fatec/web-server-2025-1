@@ -1,4 +1,4 @@
-INSERT INTO dataflow_appl.tools(
+INSERT INTO dashflow_appl.tools(
 	tool_id, tool_name)
 	VALUES (1, 'taiga');
 
