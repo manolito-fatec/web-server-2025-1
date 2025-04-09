@@ -3,8 +3,7 @@ name: Java Build and Deploy to Tomcat VM (SCP + SSH Actions)
 on:
   push:
     branches:
-      - main
-      - master
+      - '*'
 
 jobs:
   build:
