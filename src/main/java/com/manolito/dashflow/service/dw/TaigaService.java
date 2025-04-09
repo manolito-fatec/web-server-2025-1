@@ -7,6 +7,7 @@ import com.manolito.dashflow.loader.TasksDataWarehouseLoader;
 import com.manolito.dashflow.repository.dw.UserRepository;
 import com.manolito.dashflow.transformer.TaigaTransformer;
 import com.manolito.dashflow.util.SparkUtils;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -46,6 +47,8 @@ public class TaigaService {
     private String authToken;
     private Integer userId;
     private String project = String.valueOf(1637322);
+    @Getter
+    private static Integer authenticatedUserId;
 
     /**
      * Maps the "name" field to the appropriate column name based on the target table.
@@ -132,7 +135,6 @@ public class TaigaService {
             JsonNode jsonNode = objectMapper.readTree(responseString);
 
             authToken = jsonNode.get("auth_token").asText();
-            saveUserToDatabase();
 
         } catch (Exception e) {
             throw new RuntimeException("Erro ao autenticar no Taiga", e);
@@ -186,6 +188,8 @@ public class TaigaService {
         Row Project = projectsData.select("id").head();
         long projectId = Project.getLong(0);
         project = String.valueOf(projectId);
+        Long userId = userRepository.getUserIdByOriginalId(originalId);
+        authenticatedUserId = userId.intValue();
     }
 
     private String extractOriginalIdFromDataset(Dataset<Row> transformedUsers) {
@@ -377,6 +381,7 @@ public class TaigaService {
         Dataset<Row> tags = transformer.transformTags(handleTags());
         dataWarehouseLoader.save(roles,"roles");
         dataWarehouseLoader.save(users, "users");
+        saveUserToDatabase();
         Dataset<Row> userRole = saveUserRoleToDatabase();
         dataWarehouseLoader.save(userRole,"user_role");
         dataWarehouseLoader.save(projects, "projects");
