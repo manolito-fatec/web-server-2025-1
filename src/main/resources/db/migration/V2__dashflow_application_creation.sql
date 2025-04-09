@@ -1,7 +1,7 @@
 ----------- INTERNAL APPLICATION DB CREATION -----------
 
-CREATE SCHEMA IF NOT EXISTS dataflow_appl;
-SET search_path TO dataflow_appl;
+CREATE SCHEMA IF NOT EXISTS dashflow_appl;
+SET search_path TO dashflow_appl;
 
 ----- USERS TABLE -----
 
