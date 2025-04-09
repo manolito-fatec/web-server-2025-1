@@ -45,14 +45,7 @@ jobs:
           echo "WAR_FILE=${WAR_FILE}" >> $GITHUB_OUTPUT
           echo "WAR_FILENAME=$(basename ${WAR_FILE})" >> $GITHUB_OUTPUT
 
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Copy WAR to VM
+      - name: Deploy to ManoLitoVM
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.MANOLITO_VM_IP }}
