@@ -1,4 +1,4 @@
-name: Java Build and Deploy to Tomcat VM (SCP + SSH Actions)
+name: Java Build and Deploy
 
 on:
   push:
