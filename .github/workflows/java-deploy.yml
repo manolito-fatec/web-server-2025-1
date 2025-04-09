@@ -59,18 +59,4 @@ jobs:
           username: ${{ secrets.MANOLITO_VM_USR }}
           password: ${{ secrets.MANOLITO_VM_PSW }}
           source: "target/*.war"
-          target: "/tmp/"
-
-      - name: Deploy on Tomcat
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.MANOLITO_VM_IP }}
-          username: ${{ secrets.MANOLITO_VM_USR }}
-          password: ${{ secrets.MANOLITO_VM_PSW }}
-          script: |
-            sudo systemctl stop tomcat
-            sudo rm -rf /opt/tomcat/webapps/ROOT*
-            sudo mv /tmp/*.war /opt/tomcat/webapps/ROOT.war
-            sudo chown tomcat:tomcat /opt/tomcat/webapps/ROOT.war
-            sudo systemctl start tomcat
-            echo "Deployment completed successfully!"
+          target: "/opt/tomcat/webapps/ROOT/"
