@@ -1,7 +1,6 @@
 package com.manolito.dashflow.service.application;
 
 import com.manolito.dashflow.dto.dw.CreatedDoneDto;
-import com.manolito.dashflow.dto.dw.StatusCountDto;
 import com.manolito.dashflow.repository.application.TasksDataWarehouseRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -66,12 +65,28 @@ public class TasksService {
         return taskCount;
     }
 
+    /**
+     * Retrieves a list of started and completed tasks for a specific project within a given date range.
+     *
+     * @param projectId the ID of the project to query tasks for
+     * @param startDate the start date of the period (inclusive)
+     * @param endDate the end date of the period (inclusive)
+     * @return a list of {@link CreatedDoneDto} objects representing task
+     */
+    public CreatedDoneDto getCreatedAndCompletedTaskCountByProjectBetween(Integer projectId, LocalDate startDate, LocalDate endDate) {
+        Optional<CreatedDoneDto> taskCount = tasksDataWarehouseRepository.getAllCreatedAndCompletedTasksByProjectBetween(projectId, startDate, endDate);
+        if (taskCount.isEmpty()) {
+            throw new NoSuchElementException("No tasks found in the time period");
+        }
+        return taskCount.get();
+    }
+
       /**
      * Busca a média de tempo que o usuário leva para completar suas tasks, calculando a média de tasks feitas por semana.
      *
      * @param userId O id do usuário buscado para o cálculo.
      * @return valor da média calculada, em formato '0.0'
-     * @throws 'No tasks completed'
+     * @throws  'No tasks completed'
      */
 
     public Double getAverageTimeCard(Integer userId) {
