@@ -72,6 +72,31 @@ public class TasksController {
         }
     }
 
+    @GetMapping("/get-project-count-between/{projectId}/{startDate}/{endDate}")
+    @Operation(summary = "Busca o total de tasks de um projeto dentro de um período de tempo", description = "Faz uma requisição ao DB e retorna o total de Tasks associadas a um projeto entre duas datas")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Total de tasks extraido com sucesso."),
+            @ApiResponse(responseCode = "400", description = "Requisição mal formulada."),
+            @ApiResponse(responseCode = "404", description = "Tasks para o usuário não existem."),
+            @ApiResponse(responseCode = "408", description = "Tempo de resposta excedido."),
+            @ApiResponse(responseCode = "500", description = "Erro interno do servidor ao tentar buscar o local.")
+    })
+    public ResponseEntity<?> getTotalTasksByProjectBetween(
+            @Parameter(description = "Id do projeto", required = true) @PathVariable String projectId,
+            @Parameter(description = "Data inicial do período", required = true) @PathVariable String startDate,
+            @Parameter(description = "Data final do período", required = true) @PathVariable String endDate
+    ) {
+        try {
+            return ResponseEntity.ok().body(tasksService.getCreatedAndCompletedTaskCountByProjectBetween(Integer.valueOf(projectId), LocalDate.parse(startDate), LocalDate.parse(endDate)));
+        } catch (NoSuchElementException noSuchElementException) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        } catch (IllegalArgumentException illegalArgumentException) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        } catch (RuntimeException runtimeException) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal Server Error " + runtimeException.getMessage());
+        }
+    }
+
     @GetMapping("/get-count-between/{userId}/{startDate}/{endDate}")
     @Operation(summary = "Busca o total de tasks de um usuário da aplicação dentro de um período de tempo", description = "Faz uma requisição ao DB e retorna o total de Tasks associadas a um usuário entre duas datas")
     @ApiResponses(value = {

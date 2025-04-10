@@ -100,6 +100,36 @@ public class TasksDataWarehouseRepository {
                 ));
     }
 
+    public Optional<CreatedDoneDto> getAllCreatedAndCompletedTasksByProjectBetween(int projectId, LocalDate startDate, LocalDate endDate) {
+        Date start = Date.valueOf(startDate);
+        Date end = Date.valueOf(endDate);
+
+        String sql = "SELECT COUNT(DISTINCT CASE WHEN created_date.date_date BETWEEN :start AND :end THEN ft.task_id END) AS created_task_count," +
+                "COUNT(DISTINCT CASE WHEN completed_date.date_date BETWEEN :start AND :end THEN ft.task_id END) AS completed_task_count " +
+                "FROM dataflow_appl.users u " +
+                "LEFT JOIN dataflow_appl.accounts acc ON u.user_id = acc.user_id "  +
+                "LEFT JOIN dw_tasks.users tu ON acc.account = tu.original_id " +
+                "LEFT JOIN dw_tasks.fact_tasks ft ON tu.user_id = ft.assignee_id " +
+                "LEFT JOIN dw_tasks.stories st ON ft.story_id = st.story_id " +
+                "LEFT JOIN dw_tasks.epics ep ON st.epic_id = ep.epic_id " +
+                "LEFT JOIN dw_tasks.projects prj ON ep.project_id = prj.project_id " +
+                "LEFT JOIN dw_tasks.dates created_date ON ft.created_at = created_date.date_id " +
+                "LEFT JOIN dw_tasks.dates completed_date ON ft.completed_at = completed_date.date_id " +
+                "WHERE prj.original_id = :projectId ";
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("projectId", projectId);
+        params.put("start", start);
+        params.put("end", end);
+
+        try {
+            CreatedDoneDto result = jdbcTemplate.queryForObject(sql, params, CreatedDoneDto.class);
+            return Optional.ofNullable(result);
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
+    }
+
     public Optional<Integer> getTotalProjectsByUserId(int userId) {
         String sql = "SELECT COUNT (DISTINCT prj.original_id) AS total_project_count " +
                 "FROM dataflow_appl.users u " +
