@@ -41,6 +41,9 @@ public class TasksService {
      */
     public Integer getTaskCountByOperatorIdBetween(Integer userId, LocalDate startDate, LocalDate endDate) {
         Optional<Integer> taskCount = tasksDataWarehouseRepository.getTotalTasksByOperatorBetween(userId, startDate, endDate);
+        if (startDate.isAfter(endDate)) {
+            throw new IllegalArgumentException("Start date is after end date");
+        }
         if (taskCount.isEmpty()) {
             throw new NoSuchElementException("No tasks found in the time period");
         }
@@ -59,6 +62,9 @@ public class TasksService {
      */
     public List<CreatedDoneDto> getTaskCountByStatusByOperatorIdBetween(Integer userId, LocalDate startDate, LocalDate endDate) {
         List<CreatedDoneDto> taskCount = tasksDataWarehouseRepository.getTotalTasksByStatusByOperatorBetween(userId, startDate, endDate);
+        if (startDate.isAfter(endDate)) {
+            throw new IllegalArgumentException("Start date is after end date");
+        }
         if (taskCount.isEmpty()) {
             throw new NoSuchElementException("No tasks found in the time period");
         }
@@ -75,6 +81,9 @@ public class TasksService {
      */
     public CreatedDoneDto getCreatedAndCompletedTaskCountByProjectBetween(Integer projectId, LocalDate startDate, LocalDate endDate) {
         Optional<CreatedDoneDto> taskCount = tasksDataWarehouseRepository.getAllCreatedAndCompletedTasksByProjectBetween(projectId, startDate, endDate);
+        if (startDate.isAfter(endDate)) {
+            throw new IllegalArgumentException("Start date is after end date");
+        }
         if (taskCount.isEmpty()) {
             throw new NoSuchElementException("No tasks found in the time period");
         }
@@ -91,6 +100,9 @@ public class TasksService {
 
     public Double getAverageTimeCard(Integer userId) {
         Optional<Double> averageTimeCard = tasksDataWarehouseRepository.getAverageTimeCard(userId);
+        if (userId == null) {
+            throw new IllegalArgumentException("User id is null");
+        }
         if (averageTimeCard.isPresent()) {
             return averageTimeCard.get();
         }
