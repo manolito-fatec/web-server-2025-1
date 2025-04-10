@@ -1,7 +1,6 @@
 package com.manolito.dashflow.service.application;
 
 import com.manolito.dashflow.dto.dw.CreatedDoneDto;
-import com.manolito.dashflow.dto.dw.StatusCountDto;
 import com.manolito.dashflow.repository.application.TasksDataWarehouseRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -39,9 +38,13 @@ public class TasksService {
      * @param endDate the end date of the period (inclusive)
      * @return the total count of tasks assigned to the operator during the specified period
      * @throws NoSuchElementException if no tasks are found within the given date range
+     * @throws IllegalArgumentException if the start date is after the end date
      */
     public Integer getTaskCountByOperatorIdBetween(Integer userId, LocalDate startDate, LocalDate endDate) {
         Optional<Integer> taskCount = tasksDataWarehouseRepository.getTotalTasksByOperatorBetween(userId, startDate, endDate);
+        if (startDate.isAfter(endDate)) {
+            throw new IllegalArgumentException("Start date is after end date");
+        }
         if (taskCount.isEmpty()) {
             throw new NoSuchElementException("No tasks found in the time period");
         }
@@ -57,25 +60,53 @@ public class TasksService {
      * @param endDate the end date of the period (inclusive)
      * @return a list of {@link CreatedDoneDto} objects representing task counts by status
      * @throws NoSuchElementException if no tasks are found within the given date range
+     * @throws IllegalArgumentException if the start date is after the end date
      */
     public List<CreatedDoneDto> getTaskCountByStatusByOperatorIdBetween(Integer userId, LocalDate startDate, LocalDate endDate) {
         List<CreatedDoneDto> taskCount = tasksDataWarehouseRepository.getTotalTasksByStatusByOperatorBetween(userId, startDate, endDate);
+        if (startDate.isAfter(endDate)) {
+            throw new IllegalArgumentException("Start date is after end date");
+        }
         if (taskCount.isEmpty()) {
             throw new NoSuchElementException("No tasks found in the time period");
         }
         return taskCount;
     }
 
-      /**
-     * Busca a média de tempo que o usuário leva para completar suas tasks, calculando a média de tasks feitas por semana.
+    /**
+     * Retrieves a list of started and completed tasks for a specific project within a given date range.
      *
-     * @param userId O id do usuário buscado para o cálculo.
-     * @return valor da média calculada, em formato '0.0'
-     * @throws 'No tasks completed'
+     * @param projectId the ID of the project to query tasks for
+     * @param startDate the start date of the period (inclusive)
+     * @param endDate the end date of the period (inclusive)
+     * @return a list of {@link CreatedDoneDto} objects representing task
+     * @throws NoSuchElementException if no tasks are found within the given date range
+     * @throws IllegalArgumentException if the start date is after the end date
      */
+    public CreatedDoneDto getCreatedAndCompletedTaskCountByProjectBetween(Integer projectId, LocalDate startDate, LocalDate endDate) {
+        Optional<CreatedDoneDto> taskCount = tasksDataWarehouseRepository.getAllCreatedAndCompletedTasksByProjectBetween(projectId, startDate, endDate);
+        if (startDate.isAfter(endDate)) {
+            throw new IllegalArgumentException("Start date is after end date");
+        }
+        if (taskCount.isEmpty()) {
+            throw new NoSuchElementException("No tasks found in the time period");
+        }
+        return taskCount.get();
+    }
 
+    /**
+     * Retrieves the average time a user takes to complete their tasks, calculating the average amount of tasks done by week.
+     *
+     * @param userId the ID of the user to query tasks for
+     * @return average task completion time by the user, in the following format: '0.0' (days)
+     * @throws NoSuchElementException if no tasks are found
+     * @throws IllegalArgumentException if user ID is null
+     */
     public Double getAverageTimeCard(Integer userId) {
         Optional<Double> averageTimeCard = tasksDataWarehouseRepository.getAverageTimeCard(userId);
+        if (userId == null) {
+            throw new IllegalArgumentException("User id is null");
+        }
         if (averageTimeCard.isPresent()) {
             return averageTimeCard.get();
         }
