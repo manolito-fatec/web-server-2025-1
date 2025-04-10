@@ -81,4 +81,12 @@ public class TasksService {
         }
         throw new NoSuchElementException("No tasks completed");
     }
+
+    public Integer getTotalCardsForManager(Integer userId) {
+        Optional<Integer> cardsCount = tasksDataWarehouseRepository.getTotalCardsForManager(userId);
+        if (cardsCount.isEmpty()) {
+            throw new NoSuchElementException("No cards found for this manager");
+        }
+        return cardsCount.get();
+    }
 }
