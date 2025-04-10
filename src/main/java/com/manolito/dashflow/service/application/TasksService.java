@@ -95,10 +95,10 @@ public class TasksService {
     }
 
     /**
-     * Busca a média de tempo que o usuário leva para completar suas tasks, calculando a média de tasks feitas por semana.
+     * Retrieves the average time a user takes to complete their tasks, calculating the average amount of tasks done by week.
      *
-     * @param userId O id do usuário buscado para o cálculo.
-     * @return valor da média calculada, em formato '0.0'
+     * @param userId the ID of the user to query tasks for
+     * @return average task completion time by the user, in the following format: '0.0' (days)
      * @throws NoSuchElementException if no tasks are found
      * @throws IllegalArgumentException if user ID is null
      */
