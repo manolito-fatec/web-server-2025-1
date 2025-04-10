@@ -1,7 +1,6 @@
 package com.manolito.dashflow.controller.application;
 
 import com.manolito.dashflow.service.application.TasksService;
-import com.manolito.dashflow.service.dw.TaigaService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -122,42 +121,33 @@ public class TasksController {
         }
     }
 
-    @GetMapping("/me")
-    @Operation(summary = "Retorna o ID do usuário autenticado", description = "Obtém o ID do usuário atualmente logado no sistema Taiga")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "ID do usuário retornado com sucesso"),
-            @ApiResponse(responseCode = "401", description = "Usuário não autenticado"),
-            @ApiResponse(responseCode = "500", description = "Erro interno no servidor ao tentar obter ID do usuário")
-    })
-    public ResponseEntity<Integer> getAuthenticatedUserId() {
-        Integer userId = TaigaService.getAuthenticatedUserId();
-        if (userId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-        return ResponseEntity.ok(userId);
-    }
-
-    @GetMapping("/get-count/me")
-    @Operation(summary = "Mostra contagem de tasks do usuário logado", description = "Retorna o número total de tasks associadas ao usuário autenticado")
+    @GetMapping("/get-count/gestor/quantity-cards/{userId}")
+    @Operation(summary = "Mostra contagem de tasks do gestor", description = "Retorna o número total de tasks em todos os projetos associados ao gestor")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Contagem de tasks retornada com sucesso"),
             @ApiResponse(responseCode = "400", description = "Requisição mal formulada"),
             @ApiResponse(responseCode = "401", description = "Usuário não autenticado"),
-            @ApiResponse(responseCode = "404", description = "Nenhuma task encontrada para este usuário"),
+            @ApiResponse(responseCode = "404", description = "Nenhuma task encontrada para este gestor"),
             @ApiResponse(responseCode = "408", description = "Tempo de resposta excedido"),
             @ApiResponse(responseCode = "500", description = "Erro interno no servidor ao tentar contar tasks")
     })
-    public ResponseEntity<?> getTotalTasksForAuthenticatedUser() {
-        Integer userId = TaigaService.getAuthenticatedUserId();
-
-        if (userId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not logged in");
-        }
+    public ResponseEntity<?> getTotalTasksForManager(
+            @Parameter(description = "id do usuário gestor", required = true) @PathVariable Integer userId) {
 
         try {
-            return ResponseEntity.ok(tasksService.getTaskCountByOperatorId(userId));
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            if (userId == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not logged in");
+            }
+            Integer totalCards = tasksService.getTotalCardsForManager(userId);
+            return ResponseEntity.ok(totalCards);
+
+        } catch (NoSuchElementException noSuchElementException) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(noSuchElementException.getMessage());
+        } catch (IllegalArgumentException illegalArgumentException) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        } catch (RuntimeException runtimeException) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Internal Server Error: " + runtimeException.getMessage());
         }
     }
 }
