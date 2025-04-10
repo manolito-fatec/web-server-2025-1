@@ -38,6 +38,7 @@ public class TasksService {
      * @param endDate the end date of the period (inclusive)
      * @return the total count of tasks assigned to the operator during the specified period
      * @throws NoSuchElementException if no tasks are found within the given date range
+     * @throws IllegalArgumentException if the start date is after the end date
      */
     public Integer getTaskCountByOperatorIdBetween(Integer userId, LocalDate startDate, LocalDate endDate) {
         Optional<Integer> taskCount = tasksDataWarehouseRepository.getTotalTasksByOperatorBetween(userId, startDate, endDate);
@@ -59,6 +60,7 @@ public class TasksService {
      * @param endDate the end date of the period (inclusive)
      * @return a list of {@link CreatedDoneDto} objects representing task counts by status
      * @throws NoSuchElementException if no tasks are found within the given date range
+     * @throws IllegalArgumentException if the start date is after the end date
      */
     public List<CreatedDoneDto> getTaskCountByStatusByOperatorIdBetween(Integer userId, LocalDate startDate, LocalDate endDate) {
         List<CreatedDoneDto> taskCount = tasksDataWarehouseRepository.getTotalTasksByStatusByOperatorBetween(userId, startDate, endDate);
@@ -78,6 +80,8 @@ public class TasksService {
      * @param startDate the start date of the period (inclusive)
      * @param endDate the end date of the period (inclusive)
      * @return a list of {@link CreatedDoneDto} objects representing task
+     * @throws NoSuchElementException if no tasks are found within the given date range
+     * @throws IllegalArgumentException if the start date is after the end date
      */
     public CreatedDoneDto getCreatedAndCompletedTaskCountByProjectBetween(Integer projectId, LocalDate startDate, LocalDate endDate) {
         Optional<CreatedDoneDto> taskCount = tasksDataWarehouseRepository.getAllCreatedAndCompletedTasksByProjectBetween(projectId, startDate, endDate);
@@ -90,14 +94,14 @@ public class TasksService {
         return taskCount.get();
     }
 
-      /**
+    /**
      * Busca a média de tempo que o usuário leva para completar suas tasks, calculando a média de tasks feitas por semana.
      *
      * @param userId O id do usuário buscado para o cálculo.
      * @return valor da média calculada, em formato '0.0'
-     * @throws  'No tasks completed'
+     * @throws NoSuchElementException if no tasks are found
+     * @throws IllegalArgumentException if user ID is null
      */
-
     public Double getAverageTimeCard(Integer userId) {
         Optional<Double> averageTimeCard = tasksDataWarehouseRepository.getAverageTimeCard(userId);
         if (userId == null) {
