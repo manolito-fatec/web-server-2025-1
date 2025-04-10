@@ -178,4 +178,28 @@ public class TasksDataWarehouseRepository {
             return Optional.empty();
         }
     }
+
+    public Optional<Integer> getTotalCardsForManager(int userId) {
+        String sql = "SELECT COUNT(ft.task_id) AS total_cards " +
+                "FROM dataflow_appl.users u " +
+                "LEFT JOIN dataflow_appl.accounts acc ON u.user_id = acc.user_id " +
+                "LEFT JOIN dw_tasks.users tu ON acc.account = tu.original_id " +
+                "LEFT JOIN dw_tasks.fact_tasks ft ON tu.user_id = ft.assignee_id " +
+                "LEFT JOIN dw_tasks.status st ON ft.status_id = st.status_id " +
+                "LEFT JOIN dw_tasks.projects prj ON st.project_id = prj.project_id " +
+                "WHERE u.user_id = :userId " +
+                "AND prj.is_current = TRUE " +
+                "AND st.is_current = TRUE " +
+                "AND tu.is_current = TRUE";
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("userId", userId);
+
+        try {
+            Integer result = jdbcTemplate.queryForObject(sql, params, Integer.class);
+            return Optional.ofNullable(result);
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
+    }
 }
