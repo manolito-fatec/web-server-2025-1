@@ -47,8 +47,6 @@ public class TaigaService {
     private String authToken;
     private Integer userId;
     private String project = String.valueOf(1637322);
-    @Getter
-    private static Integer authenticatedUserId;
 
     /**
      * Maps the "name" field to the appropriate column name based on the target table.
@@ -188,8 +186,6 @@ public class TaigaService {
         Row Project = projectsData.select("id").head();
         long projectId = Project.getLong(0);
         project = String.valueOf(projectId);
-        Long userId = userRepository.getUserIdByOriginalId(originalId);
-        authenticatedUserId = userId.intValue();
     }
 
     private String extractOriginalIdFromDataset(Dataset<Row> transformedUsers) {
@@ -215,8 +211,6 @@ public class TaigaService {
     };
     
     public Dataset<Row> saveUserRoleToDatabase() {
-        final long projectId = 1637322L;
-
         try {
             Dataset<Row> userRolePairs = handleProjects()
                     .withColumn("member", explode(col("members")))
