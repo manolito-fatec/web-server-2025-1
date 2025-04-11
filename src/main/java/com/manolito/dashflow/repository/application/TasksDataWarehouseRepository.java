@@ -21,8 +21,8 @@ public class TasksDataWarehouseRepository {
 
     public Optional<Integer> getTotalTasksByOperator(int userId) {
         String sql = "SELECT COUNT(ft.task_id) AS total_task_count " +
-                "FROM dataflow_appl.users u " +
-                "LEFT JOIN dataflow_appl.accounts acc " +
+                "FROM dashflow_appl.users u " +
+                "LEFT JOIN dashflow_appl.accounts acc " +
                 "ON u.user_id = acc.user_id " +
                 "LEFT JOIN dw_tasks.users tu " +
                 "ON acc.account = tu.original_id " +
@@ -46,8 +46,8 @@ public class TasksDataWarehouseRepository {
 
 
         String sql = "SELECT COUNT(ft.task_id) AS total_task_count " +
-                "FROM dataflow_appl.users u " +
-                "LEFT JOIN dataflow_appl.accounts acc ON u.user_id = acc.user_id " +
+                "FROM dashflow_appl.users u " +
+                "LEFT JOIN dashflow_appl.accounts acc ON u.user_id = acc.user_id " +
                 "LEFT JOIN dw_tasks.users tu ON acc.account = tu.original_id " +
                 "LEFT JOIN dw_tasks.fact_tasks ft ON tu.user_id = ft.assignee_id " +
                 "LEFT JOIN dw_tasks.dates created_date ON ft.created_at = created_date.date_id " +
@@ -78,8 +78,8 @@ public class TasksDataWarehouseRepository {
 
         String sql = "SELECT COUNT(DISTINCT CASE WHEN created_date.date_date BETWEEN :start AND :end THEN ft.task_id END) AS created_task_count," +
         "COUNT(DISTINCT CASE WHEN completed_date.date_date BETWEEN :start AND :end THEN ft.task_id END) AS completed_task_count " +
-        "FROM dataflow_appl.users u " +
-        "LEFT JOIN dataflow_appl.accounts acc ON u.user_id = acc.user_id "  +
+        "FROM dashflow_appl.users u " +
+        "LEFT JOIN dashflow_appl.accounts acc ON u.user_id = acc.user_id "  +
         "LEFT JOIN dw_tasks.users tu ON acc.account = tu.original_id " +
         "LEFT JOIN dw_tasks.fact_tasks ft ON tu.user_id = ft.assignee_id " +
         "LEFT JOIN dw_tasks.dates created_date ON ft.created_at = created_date.date_id " +
@@ -106,8 +106,8 @@ public class TasksDataWarehouseRepository {
 
         String sql = "SELECT COUNT(DISTINCT CASE WHEN created_date.date_date BETWEEN :start AND :end THEN ft.task_id END) AS created_task_count," +
                 "COUNT(DISTINCT CASE WHEN completed_date.date_date BETWEEN :start AND :end THEN ft.task_id END) AS completed_task_count " +
-                "FROM dataflow_appl.users u " +
-                "LEFT JOIN dataflow_appl.accounts acc ON u.user_id = acc.user_id "  +
+                "FROM dashflow_appl.users u " +
+                "LEFT JOIN dashflow_appl.accounts acc ON u.user_id = acc.user_id "  +
                 "LEFT JOIN dw_tasks.users tu ON acc.account = tu.original_id " +
                 "LEFT JOIN dw_tasks.fact_tasks ft ON tu.user_id = ft.assignee_id " +
                 "LEFT JOIN dw_tasks.stories st ON ft.story_id = st.story_id " +
@@ -132,8 +132,8 @@ public class TasksDataWarehouseRepository {
 
     public Optional<Integer> getTotalProjectsByUserId(int userId) {
         String sql = "SELECT COUNT (DISTINCT prj.original_id) AS total_project_count " +
-                "FROM dataflow_appl.users u " +
-                "LEFT JOIN dataflow_appl.accounts acc " +
+                "FROM dashflow_appl.users u " +
+                "LEFT JOIN dashflow_appl.accounts acc " +
                 "ON u.user_id = acc.user_id " +
                 "LEFT JOIN dw_tasks.users tu " +
                 "ON acc.account = tu.original_id " +
@@ -159,8 +159,8 @@ public class TasksDataWarehouseRepository {
 
     public List<StatusCountDto> getTaskCountGroupByStatusByUserIdAndProjectId(int userId, int projectId) {
         String sql = "SELECT st.status_name, COUNT(ft.task_id) as task_count " +
-                "FROM dataflow_appl.users u " +
-                "LEFT JOIN dataflow_appl.accounts acc " +
+                "FROM dashflow_appl.users u " +
+                "LEFT JOIN dashflow_appl.accounts acc " +
                 "ON u.user_id = acc.user_id " +
                 "LEFT JOIN dw_tasks.users tu " +
                 "ON acc.account = tu.original_id " +
