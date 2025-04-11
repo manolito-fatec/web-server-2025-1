@@ -7,7 +7,6 @@ import com.manolito.dashflow.loader.TasksDataWarehouseLoader;
 import com.manolito.dashflow.repository.dw.UserRepository;
 import com.manolito.dashflow.transformer.TaigaTransformer;
 import com.manolito.dashflow.util.SparkUtils;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;

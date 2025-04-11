@@ -1,7 +1,6 @@
 package com.manolito.dashflow.service.application;
 
 import com.manolito.dashflow.dto.dw.CreatedDoneDto;
-import com.manolito.dashflow.dto.dw.StatusCountDto;
 import com.manolito.dashflow.repository.application.TasksDataWarehouseRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
