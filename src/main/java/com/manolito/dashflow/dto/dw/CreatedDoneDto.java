@@ -8,6 +8,6 @@ import lombok.Data;
 @Builder
 @AllArgsConstructor
 public class CreatedDoneDto {
-    private Integer CreatedTaskCount;
-    private Integer CompletedTaskCount;
+    private Integer createdTaskCount;
+    private Integer completedTaskCount;
 }

@@ -30,7 +30,7 @@ class TasksServiceTest {
     private TasksService tasksService;
 
     private final int TEST_USER_ID = 123;
-    private final int TEST_PROJECT_ID = 456;
+    private final String TEST_PROJECT_ID = "456";
     private final LocalDate TEST_START_DATE = LocalDate.parse("2024-01-01");
     private final LocalDate TEST_END_DATE = LocalDate.parse("2025-01-01");
     private final LocalDate INVALID_START_DATE = LocalDate.parse("7777-01-01"); // start date after end date
@@ -144,7 +144,7 @@ class TasksServiceTest {
     void getTaskCountByStatusByOperatorIdBetween_whenDatesReversed_shouldThrow() {
         assertThrows(IllegalArgumentException.class,
                 () -> tasksService.getTaskCountByStatusByOperatorIdBetween(
-                        TEST_PROJECT_ID, INVALID_START_DATE, INVALID_END_DATE));
+                        TEST_USER_ID, INVALID_START_DATE, INVALID_END_DATE));
     }
 
     @Test

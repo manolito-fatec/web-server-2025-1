@@ -87,7 +87,7 @@ public class TasksController {
             @Parameter(description = "Data final do período", required = true) @PathVariable String endDate
     ) {
         try {
-            return ResponseEntity.ok().body(tasksService.getCreatedAndCompletedTaskCountByProjectBetween(Integer.valueOf(projectId), LocalDate.parse(startDate), LocalDate.parse(endDate)));
+            return ResponseEntity.ok().body(tasksService.getCreatedAndCompletedTaskCountByProjectBetween(projectId, LocalDate.parse(startDate), LocalDate.parse(endDate)));
         } catch (NoSuchElementException noSuchElementException) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         } catch (IllegalArgumentException illegalArgumentException) {
