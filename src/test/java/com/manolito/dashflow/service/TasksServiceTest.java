@@ -78,4 +78,17 @@ class TasksServiceTest {
         verify(tasksDataWarehouseRepository, times(1)).getAverageTimeCard(userId);
     }
 
+    @Test
+    @DisplayName("Test when total cards from manager are successfully retrieved")
+    void testGetTotalCardsForManager_Success() {
+        int userId = 1;
+        Integer expectedCount = 9;
+
+        when(tasksDataWarehouseRepository.getTotalCardsForManager(userId)).thenReturn(Optional.of(expectedCount));
+
+        Integer result = tasksService.getTotalCardsForManager(userId);
+
+        assertEquals(expectedCount, result);
+        verify(tasksDataWarehouseRepository, times(1)).getTotalCardsForManager(userId);
+    }
 }
