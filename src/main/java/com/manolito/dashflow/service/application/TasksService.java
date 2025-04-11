@@ -81,6 +81,7 @@ public class TasksService {
      * @param endDate the end date of the period (inclusive)
      * @return a list of {@link CreatedDoneDto} objects representing task
      * @throws NoSuchElementException if no tasks are found within the given date range
+     * @throws NullPointerException if the given project ID is null
      * @throws IllegalArgumentException if the start date is after the end date
      */
     public CreatedDoneDto getCreatedAndCompletedTaskCountByProjectBetween(String projectId, LocalDate startDate, LocalDate endDate) {
