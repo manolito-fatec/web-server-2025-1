@@ -27,7 +27,7 @@ public class StatusService {
      * @throws NoSuchElementException if no status information is found for the given user and project
      * @throws NullPointerException if either userId or projectId is null
      * @see StatusCountDto
-     * @see TasksDataWarehouseRepository#getTaskCountGroupByStatusByUserIdAndProjectId(int, int)
+     * @see TasksDataWarehouseRepository#getTaskCountGroupByStatusByUserIdAndProjectId(int, String)
      *
      * @example
      * <pre>{@code
@@ -36,10 +36,13 @@ public class StatusService {
      *     .getTaskCountGroupByStatusByUserIdAndProjectId(123, 456);
      * }</pre>
      */
-    public List<StatusCountDto> getTaskCountGroupByStatusByUserIdAndProjectId(Integer userId, Integer projectId) {
+    public List<StatusCountDto> getTaskCountGroupByStatusByUserIdAndProjectId(Integer userId, String projectId) {
         List<StatusCountDto> statusCountDto = tasksDataWarehouseRepository.getTaskCountGroupByStatusByUserIdAndProjectId(
                 userId, projectId
         );
+        if (projectId == null) {
+            throw new NullPointerException("projectId cannot be null");
+        }
         if (statusCountDto.isEmpty()) {
             throw new NoSuchElementException("No statuses found");
         }

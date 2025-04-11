@@ -36,7 +36,7 @@ public class StatusController {
     })
     public ResponseEntity<?> getTaskCountGroupByStatusByUserIdAndProjectId(
             @Parameter(description = "Id do usuário", required = true) @PathVariable Integer userId,
-            @Parameter(description = "Id do projeto", required = true) @PathVariable Integer projectId
+            @Parameter(description = "Id do projeto", required = true) @PathVariable String projectId
     ) {
         try {
             return ResponseEntity.ok().body(statusService.getTaskCountGroupByStatusByUserIdAndProjectId(userId, projectId));

@@ -28,7 +28,7 @@ class StatusServiceTest {
     private StatusService statusService;
 
     private final int TEST_USER_ID = 123;
-    private final int TEST_PROJECT_ID = 456;
+    private final String TEST_PROJECT_ID = "456";
 
     @Test
     @DisplayName("Should return task counts grouped by status when valid user and project IDs are provided")
@@ -58,7 +58,7 @@ class StatusServiceTest {
     @DisplayName("Should throw NoSuchElementException when no task status counts are found")
     void getTaskCountGroupByStatusByUserIdAndProjectId_whenNoResults_shouldThrowException() {
         when(tasksDataWarehouseRepository.getTaskCountGroupByStatusByUserIdAndProjectId(
-                anyInt(), anyInt()))
+                anyInt(), anyString()))
                 .thenReturn(Collections.emptyList());
 
         assertThrows(NoSuchElementException.class, () ->
@@ -81,6 +81,6 @@ class StatusServiceTest {
         );
 
         verify(tasksDataWarehouseRepository, never())
-                .getTaskCountGroupByStatusByUserIdAndProjectId(anyInt(), anyInt());
+                .getTaskCountGroupByStatusByUserIdAndProjectId(anyInt(), anyString());
     }
 }

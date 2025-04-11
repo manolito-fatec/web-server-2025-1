@@ -161,7 +161,7 @@ public class TasksDataWarehouseRepository {
         }
     }
 
-    public List<StatusCountDto> getTaskCountGroupByStatusByUserIdAndProjectId(int userId, int projectId) {
+    public List<StatusCountDto> getTaskCountGroupByStatusByUserIdAndProjectId(int userId, String projectId) {
         String sql = "SELECT st.status_name, COUNT(ft.task_id) as task_count " +
                 "FROM dashflow_appl.users u " +
                 "LEFT JOIN dashflow_appl.accounts acc " +
@@ -182,7 +182,7 @@ public class TasksDataWarehouseRepository {
 
         Map<String, Object> params = new HashMap<>();
         params.put("userId", userId);
-        params.put("projectId", String.valueOf(projectId));
+        params.put("projectId", projectId);
 
         return jdbcTemplate.query(
                 sql,
