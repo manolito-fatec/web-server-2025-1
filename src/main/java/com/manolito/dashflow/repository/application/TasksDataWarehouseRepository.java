@@ -161,7 +161,7 @@ public class TasksDataWarehouseRepository {
         }
     }
 
-    public List<StatusCountDto> getTaskCountGroupByStatusByUserIdAndProjectId(int userId, int projectId) {
+    public List<StatusCountDto> getTaskCountGroupByStatusByUserIdAndProjectId(int userId, String projectId) {
         String sql = "SELECT st.status_name, COUNT(ft.task_id) as task_count " +
                 "FROM dashflow_appl.users u " +
                 "LEFT JOIN dashflow_appl.accounts acc " +
@@ -182,7 +182,32 @@ public class TasksDataWarehouseRepository {
 
         Map<String, Object> params = new HashMap<>();
         params.put("userId", userId);
-        params.put("projectId", String.valueOf(projectId));
+        params.put("projectId", projectId);
+
+        return jdbcTemplate.query(
+                sql,
+                params,
+                (rs, rowNum) -> new StatusCountDto(
+                        rs.getString("status_name"),
+                        rs.getInt("task_count")
+                )
+        );
+    }
+
+    public List<StatusCountDto> getTaskCountGroupByStatusByProjectId(String projectId) {
+        String sql = "SELECT st.status_name, COUNT(ft.task_id) as task_count " +
+                "FROM dw_tasks.projects prj " +
+                "LEFT JOIN dw_tasks.epics ep ON prj.project_id = ep.project_id " +
+                "LEFT JOIN dw_tasks.stories sto ON ep.epic_id = sto.epic_id " +
+                "LEFT JOIN dw_tasks.fact_tasks ft ON sto.story_id = ft.story_id " +
+                "LEFT JOIN dw_tasks.status st " +
+                "ON ft.status_id = st.status_id " +
+                "WHERE prj.original_id = :projectId " +
+                "AND st.is_current = TRUE " +
+                "GROUP BY st.status_name";
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("projectId", projectId);
 
         return jdbcTemplate.query(
                 sql,
