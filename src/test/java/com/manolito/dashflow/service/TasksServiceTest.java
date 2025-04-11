@@ -91,4 +91,18 @@ class TasksServiceTest {
         assertEquals(expectedCount, result);
         verify(tasksDataWarehouseRepository, times(1)).getTotalCardsForManager(userId);
     }
+
+    @Test
+    @DisplayName("Test when manager wasn't assiged in any card")
+    void TestGetTotalCardsForManager_NoAssigedCard() {
+        int userId = 1;
+
+        when(tasksDataWarehouseRepository.getTotalCardsForManager(userId)).thenReturn(Optional.empty());
+
+        NoSuchElementException exception = assertThrows(NoSuchElementException.class,
+                () -> tasksService.getTotalCardsForManager(userId));
+
+        assertEquals("No cards found for this manager", exception.getMessage());
+        verify(tasksDataWarehouseRepository, times(1)).getTotalCardsForManager(userId);
+    }
 }
