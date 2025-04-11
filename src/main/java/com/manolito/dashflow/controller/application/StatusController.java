@@ -48,4 +48,28 @@ public class StatusController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal Server Error " + runtimeException.getMessage());
         }
     }
+
+    @GetMapping("/{projectId}")
+    @Operation(summary = "Busca a soma de tasks por status de um projeto",
+            description = "Faz uma requisição ao DB e retorna o nome do status e a quantidade de tasks referentes a ela em projeto")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Quantidade de status extraída com sucesso."),
+            @ApiResponse(responseCode = "400", description = "Requisição mal formulada."),
+            @ApiResponse(responseCode = "404", description = "Status para o projeto não existem."),
+            @ApiResponse(responseCode = "408", description = "Tempo de resposta excedido."),
+            @ApiResponse(responseCode = "500", description = "Erro interno do servidor ao tentar buscar o local.")
+    })
+    public ResponseEntity<?> getTaskCountGroupByStatusByProjectId(
+            @Parameter(description = "Id do projeto", required = true) @PathVariable String projectId
+    ) {
+        try {
+            return ResponseEntity.ok().body(statusService.getTaskCountGroupByStatusByProjectId(projectId));
+        } catch (NoSuchElementException noSuchElementException) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        } catch (IllegalArgumentException illegalArgumentException) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        } catch (RuntimeException runtimeException) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal Server Error " + runtimeException.getMessage());
+        }
+    }
 }
