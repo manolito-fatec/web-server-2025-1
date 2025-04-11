@@ -88,6 +88,9 @@ public class TasksService {
         if (startDate.isAfter(endDate)) {
             throw new IllegalArgumentException("Start date is after end date");
         }
+        if (projectId == null) {
+            throw new NullPointerException("Project ID cannot be empty or null");
+        }
         if (taskCount.isEmpty()) {
             throw new NoSuchElementException("No tasks found in the time period");
         }
