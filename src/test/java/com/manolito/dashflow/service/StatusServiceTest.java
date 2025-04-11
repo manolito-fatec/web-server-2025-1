@@ -83,4 +83,51 @@ class StatusServiceTest {
         verify(tasksDataWarehouseRepository, never())
                 .getTaskCountGroupByStatusByUserIdAndProjectId(anyInt(), anyString());
     }
+
+    @Test
+    @DisplayName("Should return task counts grouped by status when valid project ID is provided")
+    void getTaskCountGroupByStatusByProjectId_shouldReturnStatusCounts() {
+        List<StatusCountDto> expectedResults = List.of(
+                new StatusCountDto("To Do", 10),
+                new StatusCountDto("In Progress", 6),
+                new StatusCountDto("Done", 4)
+        );
+
+        when(tasksDataWarehouseRepository.getTaskCountGroupByStatusByProjectId(TEST_PROJECT_ID))
+                .thenReturn(expectedResults);
+
+        List<StatusCountDto> actualResults = statusService.getTaskCountGroupByStatusByProjectId(TEST_PROJECT_ID);
+
+        assertNotNull(actualResults);
+        assertEquals(3, actualResults.size());
+        assertEquals("To Do", actualResults.get(0).getStatusName());
+        assertEquals(10, actualResults.get(0).getCount());
+        verify(tasksDataWarehouseRepository, times(1))
+                .getTaskCountGroupByStatusByProjectId(TEST_PROJECT_ID);
+    }
+
+    @Test
+    @DisplayName("Should throw NoSuchElementException when no task status counts are found for project")
+    void getTaskCountGroupByStatusByProjectId_whenNoResults_shouldThrowException() {
+        when(tasksDataWarehouseRepository.getTaskCountGroupByStatusByProjectId(anyString()))
+                .thenReturn(Collections.emptyList());
+
+        assertThrows(NoSuchElementException.class, () ->
+                statusService.getTaskCountGroupByStatusByProjectId(TEST_PROJECT_ID)
+        );
+
+        verify(tasksDataWarehouseRepository, times(1))
+                .getTaskCountGroupByStatusByProjectId(TEST_PROJECT_ID);
+    }
+
+    @Test
+    @DisplayName("Should throw NullPointerException when project ID is null")
+    void getTaskCountGroupByStatusByProjectId_withNullInput_shouldThrowException() {
+        assertThrows(NullPointerException.class, () ->
+                statusService.getTaskCountGroupByStatusByProjectId(null)
+        );
+
+        verify(tasksDataWarehouseRepository, never())
+                .getTaskCountGroupByStatusByProjectId(anyString());
+    }
 }

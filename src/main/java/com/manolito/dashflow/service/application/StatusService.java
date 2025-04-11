@@ -74,6 +74,9 @@ public class StatusService {
         List<StatusCountDto> statusCountDto = tasksDataWarehouseRepository.getTaskCountGroupByStatusByProjectId(
                 projectId
         );
+        if (projectId == null) {
+            throw new NullPointerException("projectId cannot be null");
+        }
         if (statusCountDto.isEmpty()) {
             throw new NoSuchElementException("No statuses found");
         }
