@@ -100,7 +100,7 @@ public class TasksDataWarehouseRepository {
                 ));
     }
 
-    public Optional<CreatedDoneDto> getAllCreatedAndCompletedTasksByProjectBetween(int projectId, LocalDate startDate, LocalDate endDate) {
+    public Optional<CreatedDoneDto> getAllCreatedAndCompletedTasksByProjectBetween(String projectId, LocalDate startDate, LocalDate endDate) {
         Date start = Date.valueOf(startDate);
         Date end = Date.valueOf(endDate);
 

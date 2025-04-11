@@ -83,7 +83,7 @@ public class TasksService {
      * @throws NoSuchElementException if no tasks are found within the given date range
      * @throws IllegalArgumentException if the start date is after the end date
      */
-    public CreatedDoneDto getCreatedAndCompletedTaskCountByProjectBetween(Integer projectId, LocalDate startDate, LocalDate endDate) {
+    public CreatedDoneDto getCreatedAndCompletedTaskCountByProjectBetween(String projectId, LocalDate startDate, LocalDate endDate) {
         Optional<CreatedDoneDto> taskCount = tasksDataWarehouseRepository.getAllCreatedAndCompletedTasksByProjectBetween(projectId, startDate, endDate);
         if (startDate.isAfter(endDate)) {
             throw new IllegalArgumentException("Start date is after end date");
