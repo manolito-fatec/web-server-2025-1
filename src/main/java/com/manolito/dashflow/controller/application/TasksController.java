@@ -160,6 +160,12 @@ public class TasksController {
     ) {
         try {
             return ResponseEntity.ok().body(tasksService.getAverageTimeCardByProjectId(projectId));
+        } catch (NoSuchElementException noSuchElementException) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(noSuchElementException.getMessage());
+        } catch (IllegalArgumentException illegalArgumentException) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        } catch (RuntimeException runtimeException) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal Server Error " + runtimeException.getMessage());
         }
     }
   

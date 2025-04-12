@@ -134,6 +134,7 @@ public class TasksService {
             return averageTimeCard.get();
         }
         throw new NoSuchElementException("No tasks completed");
+    }
 
     /**
      * Retrieves the total cards assigned to manager from all projects

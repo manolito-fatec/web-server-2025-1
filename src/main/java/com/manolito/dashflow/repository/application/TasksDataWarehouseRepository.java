@@ -253,6 +253,9 @@ public class TasksDataWarehouseRepository {
         params.put("projectId", projectId);
         try {
             Double result = jdbcTemplate.queryForObject(sql, params, Double.class);
+            return Optional.ofNullable(result);
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
         }
     }
 
