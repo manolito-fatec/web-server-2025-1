@@ -248,4 +248,40 @@ class TasksServiceTest {
         assertThrows(IllegalArgumentException.class,
                 () -> tasksService.getAverageTimeCard(null));
     }
+
+    @Test
+    @DisplayName("getAverageTimeCardByProjectId - should return average when tasks exist for project")
+    void getAverageTimeCardByProjectId_whenTasksExist_shouldReturnAverage() {
+        Double expectedAverage = 5.2;
+        when(tasksDataWarehouseRepository.getAverageTimeCardByProjectId(TEST_PROJECT_ID))
+                .thenReturn(Optional.of(expectedAverage));
+
+        Double result = tasksService.getAverageTimeCardByProjectId(TEST_PROJECT_ID);
+
+        assertEquals(expectedAverage, result);
+        verify(tasksDataWarehouseRepository).getAverageTimeCardByProjectId(TEST_PROJECT_ID);
+    }
+
+    @Test
+    @DisplayName("getAverageTimeCardByProjectId - should throw when no completed tasks for project")
+    void getAverageTimeCardByProjectId_whenNoCompletedTasks_shouldThrow() {
+        when(tasksDataWarehouseRepository.getAverageTimeCardByProjectId(TEST_PROJECT_ID))
+                .thenReturn(Optional.empty());
+
+        NoSuchElementException exception = assertThrows(NoSuchElementException.class,
+                () -> tasksService.getAverageTimeCardByProjectId(TEST_PROJECT_ID));
+
+        assertEquals("No tasks completed", exception.getMessage());
+        verify(tasksDataWarehouseRepository).getAverageTimeCardByProjectId(TEST_PROJECT_ID);
+    }
+
+    @Test
+    @DisplayName("getAverageTimeCardByProjectId - should throw when projectId is null")
+    void getAverageTimeCardByProjectId_whenProjectIdIsNull_shouldThrow() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> tasksService.getAverageTimeCardByProjectId(null));
+
+        assertEquals("projectId cannot be null", exception.getMessage());
+        verify(tasksDataWarehouseRepository, never()).getAverageTimeCardByProjectId(anyString());
+    }
 }

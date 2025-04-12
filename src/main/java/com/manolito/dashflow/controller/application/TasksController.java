@@ -146,6 +146,29 @@ public class TasksController {
         }
     }
 
+    @GetMapping("/average-time-by-project/{projectId}")
+    @Operation(summary = "Calcula a média de tempo de conclusão de tasks", description = "Faz uma requisição no BD, retornando a média de tempo que o usuário leva para concluir suas tasks")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Média de tempo de conclusão de tasks extraída com sucesso."),
+            @ApiResponse(responseCode = "400", description = "Requisição mal formulada."),
+            @ApiResponse(responseCode = "404", description = "Não há tasks concluídas."),
+            @ApiResponse(responseCode = "408", description = "Tempo de resposta excedido."),
+            @ApiResponse(responseCode = "500", description = "Erro interno no servidor ao tentar calcular a média de tempo.")
+    })
+    public ResponseEntity<?> getAverageTaskTimeByProjectId(
+            @Parameter(description = "id do projeto", required = true) @PathVariable String projectId
+    ) {
+        try {
+            return ResponseEntity.ok().body(tasksService.getAverageTimeCardByProjectId(projectId));
+        } catch (NoSuchElementException noSuchElementException) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(noSuchElementException.getMessage());
+        } catch (IllegalArgumentException illegalArgumentException) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        } catch (RuntimeException runtimeException) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal Server Error " + runtimeException.getMessage());
+        }
+    }
+  
     @GetMapping("/get-count/gestor/quantity-cards/{userId}")
     @Operation(summary = "Mostra contagem de tasks do gestor", description = "Retorna o número total de tasks em todos os projetos associados ao gestor")
     @ApiResponses(value = {
@@ -165,14 +188,12 @@ public class TasksController {
             }
             Integer totalCards = tasksService.getTotalCardsForManager(userId);
             return ResponseEntity.ok(totalCards);
-
         } catch (NoSuchElementException noSuchElementException) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(noSuchElementException.getMessage());
         } catch (IllegalArgumentException illegalArgumentException) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         } catch (RuntimeException runtimeException) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Internal Server Error: " + runtimeException.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal Server Error " + runtimeException.getMessage());
         }
     }
 }

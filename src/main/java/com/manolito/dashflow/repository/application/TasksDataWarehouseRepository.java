@@ -238,6 +238,27 @@ public class TasksDataWarehouseRepository {
         }
     }
 
+    public Optional<Double> getAverageTimeCardByProjectId(String projectId) {
+        String sql = "SELECT ROUND((AVG(completed.date_date - created.date_date)/3),2) AS average_time " +
+                "FROM dw_tasks.fact_tasks ft " +
+                "JOIN dw_tasks.dates created ON ft.created_at = created.date_id " +
+                "JOIN dw_tasks.dates completed ON ft.completed_at = completed.date_id " +
+                "JOIN dw_tasks.stories st ON ft.story_id = ft.story_id " +
+                "JOIN dw_tasks.epics ep ON ep.epic_id = st.epic_id " +
+                "JOIN dw_tasks.projects prj ON prj.project_id = ep.project_id " +
+                "WHERE ft.completed_at IS NOT NULL " +
+                "AND prj.original_id = :projectId";
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("projectId", projectId);
+        try {
+            Double result = jdbcTemplate.queryForObject(sql, params, Double.class);
+            return Optional.ofNullable(result);
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
+    }
+
     public Optional<Integer> getTotalCardsForManager(int userId) {
         String sql = "SELECT COUNT(ft.task_id) AS total_cards " +
                 "FROM dataflow_appl.users u " +
