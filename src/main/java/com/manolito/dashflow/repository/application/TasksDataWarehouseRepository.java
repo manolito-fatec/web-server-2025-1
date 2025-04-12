@@ -77,15 +77,15 @@ public class TasksDataWarehouseRepository {
         Date end = Date.valueOf(endDate);
 
         String sql = "SELECT COUNT(DISTINCT CASE WHEN created_date.date_date BETWEEN :start AND :end THEN ft.task_id END) AS created_task_count," +
-                "COUNT(DISTINCT CASE WHEN completed_date.date_date BETWEEN :start AND :end THEN ft.task_id END) AS completed_task_count " +
-                "FROM dashflow_appl.users u " +
-                "LEFT JOIN dashflow_appl.accounts acc ON u.user_id = acc.user_id "  +
-                "LEFT JOIN dw_tasks.users tu ON acc.account = tu.original_id " +
-                "LEFT JOIN dw_tasks.fact_tasks ft ON tu.user_id = ft.assignee_id " +
-                "LEFT JOIN dw_tasks.dates created_date ON ft.created_at = created_date.date_id " +
-                "LEFT JOIN dw_tasks.dates completed_date ON ft.completed_at = completed_date.date_id " +
-                "WHERE u.user_id = 1 " +
-                "GROUP BY u.user_id;";
+        "COUNT(DISTINCT CASE WHEN completed_date.date_date BETWEEN :start AND :end THEN ft.task_id END) AS completed_task_count " +
+        "FROM dashflow_appl.users u " +
+        "LEFT JOIN dashflow_appl.accounts acc ON u.user_id = acc.user_id "  +
+        "LEFT JOIN dw_tasks.users tu ON acc.account = tu.original_id " +
+        "LEFT JOIN dw_tasks.fact_tasks ft ON tu.user_id = ft.assignee_id " +
+        "LEFT JOIN dw_tasks.dates created_date ON ft.created_at = created_date.date_id " +
+        "LEFT JOIN dw_tasks.dates completed_date ON ft.completed_at = completed_date.date_id " +
+        "WHERE u.user_id = 1 " +
+        "GROUP BY u.user_id;";
 
         Map<String, Object> params = new HashMap<>();
         params.put("userId", userId);
@@ -99,6 +99,40 @@ public class TasksDataWarehouseRepository {
                         rs.getInt("completed_task_count")
                 ));
     }
+    public Optional<CreatedDoneDto> getAllCreatedAndCompletedTasksByProjectBetween(String projectId, LocalDate startDate, LocalDate endDate) {
+        Date start = Date.valueOf(startDate);
+        Date end = Date.valueOf(endDate);
+
+        String sql = "SELECT COUNT(DISTINCT CASE WHEN created_date.date_date BETWEEN :start AND :end THEN ft.task_id END) AS created_task_count, " +
+                "COUNT(DISTINCT CASE WHEN completed_date.date_date BETWEEN :start AND :end THEN ft.task_id END) AS completed_task_count " +
+                "FROM dw_tasks.projects prj " +
+                "LEFT JOIN dw_tasks.epics ep ON prj.project_id = ep.project_id " +
+                "LEFT JOIN dw_tasks.stories st ON ep.epic_id = st.epic_id " +
+                "LEFT JOIN dw_tasks.fact_tasks ft ON st.story_id = ft.story_id " +
+                "LEFT JOIN dw_tasks.dates created_date ON ft.created_at = created_date.date_id  " +
+                "LEFT JOIN dw_tasks.dates completed_date ON ft.completed_at = completed_date.date_id " +
+                "WHERE prj.original_id = :projectId";
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("projectId", projectId);
+        params.put("start", start);
+        params.put("end", end);
+
+        try {
+            CreatedDoneDto result = jdbcTemplate.queryForObject(
+                    sql,
+                    params,
+                    (rs, rowNum) -> CreatedDoneDto.builder()
+                            .createdTaskCount(rs.getInt("created_task_count"))
+                            .completedTaskCount(rs.getInt("completed_task_count"))
+                            .build()
+            );
+            return Optional.ofNullable(result);
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
+    }
+
     public Optional<CreatedDoneDto> getAllCreatedAndCompletedTasksByProjectBetween(String projectId, LocalDate startDate, LocalDate endDate) {
         Date start = Date.valueOf(startDate);
         Date end = Date.valueOf(endDate);

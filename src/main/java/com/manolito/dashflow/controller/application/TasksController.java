@@ -168,7 +168,6 @@ public class TasksController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal Server Error " + runtimeException.getMessage());
         }
     }
-
     @GetMapping("/get-count/gestor/quantity-cards/{userId}")
     @Operation(summary = "Mostra contagem de tasks do gestor", description = "Retorna o número total de tasks em todos os projetos associados ao gestor")
     @ApiResponses(value = {

@@ -129,7 +129,6 @@ public class TaigaService {
             JsonNode jsonNode = objectMapper.readTree(responseString);
 
             authToken = jsonNode.get("auth_token").asText();
-            saveUserToDatabase();
 
         } catch (Exception e) {
             throw new RuntimeException("Erro ao autenticar no Taiga", e);
@@ -208,8 +207,6 @@ public class TaigaService {
     };
     
     public Dataset<Row> saveUserRoleToDatabase() {
-        final long projectId = 1637322L;
-
         try {
             Dataset<Row> userRolePairs = handleProjects()
                     .withColumn("member", explode(col("members")))
@@ -362,7 +359,7 @@ public class TaigaService {
     //Remove post construct annotation after login is done
     @PostConstruct
     public void taigaEtl() {
-        authenticateTaiga("gabguska", "aluno123");
+        authenticateTaiga("Man_Olito", "Manolito");
         TaigaTransformer transformer = new TaigaTransformer(spark.emptyDataFrame());
         Dataset<Row> roles = transformer.transformRoles(handleRoles());
         Dataset<Row> users = transformer.transformedUserProjects(handleUser());
@@ -374,6 +371,7 @@ public class TaigaService {
         Dataset<Row> tags = transformer.transformTags(handleTags());
         dataWarehouseLoader.save(roles,"roles");
         dataWarehouseLoader.save(users, "users");
+        saveUserToDatabase();
         Dataset<Row> userRole = saveUserRoleToDatabase();
         dataWarehouseLoader.save(userRole,"user_role");
         dataWarehouseLoader.save(projects, "projects");
