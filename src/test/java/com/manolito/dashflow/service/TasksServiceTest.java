@@ -16,6 +16,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.NoSuchElementException;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -214,6 +215,33 @@ class TasksServiceTest {
         assertEquals("No tasks completed", exception.getMessage());
     }
 
+    @Test
+    @DisplayName("Test when total cards from manager are successfully retrieved")
+    void testGetTotalCardsForManager_Success() {
+        int userId = 1;
+        Integer expectedCount = 9;
+
+        when(tasksDataWarehouseRepository.getTotalCardsForManager(userId)).thenReturn(Optional.of(expectedCount));
+
+        Integer result = tasksService.getTotalCardsForManager(userId);
+
+        assertEquals(expectedCount, result);
+        verify(tasksDataWarehouseRepository, times(1)).getTotalCardsForManager(userId);
+    }
+
+    @Test
+    @DisplayName("Test when manager wasn't assiged in any card")
+    void TestGetTotalCardsForManager_NoAssigedCard() {
+        int userId = 1;
+
+        when(tasksDataWarehouseRepository.getTotalCardsForManager(userId)).thenReturn(Optional.empty());
+
+        NoSuchElementException exception = assertThrows(NoSuchElementException.class,
+                () -> tasksService.getTotalCardsForManager(userId));
+
+        assertEquals("No cards found for this manager", exception.getMessage());
+        verify(tasksDataWarehouseRepository, times(1)).getTotalCardsForManager(userId);
+    }
     @Test
     @DisplayName("getAverageTimeCard - should throw when userId is null")
     void getAverageTimeCard_whenUserIdIsNull_shouldThrow() {
