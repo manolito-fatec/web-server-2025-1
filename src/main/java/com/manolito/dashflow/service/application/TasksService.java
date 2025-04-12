@@ -81,12 +81,16 @@ public class TasksService {
      * @param endDate the end date of the period (inclusive)
      * @return a list of {@link CreatedDoneDto} objects representing task
      * @throws NoSuchElementException if no tasks are found within the given date range
+     * @throws NullPointerException if the given project ID is null
      * @throws IllegalArgumentException if the start date is after the end date
      */
-    public CreatedDoneDto getCreatedAndCompletedTaskCountByProjectBetween(Integer projectId, LocalDate startDate, LocalDate endDate) {
+    public CreatedDoneDto getCreatedAndCompletedTaskCountByProjectBetween(String projectId, LocalDate startDate, LocalDate endDate) {
         Optional<CreatedDoneDto> taskCount = tasksDataWarehouseRepository.getAllCreatedAndCompletedTasksByProjectBetween(projectId, startDate, endDate);
         if (startDate.isAfter(endDate)) {
             throw new IllegalArgumentException("Start date is after end date");
+        }
+        if (projectId == null) {
+            throw new NullPointerException("Project ID cannot be empty or null");
         }
         if (taskCount.isEmpty()) {
             throw new NoSuchElementException("No tasks found in the time period");
@@ -111,5 +115,39 @@ public class TasksService {
             return averageTimeCard.get();
         }
         throw new NoSuchElementException("No tasks completed");
+    }
+
+    /**
+     * Retrieves the average time a project team takes to complete their tasks, calculating the average amount of tasks done by week.
+     *
+     * @param projectId the ID of the project to query tasks for
+     * @return average task completion time by a project team, in the following format: '0.0' (days)
+     * @throws NoSuchElementException if no tasks are found
+     * @throws IllegalArgumentException if project ID is null
+     */
+    public Double getAverageTimeCardByProjectId(String projectId) {
+        Optional<Double> averageTimeCard = tasksDataWarehouseRepository.getAverageTimeCardByProjectId(projectId);
+        if (projectId == null) {
+            throw new IllegalArgumentException("projectId cannot be null");
+        }
+        if (averageTimeCard.isPresent()) {
+            return averageTimeCard.get();
+        }
+        throw new NoSuchElementException("No tasks completed");
+    }
+
+    /**
+     * Retrieves the total cards assigned to manager from all projects
+     *
+     * @param userId the ID of the user logged in application
+     * @return total cards assigned to manager
+     * @throws NoSuchElementException if no cards are assigned to manager
+     */
+    public Integer getTotalCardsForManager(Integer userId) {
+        Optional<Integer> cardsCount = tasksDataWarehouseRepository.getTotalCardsForManager(userId);
+        if (cardsCount.isEmpty()) {
+            throw new NoSuchElementException("No cards found for this manager");
+        }
+        return cardsCount.get();
     }
 }

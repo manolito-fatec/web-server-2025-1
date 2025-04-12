@@ -30,7 +30,7 @@ class TasksServiceTest {
     private TasksService tasksService;
 
     private final int TEST_USER_ID = 123;
-    private final int TEST_PROJECT_ID = 456;
+    private final String TEST_PROJECT_ID = "456";
     private final LocalDate TEST_START_DATE = LocalDate.parse("2024-01-01");
     private final LocalDate TEST_END_DATE = LocalDate.parse("2025-01-01");
     private final LocalDate INVALID_START_DATE = LocalDate.parse("7777-01-01"); // start date after end date
@@ -144,7 +144,7 @@ class TasksServiceTest {
     void getTaskCountByStatusByOperatorIdBetween_whenDatesReversed_shouldThrow() {
         assertThrows(IllegalArgumentException.class,
                 () -> tasksService.getTaskCountByStatusByOperatorIdBetween(
-                        TEST_PROJECT_ID, INVALID_START_DATE, INVALID_END_DATE));
+                        TEST_USER_ID, INVALID_START_DATE, INVALID_END_DATE));
     }
 
     @Test
@@ -215,9 +215,72 @@ class TasksServiceTest {
     }
 
     @Test
+    @DisplayName("Test when total cards from manager are successfully retrieved")
+    void testGetTotalCardsForManager_Success() {
+        int userId = 1;
+        Integer expectedCount = 9;
+
+        when(tasksDataWarehouseRepository.getTotalCardsForManager(userId)).thenReturn(Optional.of(expectedCount));
+
+        Integer result = tasksService.getTotalCardsForManager(userId);
+
+        assertEquals(expectedCount, result);
+        verify(tasksDataWarehouseRepository, times(1)).getTotalCardsForManager(userId);
+    }
+
+    @Test
+    @DisplayName("Test when manager wasn't assiged in any card")
+    void TestGetTotalCardsForManager_NoAssigedCard() {
+        int userId = 1;
+
+        when(tasksDataWarehouseRepository.getTotalCardsForManager(userId)).thenReturn(Optional.empty());
+
+        NoSuchElementException exception = assertThrows(NoSuchElementException.class,
+                () -> tasksService.getTotalCardsForManager(userId));
+
+        assertEquals("No cards found for this manager", exception.getMessage());
+        verify(tasksDataWarehouseRepository, times(1)).getTotalCardsForManager(userId);
+    }
+    @Test
     @DisplayName("getAverageTimeCard - should throw when userId is null")
     void getAverageTimeCard_whenUserIdIsNull_shouldThrow() {
         assertThrows(IllegalArgumentException.class,
                 () -> tasksService.getAverageTimeCard(null));
+    }
+
+    @Test
+    @DisplayName("getAverageTimeCardByProjectId - should return average when tasks exist for project")
+    void getAverageTimeCardByProjectId_whenTasksExist_shouldReturnAverage() {
+        Double expectedAverage = 5.2;
+        when(tasksDataWarehouseRepository.getAverageTimeCardByProjectId(TEST_PROJECT_ID))
+                .thenReturn(Optional.of(expectedAverage));
+
+        Double result = tasksService.getAverageTimeCardByProjectId(TEST_PROJECT_ID);
+
+        assertEquals(expectedAverage, result);
+        verify(tasksDataWarehouseRepository).getAverageTimeCardByProjectId(TEST_PROJECT_ID);
+    }
+
+    @Test
+    @DisplayName("getAverageTimeCardByProjectId - should throw when no completed tasks for project")
+    void getAverageTimeCardByProjectId_whenNoCompletedTasks_shouldThrow() {
+        when(tasksDataWarehouseRepository.getAverageTimeCardByProjectId(TEST_PROJECT_ID))
+                .thenReturn(Optional.empty());
+
+        NoSuchElementException exception = assertThrows(NoSuchElementException.class,
+                () -> tasksService.getAverageTimeCardByProjectId(TEST_PROJECT_ID));
+
+        assertEquals("No tasks completed", exception.getMessage());
+        verify(tasksDataWarehouseRepository).getAverageTimeCardByProjectId(TEST_PROJECT_ID);
+    }
+
+    @Test
+    @DisplayName("getAverageTimeCardByProjectId - should throw when projectId is null")
+    void getAverageTimeCardByProjectId_whenProjectIdIsNull_shouldThrow() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> tasksService.getAverageTimeCardByProjectId(null));
+
+        assertEquals("projectId cannot be null", exception.getMessage());
+        verify(tasksDataWarehouseRepository, never()).getAverageTimeCardByProjectId(anyString());
     }
 }
