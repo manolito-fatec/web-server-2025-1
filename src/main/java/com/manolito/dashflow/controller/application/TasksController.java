@@ -160,6 +160,28 @@ public class TasksController {
     ) {
         try {
             return ResponseEntity.ok().body(tasksService.getAverageTimeCardByProjectId(projectId));
+        }
+    }
+  
+    @GetMapping("/get-count/gestor/quantity-cards/{userId}")
+    @Operation(summary = "Mostra contagem de tasks do gestor", description = "Retorna o número total de tasks em todos os projetos associados ao gestor")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Contagem de tasks retornada com sucesso"),
+            @ApiResponse(responseCode = "400", description = "Requisição mal formulada"),
+            @ApiResponse(responseCode = "401", description = "Usuário não autenticado"),
+            @ApiResponse(responseCode = "404", description = "Nenhuma task encontrada para este gestor"),
+            @ApiResponse(responseCode = "408", description = "Tempo de resposta excedido"),
+            @ApiResponse(responseCode = "500", description = "Erro interno no servidor ao tentar contar tasks")
+    })
+    public ResponseEntity<?> getTotalTasksForManager(
+            @Parameter(description = "id do usuário gestor", required = true) @PathVariable Integer userId) {
+
+        try {
+            if (userId == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not logged in");
+            }
+            Integer totalCards = tasksService.getTotalCardsForManager(userId);
+            return ResponseEntity.ok(totalCards);
         } catch (NoSuchElementException noSuchElementException) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(noSuchElementException.getMessage());
         } catch (IllegalArgumentException illegalArgumentException) {

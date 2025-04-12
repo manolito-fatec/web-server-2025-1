@@ -134,5 +134,19 @@ public class TasksService {
             return averageTimeCard.get();
         }
         throw new NoSuchElementException("No tasks completed");
+
+    /**
+     * Retrieves the total cards assigned to manager from all projects
+     *
+     * @param userId the ID of the user logged in application
+     * @return total cards assigned to manager
+     * @throws NoSuchElementException if no cards are assigned to manager
+     */
+    public Integer getTotalCardsForManager(Integer userId) {
+        Optional<Integer> cardsCount = tasksDataWarehouseRepository.getTotalCardsForManager(userId);
+        if (cardsCount.isEmpty()) {
+            throw new NoSuchElementException("No cards found for this manager");
+        }
+        return cardsCount.get();
     }
 }
