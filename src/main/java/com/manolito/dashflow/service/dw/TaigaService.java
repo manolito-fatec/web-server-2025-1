@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.manolito.dashflow.dto.dw.TaigaAuthDto;
 import com.manolito.dashflow.loader.TasksDataWarehouseLoader;
-import com.manolito.dashflow.repository.dw.UserRepository;
 import com.manolito.dashflow.transformer.TaigaTransformer;
 import com.manolito.dashflow.util.SparkUtils;
 import lombok.RequiredArgsConstructor;
@@ -39,12 +38,10 @@ public class TaigaService {
     private final SparkSession spark;
     private final SparkUtils utils;
     private final TasksDataWarehouseLoader dataWarehouseLoader;
-    private final UserRepository userRepository;
     private static final String API_URL = "https://api.taiga.io/api/v1/auth";
     private static final String USER_ME_URL = "https://api.taiga.io/api/v1/users/me";
     private static final ObjectMapper objectMapper = new ObjectMapper();
     private String authToken;
-    private Integer userId;
     private String project = String.valueOf(1637322);
 
     /**

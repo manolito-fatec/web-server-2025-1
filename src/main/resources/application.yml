@@ -15,6 +15,17 @@ spring:
   flyway:
     enabled: true
     baseline-on-migrate: true
+  main:
+    allow-bean-definition-overriding: true
 server:
   error:
     include-message: always
+  servlet:
+    context-path: /web-server
+logging:
+  level:
+    org:
+      springframework: DEBUG
+      apache:
+              tomcat: DEBUG
+              catalina: DEBUG
