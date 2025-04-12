@@ -116,4 +116,23 @@ public class TasksService {
         }
         throw new NoSuchElementException("No tasks completed");
     }
+
+    /**
+     * Retrieves the average time a project team takes to complete their tasks, calculating the average amount of tasks done by week.
+     *
+     * @param projectId the ID of the project to query tasks for
+     * @return average task completion time by a project team, in the following format: '0.0' (days)
+     * @throws NoSuchElementException if no tasks are found
+     * @throws IllegalArgumentException if project ID is null
+     */
+    public Double getAverageTimeCardByProjectId(String projectId) {
+        Optional<Double> averageTimeCard = tasksDataWarehouseRepository.getAverageTimeCardByProjectId(projectId);
+        if (projectId == null) {
+            throw new IllegalArgumentException("projectId cannot be null");
+        }
+        if (averageTimeCard.isPresent()) {
+            return averageTimeCard.get();
+        }
+        throw new NoSuchElementException("No tasks completed");
+    }
 }
