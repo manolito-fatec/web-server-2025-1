@@ -1,6 +1,7 @@
 package com.manolito.dashflow.service.application;
 
 import com.manolito.dashflow.dto.dw.CreatedDoneDto;
+import com.manolito.dashflow.dto.dw.TaskTagDto;
 import com.manolito.dashflow.repository.application.TasksDataWarehouseRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -149,5 +150,24 @@ public class TasksService {
             throw new NoSuchElementException("No cards found for this manager");
         }
         return cardsCount.get();
+    }
+
+    /**
+     * Retrieves a list of task counts grouped by their tags for a specific project.
+     * Each element in the list contains the task tag and the corresponding count.
+     *
+     * @param projectId the ID of the project to query tasks for
+     * @return a list of {@link TaskTagDto} objects representing task counts by tags
+     * @throws NoSuchElementException if no tasks are found within the given date range
+     */
+    public List<TaskTagDto> getTaskCountByTagByProjectId(String projectId) {
+        List<TaskTagDto> taskCount = tasksDataWarehouseRepository.getTaskCountGroupByTagByProjectId(projectId);
+        if (projectId == null) {
+            throw new IllegalArgumentException("projectId cannot be null");
+        }
+        if (taskCount.isEmpty()) {
+            throw new NoSuchElementException("No tasks found");
+        }
+        return taskCount;
     }
 }
