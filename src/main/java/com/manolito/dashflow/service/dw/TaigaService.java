@@ -241,13 +241,13 @@ public class TaigaService {
                     .reduce(Dataset::union)
                     .orElse(spark.emptyDataFrame());
 
-            Dataset<Row> roles = dataWarehouseLoader.loadDimensionWithoutTool("roles", "taiga")
+            Dataset<Row> roles = dataWarehouseLoader.loadDimensionWithoutTool("roles")
                     .select(
                             col("role_id").cast("long").as("role_id"),
                             col("original_id").cast("long").as("role_original_id")
                     );
 
-            Dataset<Row> users = dataWarehouseLoader.loadDimensionWithoutTool("users", "taiga")
+            Dataset<Row> users = dataWarehouseLoader.loadDimensionWithoutTool("users")
                     .select(
                             col("user_id").cast("long").as("user_id"),
                             col("original_id").cast("long").as("user_original_id")
@@ -414,13 +414,14 @@ public class TaigaService {
         List<Dataset<Row>> tasksList = handleTasks();
         for (Dataset<Row> taskDF : tasksList) {
             Dataset<Row> transformedStatus = transformer.transformStatus(taskDF);
-            transformedStatus = updateStatusProjectId(transformedStatus, dataWarehouseLoader.loadDimensionWithoutTool("projects","taiga"));
+            transformedStatus = updateStatusProjectId(transformedStatus, dataWarehouseLoader.loadDimensionWithoutTool("projects"));
             Dataset<Row> transformedTags = transformer.transformTags(taskDF);
             //epico
 
             dataWarehouseLoader.save(transformedStatus, "status");
             dataWarehouseLoader.save(transformedTags, "tags");
             //epico
+            transformedEpic = updateEpicProject(transformedEpic, dataWarehouseLoader.loadDimensionWithoutTool("projects"));
         }
 
         List<Dataset<Row>> storiesList = handleUserStories();
@@ -428,6 +429,8 @@ public class TaigaService {
             Dataset<Row> transformedStories = transformer.transformUserStories(storiesDF);
             transformedStories = updateStoryProjectAndEpicIds(transformedStories, dataWarehouseLoader.loadDimensionWithoutTool("projects", "taiga"),
                     dataWarehouseLoader.loadDimensionWithoutTool("epics", "taiga")
+            transformedStories = updateStoryProjectAndEpicIds(transformedStories, dataWarehouseLoader.loadDimensionWithoutTool("projects"),
+                    dataWarehouseLoader.loadDimensionWithoutTool("epics")
             );
             dataWarehouseLoader.save(transformedStories, "stories");
         }
