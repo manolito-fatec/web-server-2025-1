@@ -32,12 +32,6 @@ public class TaigaHandler implements ToolHandler {
             case ISSUES:
                 taigaService.handleIssues();
                 break;
-            case EPICS:
-                taigaService.handleEpics();
-                break;
-            case ROLES:
-                taigaService.handleRoles();
-                break;
             default:
                 throw new RuntimeException("Unsupported Taiga Object");
         }

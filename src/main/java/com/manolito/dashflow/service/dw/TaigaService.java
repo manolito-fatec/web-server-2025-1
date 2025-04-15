@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.manolito.dashflow.dto.dw.TaigaAuthDto;
 import com.manolito.dashflow.loader.TasksDataWarehouseLoader;
-import com.manolito.dashflow.repository.dw.UserRepository;
 import com.manolito.dashflow.transformer.TaigaTransformer;
 import com.manolito.dashflow.util.SparkUtils;
 import lombok.RequiredArgsConstructor;
@@ -14,15 +13,13 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
-import org.apache.spark.sql.SparkSession;
-import org.apache.spark.sql.functions;
+import org.apache.spark.sql.*;
 import org.apache.spark.sql.types.LongType;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -39,13 +36,11 @@ public class TaigaService {
     private final SparkSession spark;
     private final SparkUtils utils;
     private final TasksDataWarehouseLoader dataWarehouseLoader;
-    private final UserRepository userRepository;
     private static final String API_URL = "https://api.taiga.io/api/v1/auth";
     private static final String USER_ME_URL = "https://api.taiga.io/api/v1/users/me";
     private static final ObjectMapper objectMapper = new ObjectMapper();
     private String authToken;
-    private Integer userId;
-    private String project = String.valueOf(1637322);
+    private List<Long> projectIds;
 
     /**
      * Maps the "name" field to the appropriate column name based on the target table.
@@ -68,40 +63,45 @@ public class TaigaService {
         };
     }
 
-    public Dataset<Row> handleProjects() {
-        return fetchAndConvertToDataFrame(PROJECTS.getPath() + "/" + project, "projects");
+    public List<Dataset<Row>> handleProjects() {
+        List<Dataset<Row>> projectsData = new ArrayList<>();
+
+        for (Long projectId : projectIds) {
+            String endpoint = PROJECTS.getPath() + "/" + projectId;
+            Dataset<Row> projectDF = fetchAndConvertToDataFrame(endpoint, "projects");
+            projectsData.add(projectDF);
+        }
+
+        return projectsData;
     }
 
-    public Dataset<Row> handleUserStories() {
-        return fetchAndConvertToDataFrame(USER_STORIES.getPath() + "?project=" + project, "stories");
+    public List<Dataset<Row>> handleTasks() {
+        List<Dataset<Row>> tasksData = new ArrayList<>();
+
+        for (Long projectId : projectIds) {
+            String endpoint = TASKS.getPath() + "?project=" + projectId;
+            Dataset<Row> taskDF = fetchAndConvertToDataFrame(endpoint, "fact_tasks");
+            tasksData.add(taskDF);
+        }
+
+        return tasksData;
     }
 
-    public Dataset<Row> handleTasks() {
-        return fetchAndConvertToDataFrame(TASKS.getPath() + "?project=" + project, "fact_tasks");
+    public List<Dataset<Row>> handleUserStories(
+    ) {
+        List<Dataset<Row>> userStoriesData = new ArrayList<>();
+
+        for (Long projectId : projectIds) {
+            String endpoint = USER_STORIES.getPath() + "?project=" + projectId;
+            Dataset<Row> userDF = fetchAndConvertToDataFrame(endpoint, "users");
+            userStoriesData.add(userDF);
+        }
+
+        return userStoriesData;
     }
 
     public Dataset<Row> handleIssues() {
         return fetchAndConvertToDataFrame(ISSUES.getPath(), "PLACEHOLDER");
-    }
-
-    public Dataset<Row> handleEpics() {
-        return fetchAndConvertToDataFrame(TASKS.getPath() + "?project=" + project, "epics");
-    }
-
-    public Dataset<Row> handleRoles() {
-        return fetchAndConvertToDataFrame(PROJECTS.getPath() + "/" + project, "roles");
-    }
-
-    private Dataset<Row> handleStatus() {
-        return fetchAndConvertToDataFrame(TASKS.getPath() + "?project=" + project, "status");
-    }
-
-    private Dataset<Row> handleUser() {
-        return fetchAndConvertToDataFrame(PROJECTS.getPath() + "/" + project, "users");
-    }
-
-    private Dataset<Row> handleTags() {
-        return fetchAndConvertToDataFrame(TASKS.getPath() + "?project=" + project, "tags");
     }
 
     public void authenticateTaiga(String username, String password) {
@@ -145,7 +145,7 @@ public class TaigaService {
      * @return A DataFrame containing the fetched data.
      */
     private Dataset<Row> fetchAndConvertToDataFrame(String endpoint, String tableName) {
-        authenticateTaiga("gabguska", "aluno123");
+        authenticateTaiga("Man_Olito", "Manolito");
         String jsonResponse = utils.fetchDataFromEndpoint(TAIGA.getBaseUrl() + endpoint, authToken);
         Dataset<Row> data = utils.fetchDataAsDataFrame(jsonResponse);
 
@@ -182,9 +182,9 @@ public class TaigaService {
             throw new IllegalStateException("Project not found.");
         }
 
-        Row Project = projectsData.select("id").head();
-        long projectId = Project.getLong(0);
-        project = String.valueOf(projectId);
+        projectIds = projectsData.select("id")
+                .as(Encoders.LONG())
+                .collectAsList();
     }
 
     private String extractOriginalIdFromDataset(Dataset<Row> transformedUsers) {
@@ -364,33 +364,60 @@ public class TaigaService {
     public void taigaEtl() {
         authenticateTaiga("Man_Olito", "Manolito");
         TaigaTransformer transformer = new TaigaTransformer(spark.emptyDataFrame());
-        Dataset<Row> roles = transformer.transformRoles(handleRoles());
-        Dataset<Row> users = transformer.transformedUserProjects(handleUser());
-        Dataset<Row> projects = transformer.transformProjects(handleProjects());
-        Dataset<Row> stories = transformer.transformUserStories(handleUserStories());
-        stories = updateStoryProjectAndEpicIds(stories, dataWarehouseLoader.loadDimensionWithoutTool("projects", "taiga"),
-                dataWarehouseLoader.loadDimensionWithoutTool("epics", "taiga")
-        );
-        Dataset<Row> tags = transformer.transformTags(handleTags());
-        dataWarehouseLoader.save(roles,"roles");
-        dataWarehouseLoader.save(users, "users");
         saveUserToDatabase();
-        Dataset<Row> userRole = saveUserRoleToDatabase();
-        dataWarehouseLoader.save(userRole,"user_role");
-        dataWarehouseLoader.save(projects, "projects");
-        Dataset<Row> status = transformer.transformStatus(handleStatus());
-        status = updateStatusProjectId(status, dataWarehouseLoader.loadDimensionWithoutTool("projects","taiga"));
-        dataWarehouseLoader.save(status, "status");
-        dataWarehouseLoader.save(stories, "stories");
-        dataWarehouseLoader.save(tags, "tags");
-        Dataset<Row> tasks = transformer.transformTasks(handleTasks());
-        tasks = updateFactTask(tasks,
+
+        List<Dataset<Row>> projectsList = handleProjects();
+        for (Dataset<Row> projectDF : projectsList) {
+            Dataset<Row> transformedProject = transformer.transformProjects(projectDF);
+            Dataset<Row> transformedRoles = transformer.transformRoles(projectDF);
+            Dataset<Row> transformedUsers = transformer.transformedUserProjects(projectDF);
+
+            dataWarehouseLoader.save(transformedProject, "projects");
+            dataWarehouseLoader.save(transformedRoles, "roles");
+            dataWarehouseLoader.save(transformedUsers, "users");
+        }
+
+        List<Dataset<Row>> tasksList = handleTasks();
+        for (Dataset<Row> taskDF : tasksList) {
+            Dataset<Row> transformedStatus = transformer.transformStatus(taskDF);
+            transformedStatus = updateStatusProjectId(transformedStatus, dataWarehouseLoader.loadDimensionWithoutTool("projects","taiga"));
+            Dataset<Row> transformedTags = transformer.transformTags(taskDF);
+            //epico
+
+            dataWarehouseLoader.save(transformedStatus, "status");
+            dataWarehouseLoader.save(transformedTags, "tags");
+            //epico
+        }
+
+        List<Dataset<Row>> storiesList = handleUserStories();
+        for (Dataset<Row> storiesDF : storiesList) {
+            Dataset<Row> transformedStories = transformer.transformUserStories(storiesDF);
+            transformedStories = updateStoryProjectAndEpicIds(transformedStories, dataWarehouseLoader.loadDimensionWithoutTool("projects", "taiga"),
+                    dataWarehouseLoader.loadDimensionWithoutTool("epics", "taiga")
+            );
+            dataWarehouseLoader.save(transformedStories, "stories");
+        }
+
+        List<Dataset<Row>> factTaskList = handleTasks();
+        for (Dataset<Row> factTaskDF : factTaskList) {
+            Dataset<Row> transformedFactTask = transformer.transformTasks(factTaskDF);
+            transformedFactTask = updateFactTask(transformedFactTask,
                 dataWarehouseLoader.loadDimension("status"),
                 dataWarehouseLoader.loadDimension("users"),
                 dataWarehouseLoader.loadDimension("stories"),
                 dataWarehouseLoader.loadDimensionWithoutIsCurrent("dates", "taiga"));
-        dataWarehouseLoader.save(tasks, "fact_tasks");
-        Dataset<Row> taskTag = saveTaskTagToDatabase();
-        dataWarehouseLoader.save(taskTag,"task_tag");
+            dataWarehouseLoader.save(transformedFactTask, "fact_tasks");
+        }
+
+//        Dataset<Row> userRole = saveUserRoleToDatabase();
+//        dataWarehouseLoader.save(userRole,"user_role");
+//        tasks = updateFactTask(tasks,
+//                dataWarehouseLoader.loadDimension("status"),
+//                dataWarehouseLoader.loadDimension("users"),
+//                dataWarehouseLoader.loadDimension("stories"),
+//                dataWarehouseLoader.loadDimensionWithoutIsCurrent("dates", "taiga"));
+//        dataWarehouseLoader.save(tasks, "fact_tasks");
+//        Dataset<Row> taskTag = saveTaskTagToDatabase();
+//        dataWarehouseLoader.save(taskTag,"task_tag");
     }
 }
