@@ -94,7 +94,7 @@ public class TaigaTransformer {
     public Dataset<Row> transformEpics(Dataset<Row> rawEpics) {
         return rawEpics.select(
                 col("id").as("original_id"),
-                lit(1).as("project_id"),
+                col("project").as("project_id"),
                 col("subject").as("epic_name")
         );
     }
