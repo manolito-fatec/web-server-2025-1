@@ -398,8 +398,7 @@ public class TaigaService {
             dataWarehouseLoader.save(transformedStories, "stories");
         }
 
-        List<Dataset<Row>> factTaskList = handleTasks();
-        for (Dataset<Row> factTaskDF : factTaskList) {
+        for (Dataset<Row> factTaskDF : tasksList) {
             Dataset<Row> transformedFactTask = transformer.transformTasks(factTaskDF);
             transformedFactTask = updateFactTask(transformedFactTask,
                 dataWarehouseLoader.loadDimension("status"),
