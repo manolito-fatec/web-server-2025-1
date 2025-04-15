@@ -211,12 +211,24 @@ public class TaigaService {
     
     public Dataset<Row> saveUserRoleToDatabase() {
         try {
-            Dataset<Row> userRolePairs = handleProjects()
+            List<Dataset<Row>> tasksList = handleProjects();
+            List<Dataset<Row>> processedUserRoles = new ArrayList<>();
+
+            for (Dataset<Row> projectDF : tasksList) {
+                Dataset<Row> userRolePairs = projectDF
                     .withColumn("member", explode(col("members")))
                     .select(
                             col("member.id").cast("long").as("user_original_id"),
-                            col("member.role").cast("long").as("role_original_id")
+                            col("member.role").cast("long").as("role_original_id"),
+                            col("id").as("project_id")
                     );
+
+                processedUserRoles.add(userRolePairs);
+            }
+
+            Dataset<Row> allUserRoles = processedUserRoles.stream()
+                    .reduce(Dataset::union)
+                    .orElse(spark.emptyDataFrame());
 
             Dataset<Row> roles = dataWarehouseLoader.loadDimensionWithoutTool("roles", "taiga")
                     .select(
@@ -230,10 +242,10 @@ public class TaigaService {
                             col("original_id").cast("long").as("user_original_id")
                     );
 
-            return userRolePairs
+            return allUserRoles
                     .join(users, "user_original_id", "inner")
                     .join(roles, "role_original_id", "inner")
-                    .select("user_id", "role_id");
+                    .select("project_id", "user_id", "role_id");
 
         } catch (Exception e) {
             throw new RuntimeException("Failed to save user roles", e);
@@ -242,12 +254,23 @@ public class TaigaService {
 
     public Dataset<Row> saveTaskTagToDatabase() {
         try {
-            Dataset<Row> taskTagPairs = handleTasks()
+            List<Dataset<Row>> tasksList = handleTasks();
+            List<Dataset<Row>> processedTaskTags = new ArrayList<>();
+
+            for (Dataset<Row> tasksDF : tasksList) {
+                Dataset<Row> taskTagPairs = tasksDF
                     .withColumn("tag", explode(col("tags")))
                     .select(
                             col("id").cast("long").as("task_original_id"),
-                            col("tag").getItem(0).as("tag_name")
+                            col("tag").getItem(0).as("tag_name"),
+                            col("project").cast("long").as("project_id")
                     );
+                processedTaskTags.add(taskTagPairs);
+            }
+
+            Dataset<Row> allTaskTags = processedTaskTags.stream()
+                    .reduce(Dataset::union)
+                    .orElse(spark.emptyDataFrame());
 
             Dataset<Row> tasks = dataWarehouseLoader.loadDimensionWithoutIsCurrent("fact_tasks", "taiga")
                     .select(
@@ -261,11 +284,11 @@ public class TaigaService {
                             col("tag_name").as("tag_name")
                     );
 
-            return taskTagPairs
+            return allTaskTags
                     .join(tasks, "task_original_id", "inner")
                     .join(tags, "tag_name", "inner")
-                    .select("task_id", "tag_id")
-                    .orderBy("task_id", "tag_id");
+                    .select("project_id", "task_id", "tag_id")
+                    .orderBy("project_id", "task_id", "tag_id");
 
         } catch (Exception e) {
             throw new RuntimeException("Failed to save task tags", e);
@@ -408,15 +431,10 @@ public class TaigaService {
             dataWarehouseLoader.save(transformedFactTask, "fact_tasks");
         }
 
-//        Dataset<Row> userRole = saveUserRoleToDatabase();
-//        dataWarehouseLoader.save(userRole,"user_role");
-//        tasks = updateFactTask(tasks,
-//                dataWarehouseLoader.loadDimension("status"),
-//                dataWarehouseLoader.loadDimension("users"),
-//                dataWarehouseLoader.loadDimension("stories"),
-//                dataWarehouseLoader.loadDimensionWithoutIsCurrent("dates", "taiga"));
-//        dataWarehouseLoader.save(tasks, "fact_tasks");
-//        Dataset<Row> taskTag = saveTaskTagToDatabase();
-//        dataWarehouseLoader.save(taskTag,"task_tag");
+        Dataset<Row> userRole = saveUserRoleToDatabase();
+        dataWarehouseLoader.save(userRole,"user_role");
+
+        Dataset<Row> taskTag = saveTaskTagToDatabase();
+        dataWarehouseLoader.save(taskTag,"task_tag");
     }
 }
