@@ -69,6 +69,10 @@ public class ApplicationUserService implements UserDetailsService {
     public ApplicationUserDto createUser(ApplicationUserDto applicationUserDto) {
         Set<Role> roles = roleRepository.findByRoleNameIn(applicationUserDto.getRoles());
 
+        if (roles.size() != applicationUserDto.getRoles().size()) {
+            throw new IllegalArgumentException("One or more roles don't exist");
+        }
+
         ApplicationUser applicationUser = ApplicationUser.builder()
                 .username(applicationUserDto.getUsername())
                 .password(passwordEncoder.encode(applicationUserDto.getPassword()))
@@ -93,8 +97,7 @@ public class ApplicationUserService implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         Optional<ApplicationUser> user = userRepository.findByUsername(username);
         if (user.isEmpty()) {
-            throw new NoSuchElementException();
-        }
+            throw new UsernameNotFoundException("User not found with username: " + username);        }
         return user.get();
     }
 
