@@ -87,8 +87,7 @@ public class TaigaService {
         return tasksData;
     }
 
-    public List<Dataset<Row>> handleUserStories(
-    ) {
+    public List<Dataset<Row>> handleUserStories() {
         List<Dataset<Row>> userStoriesData = new ArrayList<>();
 
         for (Long projectId : projectIds) {
@@ -98,6 +97,18 @@ public class TaigaService {
         }
 
         return userStoriesData;
+    }
+
+    public List<Dataset<Row>> handleEpics() {
+        List<Dataset<Row>> epicsData = new ArrayList<>();
+
+        for (Long projectId : projectIds) {
+            String endpoint = EPICS.getPath() + "?project=" + projectId;
+            Dataset<Row> epicsDF = fetchAndConvertToDataFrame(endpoint, "epics");
+            epicsData.add(epicsDF);
+        }
+
+        return epicsData;
     }
 
     public Dataset<Row> handleIssues() {
