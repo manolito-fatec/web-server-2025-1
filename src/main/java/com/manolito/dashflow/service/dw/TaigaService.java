@@ -135,6 +135,11 @@ public class TaigaService {
         return epicsData;
     }
 
+    /**
+     * Fetches the data in the given endpoint and convert it into dataframe
+     *
+     * @return A ArrayList of Datasets from each endpoint
+     */
     public List<Dataset<Row>> handleIssues() {
         List<Dataset<Row>> issuesData = new ArrayList<>();
 
