@@ -12,6 +12,7 @@ import com.manolito.dashflow.service.application.ApplicationUserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +25,7 @@ public class SeedDataConfig implements CommandLineRunner {
 
     private final ApplicationUserRepository userRepository;
     private final ApplicationUserService userService;
+    private final PasswordEncoder passwordEncoder;
     private final ApplicationToolRepository toolRepository;
     private final AccountRepository accountRepository;
 
@@ -57,7 +59,7 @@ public class SeedDataConfig implements CommandLineRunner {
         ApplicationUserDto userDto = ApplicationUserDto.builder()
                 .username(username)
                 .email(email)
-                .password(password)
+                .password(passwordEncoder.encode(password))
                 .roles(Collections.singleton(role))
                 .build();
         return userService.createUserEntity(userDto);
