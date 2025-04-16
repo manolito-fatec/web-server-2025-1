@@ -135,8 +135,19 @@ public class TaigaService {
         return epicsData;
     }
 
-    public Dataset<Row> handleIssues() {
-        return fetchAndConvertToDataFrame(ISSUES.getPath(), "PLACEHOLDER");
+    public List<Dataset<Row>> handleIssues() {
+        List<Dataset<Row>> issuesData = new ArrayList<>();
+
+        for (Long projectId : projectIds) {
+            String endpoint = ISSUES.getPath() + "?project=" + projectId;
+            Dataset<Row> issueDF = fetchAndConvertToDataFrame(endpoint, "issues");
+
+            if (issueDF != null && !issueDF.isEmpty()) {
+                issuesData.add(issueDF);
+            }
+        }
+
+        return issuesData;
     }
 
     /**
@@ -567,6 +578,13 @@ public class TaigaService {
                 dataWarehouseLoader.loadDimension("stories"),
                 dataWarehouseLoader.loadDimensionWithoutIsCurrent("dates", "taiga"));
             dataWarehouseLoader.save(transformedFactTask, "fact_tasks");
+        }
+
+        List<Dataset<Row>> issuesList = handleIssues();
+        for (Dataset<Row> issueDF : issuesList) {
+            Dataset<Row> transformedIssue = transformer.transformIssues(issueDF);
+
+//            dataWarehouseLoader.save(transformedIssue, "issues"); remove coment when issue is in DW
         }
 
         Dataset<Row> userRole = saveUserRoleToDatabase();
