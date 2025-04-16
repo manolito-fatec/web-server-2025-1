@@ -1,6 +1,5 @@
 package com.manolito.dashflow.entity.application;
 
-import com.manolito.dashflow.entity.dw.Tool;
 import lombok.*;
 
 import javax.persistence.*;
@@ -23,7 +22,7 @@ public class Account {
     @MapsId("toolId")
     @ManyToOne
     @JoinColumn(name = "tool_id", nullable = false)
-    private Tool tool;
+    private ApplicationTool tool;
 
     @Column(name = "account")
     private String accountId;
