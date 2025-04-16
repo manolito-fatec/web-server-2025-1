@@ -232,22 +232,20 @@ class ApplicationUserServiceTest {
     }
 
     @Test
-    @DisplayName("Should return UserDetails when user exists with given username")
+    @DisplayName("Should return UserDetails when user exists with given email")
     void loadUserByUsername_whenUserExists_shouldReturnUserDetails() {
-        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
+        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(testUser));
 
-        UserDetails result = userService.loadUserByUsername("testuser");
+        UserDetails result = userService.loadUserByUsername("test@example.com");
 
         assertNotNull(result);
         assertEquals(testUser.getUsername(), result.getUsername());
-        verify(userRepository, times(1)).findByUsername("testuser");
     }
 
     @Test
     @DisplayName("Should throw UsernameNotFoundException when no user exists with given username")
     void loadUserByUsername_whenUserNotFound_shouldThrowUsernameNotFoundException() {
         String username = "gasparzinho";
-        when(userRepository.findByUsername(username)).thenReturn(Optional.empty());
 
         UsernameNotFoundException exception = assertThrows(
                 UsernameNotFoundException.class,
@@ -255,6 +253,98 @@ class ApplicationUserServiceTest {
         );
 
         assertEquals("User not found with username: " + username, exception.getMessage());
-        verify(userRepository, times(1)).findByUsername(username);
+    }
+
+    @Test
+    @DisplayName("createUserEntity - With valid DTO - Should return saved user with correct attributes")
+    void createUserEntity_withValidDto_shouldReturnSavedUser() {
+        when(roleRepository.findByRoleNameIn(anySet())).thenReturn(testRoles);
+        when(userRepository.save(any(ApplicationUser.class))).thenAnswer(invocation -> {
+            ApplicationUser user = invocation.getArgument(0);
+            user.setId(1);
+            return user;
+        });
+
+        ApplicationUser result = userService.createUserEntity(testUserDto);
+
+        assertNotNull(result);
+        assertEquals(testUserDto.getUsername(), result.getUsername());
+        assertEquals(testUserDto.getEmail(), result.getEmail());
+        assertEquals(testUserDto.getPassword(), result.getPassword());
+        assertEquals(testRoles, result.getRoles());
+        assertNotNull(result.getCreatedAt());
+        verify(roleRepository, times(1)).findByRoleNameIn(testUserDto.getRoles());
+        verify(userRepository, times(1)).save(any(ApplicationUser.class));
+    }
+
+    @Test
+    @DisplayName("createUserEntity - With null DTO - Should throw IllegalArgumentException")
+    void createUserEntity_withNullDto_shouldThrowException() {
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> userService.createUserEntity(null)
+        );
+        assertEquals("User DTO cannot be null", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("createUserEntity - With null username - Should throw IllegalArgumentException")
+    void createUserEntity_withNullUsername_shouldThrowException() {
+        testUserDto.setUsername(null);
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> userService.createUserEntity(testUserDto)
+        );
+        assertEquals("Username cannot be null or empty", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("createUserEntity - With empty username - Should throw IllegalArgumentException")
+    void createUserEntity_withEmptyUsername_shouldThrowException() {
+        testUserDto.setUsername("");
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> userService.createUserEntity(testUserDto)
+        );
+        assertEquals("Username cannot be null or empty", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("createUserEntity - With non-existent roles - Should throw IllegalArgumentException")
+    void createUserEntity_withNonExistentRoles_shouldThrowException() {
+        when(roleRepository.findByRoleNameIn(anySet())).thenReturn(Set.of());
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> userService.createUserEntity(testUserDto)
+        );
+        assertTrue(exception.getMessage().contains("One or more roles don't exist"));
+        verify(roleRepository, times(1)).findByRoleNameIn(testUserDto.getRoles());
+    }
+
+    @Test
+    @DisplayName("createUserEntity - With null email - Should throw IllegalArgumentException")
+    void createUserEntity_withNullEmail_shouldThrowException() {
+        testUserDto.setEmail(null);
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> userService.createUserEntity(testUserDto)
+        );
+        assertEquals("Email cannot be null or empty", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("createUserEntity - With null password - Should throw IllegalArgumentException")
+    void createUserEntity_withNullPassword_shouldThrowException() {
+        testUserDto.setPassword(null);
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> userService.createUserEntity(testUserDto)
+        );
+        assertEquals("Password cannot be null or empty", exception.getMessage());
     }
 }

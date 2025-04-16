@@ -73,7 +73,7 @@ CREATE TABLE IF NOT EXISTS role_permissions (
 
 --- roles ---
 INSERT INTO roles (role_name) VALUES
-('ROLE_USER'),
+('ROLE_OPERATOR'),
 ('ROLE_MANAGER'),
 ('ROLE_ADMIN')
 ON CONFLICT (role_name) DO NOTHING;
