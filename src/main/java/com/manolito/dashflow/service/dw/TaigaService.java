@@ -315,7 +315,19 @@ public class TaigaService {
                 projectsDF.col("project_id").alias("project_id")
         );
     }
-    
+
+    public static Dataset<Row> updateEpicProject(Dataset<Row> epicsDF,
+                                                 Dataset<Row> projectsDF) {
+
+        Dataset<Row> joinedWithProjects = epicsDF
+                .join(projectsDF, epicsDF.col("project_id").equalTo(projectsDF.col("original_id")));
+        return joinedWithProjects.select(
+                epicsDF.col("original_id"),
+                projectsDF.col("project_id"),
+                epicsDF.col("epic_name")
+        );
+    }
+
     public static Dataset<Row> updateStoryProjectAndEpicIds(Dataset<Row> storiesDF,
                                                             Dataset<Row> projectsDF,
                                                             Dataset<Row> epicsDF) {
