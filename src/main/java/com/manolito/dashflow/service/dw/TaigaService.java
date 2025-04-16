@@ -310,6 +310,7 @@ public class TaigaService {
     }
 
     public static Dataset<Row> updateStatusProjectId(Dataset<Row> statusDF, Dataset<Row> projectsDF) {
+    public static Dataset<Row> joinStatusProject(Dataset<Row> statusDF, Dataset<Row> projectsDF) {
         Dataset<Row> joined = statusDF
                 .join(projectsDF, statusDF.col("project_id").equalTo(projectsDF.col("original_id")));
         return joined.select(
@@ -319,8 +320,8 @@ public class TaigaService {
         );
     }
 
-    public static Dataset<Row> updateEpicProject(Dataset<Row> epicsDF,
-                                                 Dataset<Row> projectsDF) {
+    public static Dataset<Row> joinEpicProject(Dataset<Row> epicsDF,
+                                               Dataset<Row> projectsDF) {
 
         Dataset<Row> joinedWithProjects = epicsDF
                 .join(projectsDF, epicsDF.col("project_id").equalTo(projectsDF.col("original_id")));
@@ -331,9 +332,9 @@ public class TaigaService {
         );
     }
 
-    public static Dataset<Row> updateStoryProjectAndEpicIds(Dataset<Row> storiesDF,
-                                                            Dataset<Row> projectsDF,
-                                                            Dataset<Row> epicsDF) {
+    public static Dataset<Row> joinStoryProjectAndEpic(Dataset<Row> storiesDF,
+                                                       Dataset<Row> projectsDF,
+                                                       Dataset<Row> epicsDF) {
         Dataset<Row> joinedWithProjects = storiesDF
                 .join(projectsDF,
                         storiesDF.col("project_id").equalTo(projectsDF.col("original_id")));
@@ -352,11 +353,11 @@ public class TaigaService {
         );
     }
 
-    public static Dataset<Row> updateFactTask(Dataset<Row> tasksDF,
-                                              Dataset<Row> statusDF,
-                                              Dataset<Row> userDF,
-                                              Dataset<Row> storiesDF,
-                                              Dataset<Row> datesDF) {
+    public static Dataset<Row> joinFactTask(Dataset<Row> tasksDF,
+                                            Dataset<Row> statusDF,
+                                            Dataset<Row> userDF,
+                                            Dataset<Row> storiesDF,
+                                            Dataset<Row> datesDF) {
 
         Dataset<Row> joinedWithStatus = tasksDF
                 .join(statusDF,
@@ -429,7 +430,7 @@ public class TaigaService {
         List<Dataset<Row>> tasksList = handleTasks();
         for (Dataset<Row> taskDF : tasksList) {
             Dataset<Row> transformedStatus = transformer.transformStatus(taskDF);
-            transformedStatus = updateStatusProjectId(transformedStatus, dataWarehouseLoader.loadDimensionWithoutTool("projects"));
+            transformedStatus = joinStatusProject(transformedStatus, dataWarehouseLoader.loadDimensionWithoutTool("projects"));
             Dataset<Row> transformedTags = transformer.transformTags(taskDF);
 
             dataWarehouseLoader.save(transformedStatus, "status");
@@ -439,14 +440,14 @@ public class TaigaService {
         List<Dataset<Row>> epicsList = handleEpics();
         for (Dataset<Row> epicDF : epicsList) {
             Dataset<Row> transformedEpic = transformer.transformEpics(epicDF);
-            transformedEpic = updateEpicProject(transformedEpic, dataWarehouseLoader.loadDimensionWithoutTool("projects"));
+            transformedEpic = joinEpicProject(transformedEpic, dataWarehouseLoader.loadDimensionWithoutTool("projects"));
             dataWarehouseLoader.save(transformedEpic, "epics");
         }
 
         List<Dataset<Row>> storiesList = handleUserStories();
         for (Dataset<Row> storiesDF : storiesList) {
             Dataset<Row> transformedStories = transformer.transformUserStories(storiesDF);
-            transformedStories = updateStoryProjectAndEpicIds(transformedStories, dataWarehouseLoader.loadDimensionWithoutTool("projects"),
+            transformedStories = joinStoryProjectAndEpic(transformedStories, dataWarehouseLoader.loadDimensionWithoutTool("projects"),
                     dataWarehouseLoader.loadDimensionWithoutTool("epics")
             );
             dataWarehouseLoader.save(transformedStories, "stories");
@@ -454,7 +455,7 @@ public class TaigaService {
 
         for (Dataset<Row> factTaskDF : tasksList) {
             Dataset<Row> transformedFactTask = transformer.transformTasks(factTaskDF);
-            transformedFactTask = updateFactTask(transformedFactTask,
+            transformedFactTask = joinFactTask(transformedFactTask,
                 dataWarehouseLoader.loadDimension("status"),
                 dataWarehouseLoader.loadDimension("users"),
                 dataWarehouseLoader.loadDimension("stories"),
