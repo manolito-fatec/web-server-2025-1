@@ -63,6 +63,11 @@ public class TaigaService {
         };
     }
 
+    /**
+     * Fetches the data in the given endpoint and convert it into dataframe
+     *
+     * @return A ArrayList of Datasets from each endpoint
+     */
     public List<Dataset<Row>> handleProjects() {
         List<Dataset<Row>> projectsData = new ArrayList<>();
 
@@ -75,6 +80,11 @@ public class TaigaService {
         return projectsData;
     }
 
+    /**
+     * Fetches the data in the given endpoint and convert it into dataframe
+     *
+     * @return A ArrayList of Datasets from each endpoint
+     */
     public List<Dataset<Row>> handleTasks() {
         List<Dataset<Row>> tasksData = new ArrayList<>();
 
@@ -87,6 +97,12 @@ public class TaigaService {
         return tasksData;
     }
 
+
+    /**
+     * Fetches the data in the given endpoint and convert it into dataframe
+     *
+     * @return A ArrayList of Datasets from each endpoint
+     */
     public List<Dataset<Row>> handleUserStories() {
         List<Dataset<Row>> userStoriesData = new ArrayList<>();
 
@@ -99,6 +115,11 @@ public class TaigaService {
         return userStoriesData;
     }
 
+    /**
+     * Fetches the data in the given endpoint and convert it into dataframe
+     *
+     * @return A ArrayList of Datasets from each endpoint
+     */
     public List<Dataset<Row>> handleEpics() {
         List<Dataset<Row>> epicsData = new ArrayList<>();
 
@@ -118,6 +139,16 @@ public class TaigaService {
         return fetchAndConvertToDataFrame(ISSUES.getPath(), "PLACEHOLDER");
     }
 
+    /**
+     * Authenticates a user with the Taiga API using the provided username and password.
+     * Upon successful authentication, stores the received authentication token for subsequent API calls.
+     *
+     * @param username The username for Taiga account authentication
+     * @param password The password for Taiga account authentication
+     * @throws RuntimeException if authentication fails (non-200 status code) or if there's an error
+     *         during the authentication process (e.g., connection issues, JSON parsing errors)
+     * @throws NullPointerException if either username or password is null
+     */
     public void authenticateTaiga(String username, String password) {
         try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
             HttpPost post = new HttpPost(API_URL);
@@ -173,6 +204,13 @@ public class TaigaService {
         return data;
     }
 
+    /**
+     * Retrieves project IDs where the authenticated user is a member.
+     * Uses the stored authentication token to fetch user information and associated projects.
+     *
+     * @throws IllegalStateException if no authentication token is available or if no projects are found
+     *         for the authenticated user
+     */
     private void getProjectWhereUserIsMember() {
         if (authToken == null) {
             throw new IllegalStateException("Token not acquired");
@@ -201,6 +239,14 @@ public class TaigaService {
                 .collectAsList();
     }
 
+    /**
+     * Extracts the original user ID from a transformed user dataset.
+     *
+     * @param transformedUsers The dataset containing transformed user information
+     * @return The original ID as a string, or null if the dataset is empty
+     *
+     * @throws NullPointerException if the transformedUsers parameter is null
+     */
     private String extractOriginalIdFromDataset(Dataset<Row> transformedUsers) {
         if (transformedUsers.isEmpty()) {
             System.out.println("No user data to save.");
@@ -222,7 +268,14 @@ public class TaigaService {
                         pair -> pair[0]
                 ));
     }
-    
+
+    /**
+     * Processes and saves user-role relationships to the database for all projects.
+     * Extracts user-role-project associations, joins with dimension tables, and prepares the data for storage.
+     *
+     * @return A Dataset containing the final user-role-project relationships with their respective IDs
+     * @throws RuntimeException if any error occurs during the processing or saving of user roles
+     */
     public Dataset<Row> saveUserRoleToDatabase() {
         try {
             List<Dataset<Row>> tasksList = handleProjects();
@@ -266,6 +319,15 @@ public class TaigaService {
         }
     }
 
+    /**
+     * Processes and saves task-tag relationships to the database.
+     * Extracts task-tag associations from all tasks, joins with dimension tables,
+     * and prepares the data for storage.
+     *
+     * @return A Dataset containing the final task-tag relationships with project, task, and tag IDs,
+     *         ordered by project_id, task_id, and tag_id
+     * @throws RuntimeException if any error occurs during the processing or saving of task tags
+     */
     public Dataset<Row> saveTaskTagToDatabase() {
         try {
             List<Dataset<Row>> tasksList = handleTasks();
@@ -309,7 +371,14 @@ public class TaigaService {
         }
     }
 
-    public static Dataset<Row> updateStatusProjectId(Dataset<Row> statusDF, Dataset<Row> projectsDF) {
+    /**
+     * Joins the status dataset with projects dataset to map original project IDs to their corresponding database IDs.
+     *
+     * @param statusDF The dataset containing status information with original project IDs
+     * @param projectsDF The dataset containing project information with original and new IDs
+     * @return A new dataset with updated project IDs, containing original_id, status_name, and project_id columns
+     * @throws NullPointerException if either statusDF or projectsDF is null
+     */
     public static Dataset<Row> joinStatusProject(Dataset<Row> statusDF, Dataset<Row> projectsDF) {
         Dataset<Row> joined = statusDF
                 .join(projectsDF, statusDF.col("project_id").equalTo(projectsDF.col("original_id")));
@@ -320,6 +389,14 @@ public class TaigaService {
         );
     }
 
+    /**
+     * Joins epics dataset with projects dataset to associate epics with their corresponding project IDs.
+     *
+     * @param epicsDF Dataset containing epic information with original project IDs
+     * @param projectsDF Dataset containing project information with original and mapped IDs
+     * @return Dataset containing epic original_id, mapped project_id, and epic_name
+     * @throws NullPointerException if either epicsDF or projectsDF is null
+     */
     public static Dataset<Row> joinEpicProject(Dataset<Row> epicsDF,
                                                Dataset<Row> projectsDF) {
 
@@ -332,6 +409,15 @@ public class TaigaService {
         );
     }
 
+    /**
+     * Joins stories dataset with projects and epics datasets to associate stories with their corresponding project and epic IDs.
+     *
+     * @param storiesDF Dataset containing story information with original project and epic IDs
+     * @param projectsDF Dataset containing project information with original and mapped IDs
+     * @param epicsDF Dataset containing epic information with original IDs
+     * @return Dataset containing story original_id, mapped project_id, epic_id, story_name, and is_finished
+     * @throws NullPointerException if either storiesDF, projectsDF or epicsDF is null
+     */
     public static Dataset<Row> joinStoryProjectAndEpic(Dataset<Row> storiesDF,
                                                        Dataset<Row> projectsDF,
                                                        Dataset<Row> epicsDF) {
@@ -353,6 +439,18 @@ public class TaigaService {
         );
     }
 
+    /**
+     * Joins task dataset with status, user, story and date datasets to create a consolidated fact table for tasks.
+     *
+     * @param tasksDF Dataset containing task information with original IDs
+     * @param statusDF Dataset containing status information with original and mapped IDs
+     * @param userDF Dataset containing user information with original and mapped IDs
+     * @param storiesDF Dataset containing story information with original and mapped IDs
+     * @param datesDF Dataset containing date dimension information
+     * @return Dataset containing task original_id, status_id, assignee_id, tool_id, story_id, created_at,
+     *         completed_at, due_date, task_name, is_blocked, and is_storyless
+     * @throws NullPointerException if any of the input datasets is null
+     */
     public static Dataset<Row> joinFactTask(Dataset<Row> tasksDF,
                                             Dataset<Row> statusDF,
                                             Dataset<Row> userDF,
@@ -409,6 +507,14 @@ public class TaigaService {
                 tasksDF.col("is_storyless")
         );
     }
+
+    /**
+     * Executes the complete Taiga ETL process including authentication, data extraction,
+     * transformation and loading of projects, tasks, epics and user stories.
+     *
+     * @throws RuntimeException if any error occurs during the ETL process
+     * @throws IllegalStateException if authentication fails or no projects are found
+     */
     //Remove post construct annotation after login is done
     @PostConstruct
     public void taigaEtl() {
