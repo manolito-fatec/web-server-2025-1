@@ -173,7 +173,7 @@ public class TaigaService {
         return data;
     }
 
-    private void saveUserToDatabase() {
+    private void getProjectWhereUserIsMember() {
         if (authToken == null) {
             throw new IllegalStateException("Token not acquired");
         }
@@ -413,7 +413,7 @@ public class TaigaService {
     public void taigaEtl() {
         authenticateTaiga("Man_Olito", "Manolito");
         TaigaTransformer transformer = new TaigaTransformer(spark.emptyDataFrame());
-        saveUserToDatabase();
+        getProjectWhereUserIsMember();
 
         List<Dataset<Row>> projectsList = handleProjects();
         for (Dataset<Row> projectDF : projectsList) {
