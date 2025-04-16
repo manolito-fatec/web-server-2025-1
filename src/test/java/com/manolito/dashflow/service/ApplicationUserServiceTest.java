@@ -7,6 +7,7 @@ import com.manolito.dashflow.repository.application.ApplicationUserRepository;
 import com.manolito.dashflow.repository.application.RoleRepository;
 import com.manolito.dashflow.service.application.ApplicationUserService;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -72,6 +73,7 @@ class ApplicationUserServiceTest {
     }
 
     @Test
+    @DisplayName("Should return user DTO when user exists with given ID")
     void getUserById_whenUserExists_shouldReturnUserDto() {
         when(userRepository.findById(1)).thenReturn(Optional.of(testUser));
 
@@ -87,6 +89,7 @@ class ApplicationUserServiceTest {
     }
 
     @Test
+    @DisplayName("Should throw NoSuchElementException when no user exists with given ID")
     void getUserById_whenUserNotFound_shouldThrowNoSuchElementException() {
         when(userRepository.findById(1)).thenReturn(Optional.empty());
 
@@ -95,6 +98,7 @@ class ApplicationUserServiceTest {
     }
 
     @Test
+    @DisplayName("Should return user DTO when user exists with given email")
     void getUserByEmail_whenUserExists_shouldReturnUserDto() {
         when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(testUser));
 
@@ -107,6 +111,7 @@ class ApplicationUserServiceTest {
     }
 
     @Test
+    @DisplayName("Should throw NoSuchElementException when no user exists with given email")
     void getUserByEmail_whenUserNotFound_shouldThrowNoSuchElementException() {
         when(userRepository.findByEmail("gasparzinho@example.com")).thenReturn(Optional.empty());
 
@@ -115,6 +120,7 @@ class ApplicationUserServiceTest {
     }
 
     @Test
+    @DisplayName("Should return list of user DTOs when users exist")
     void getAllUsers_whenUsersExist_shouldReturnListOfUserDtos() {
         List<ApplicationUser> users = Collections.singletonList(testUser);
         when(userRepository.findAll()).thenReturn(users);
@@ -129,6 +135,7 @@ class ApplicationUserServiceTest {
     }
 
     @Test
+    @DisplayName("Should throw NoSuchElementException when no users exist")
     void getAllUsers_whenNoUsersExist_shouldThrowNoSuchElementException() {
         when(userRepository.findAll()).thenReturn(Collections.emptyList());
 
@@ -137,6 +144,7 @@ class ApplicationUserServiceTest {
     }
 
     @Test
+    @DisplayName("Should return created user DTO when valid input is provided")
     void createUser_whenValidInput_shouldReturnCreatedUserDto() {
         when(roleRepository.findByRoleNameIn(anySet())).thenReturn(testRoles);
         when(passwordEncoder.encode("password")).thenReturn("encodedPassword");
@@ -151,6 +159,7 @@ class ApplicationUserServiceTest {
     }
 
     @Test
+    @DisplayName("Should throw IllegalArgumentException when provided roles don't exist")
     void createUser_whenRolesMismatch_shouldThrowIllegalArgumentException() {
         Set<Role> returnedRoles = new HashSet<>();
         returnedRoles.add(testRoles.iterator().next()); // Add a single role
@@ -165,6 +174,7 @@ class ApplicationUserServiceTest {
     }
 
     @Test
+    @DisplayName("Should return updated user DTO when user exists")
     void updateUser_whenUserExists_shouldReturnUpdatedUserDto() {
         when(userRepository.findById(1)).thenReturn(Optional.of(testUser));
         when(roleRepository.findByRoleNameIn(anySet())).thenReturn(testRoles);
@@ -180,6 +190,7 @@ class ApplicationUserServiceTest {
     }
 
     @Test
+    @DisplayName("Should throw NoSuchElementException when updating non-existent user")
     void updateUser_whenUserNotFound_shouldThrowNoSuchElementException() {
         when(userRepository.findById(1)).thenReturn(Optional.empty());
 
@@ -188,6 +199,7 @@ class ApplicationUserServiceTest {
     }
 
     @Test
+    @DisplayName("Should throw IllegalArgumentException when updating with non-existent roles")
     void updateUser_whenRolesMismatch_shouldThrowIllegalArgumentException() {
         when(userRepository.findById(1)).thenReturn(Optional.of(testUser));
         when(roleRepository.findByRoleNameIn(anySet())).thenReturn(Collections.singleton(testRoles.iterator().next()));
@@ -197,6 +209,7 @@ class ApplicationUserServiceTest {
     }
 
     @Test
+    @DisplayName("Should return deleted user DTO when user exists")
     void deleteUser_whenUserExists_shouldReturnDeletedUserDto() {
         when(userRepository.findById(1)).thenReturn(Optional.of(testUser));
         doNothing().when(userRepository).deleteById(1);
@@ -210,6 +223,7 @@ class ApplicationUserServiceTest {
     }
 
     @Test
+    @DisplayName("Should throw NoSuchElementException when deleting non-existent user")
     void deleteUser_whenUserNotFound_shouldThrowNoSuchElementException() {
         when(userRepository.findById(1)).thenReturn(Optional.empty());
 
@@ -218,6 +232,7 @@ class ApplicationUserServiceTest {
     }
 
     @Test
+    @DisplayName("Should return UserDetails when user exists with given username")
     void loadUserByUsername_whenUserExists_shouldReturnUserDetails() {
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
 
@@ -229,6 +244,7 @@ class ApplicationUserServiceTest {
     }
 
     @Test
+    @DisplayName("Should throw UsernameNotFoundException when no user exists with given username")
     void loadUserByUsername_whenUserNotFound_shouldThrowUsernameNotFoundException() {
         String username = "gasparzinho";
         when(userRepository.findByUsername(username)).thenReturn(Optional.empty());
