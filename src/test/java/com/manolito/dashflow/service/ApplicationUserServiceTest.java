@@ -232,22 +232,20 @@ class ApplicationUserServiceTest {
     }
 
     @Test
-    @DisplayName("Should return UserDetails when user exists with given username")
+    @DisplayName("Should return UserDetails when user exists with given email")
     void loadUserByUsername_whenUserExists_shouldReturnUserDetails() {
-        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
+        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(testUser));
 
-        UserDetails result = userService.loadUserByUsername("testuser");
+        UserDetails result = userService.loadUserByUsername("test@example.com");
 
         assertNotNull(result);
         assertEquals(testUser.getUsername(), result.getUsername());
-        verify(userRepository, times(1)).findByUsername("testuser");
     }
 
     @Test
     @DisplayName("Should throw UsernameNotFoundException when no user exists with given username")
     void loadUserByUsername_whenUserNotFound_shouldThrowUsernameNotFoundException() {
         String username = "gasparzinho";
-        when(userRepository.findByUsername(username)).thenReturn(Optional.empty());
 
         UsernameNotFoundException exception = assertThrows(
                 UsernameNotFoundException.class,
@@ -255,6 +253,5 @@ class ApplicationUserServiceTest {
         );
 
         assertEquals("User not found with username: " + username, exception.getMessage());
-        verify(userRepository, times(1)).findByUsername(username);
     }
 }
