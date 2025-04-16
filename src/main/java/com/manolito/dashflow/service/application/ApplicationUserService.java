@@ -252,4 +252,51 @@ public class ApplicationUserService implements UserDetailsService {
                 .roles(applicationUser.getRoleNames())
                 .build();
     }
+
+    /**
+     * Creates and saves a new ApplicationUser entity from the provided DTO.
+     * <p>
+     * This method converts an ApplicationUserDto to an ApplicationUser entity, assigns roles,
+     * sets the creation timestamp, and persists the entity to the database.
+     * </p>
+     *
+     * @param applicationUserDto the user data transfer object containing user information
+     * @return the persisted ApplicationUser entity
+     * @throws IllegalArgumentException if:
+     *         - The DTO is null
+     *         - Required fields (username, email, password) are null or empty
+     *         - The specified roles don't exist in the database
+     * @see ApplicationUserDto
+     * @see ApplicationUser
+     */
+    public ApplicationUser createUserEntity(ApplicationUserDto applicationUserDto) {
+        // Validate input
+        if (applicationUserDto == null) {
+            throw new IllegalArgumentException("User DTO cannot be null");
+        }
+        if (applicationUserDto.getUsername() == null || applicationUserDto.getUsername().isBlank()) {
+            throw new IllegalArgumentException("Username cannot be null or empty");
+        }
+        if (applicationUserDto.getEmail() == null || applicationUserDto.getEmail().isBlank()) {
+            throw new IllegalArgumentException("Email cannot be null or empty");
+        }
+        if (applicationUserDto.getPassword() == null || applicationUserDto.getPassword().isBlank()) {
+            throw new IllegalArgumentException("Password cannot be null or empty");
+        }
+
+        Set<Role> roles = roleRepository.findByRoleNameIn(applicationUserDto.getRoles());
+        if (roles.size() != applicationUserDto.getRoles().size()) {
+            throw new IllegalArgumentException("One or more roles don't exist");
+        }
+
+        ApplicationUser user = ApplicationUser.builder()
+                .username(applicationUserDto.getUsername())
+                .password(applicationUserDto.getPassword())
+                .email(applicationUserDto.getEmail())
+                .roles(roles)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        return userRepository.save(user);
+    }
 }
