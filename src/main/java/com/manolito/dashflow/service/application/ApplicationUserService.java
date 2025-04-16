@@ -12,6 +12,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 /**
@@ -206,21 +207,21 @@ public class ApplicationUserService implements UserDetailsService {
     }
 
     /**
-     * Loads user details by username for authentication.
+     * Loads user details by email for authentication.
      * <p>
      * This method implements Spring Security's {@link UserDetailsService} interface
      * to support user authentication.
      * </p>
      *
-     * @param username the username to search for (must not be null or empty)
+     * @param email the email to search for (must not be null or empty)
      * @return the user details for authentication
-     * @throws UsernameNotFoundException if no user is found with the given username
+     * @throws UsernameNotFoundException if no user is found with the given email
      * @see UserDetails
      *
      * @example
      * <pre>{@code
      * // Used internally by Spring Security during authentication
-     * UserDetails userDetails = userService.loadUserByUsername("testuser");
+     * UserDetails userDetails = userService.loadUserByUsername("test@example.com");
      * }</pre>
      */
     @Override
