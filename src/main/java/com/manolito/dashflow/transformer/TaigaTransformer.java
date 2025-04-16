@@ -44,9 +44,8 @@ public class TaigaTransformer {
                 to_date(col("created_date")).as("created_at"),
                 to_date(col("modified_date")).as("updated_at"),
                 col("subject").as("issue_name"),
-                col("description"),
                 col("is_blocked"),
-                col("is_closed").as("is_resolved")
+                col("status_extra_info.is_closed").as("is_resolved")
         );
     }
 
