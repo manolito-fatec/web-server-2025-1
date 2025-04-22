@@ -307,14 +307,14 @@ CREATE TABLE IF NOT EXISTS tags(
     tag_id SERIAL PRIMARY KEY,
     seq INT NOT NULL,
     original_id TEXT NOT NULL,
-    tool_id INT NOT NULL,
+    project_id INT NOT NULL,
     tag_name VARCHAR(255) NOT NULL,
     description TEXT,
     start_date DATE NOT NULL DEFAULT CURRENT_DATE,
     end_date DATE DEFAULT NULL,
     is_current BOOLEAN NOT NULL DEFAULT TRUE,
 
-    CONSTRAINT fk_tags_tools FOREIGN KEY (tool_id) REFERENCES tools(tool_id),
+    CONSTRAINT fk_tags_projects FOREIGN KEY (project_id) REFERENCES projects(project_id),
     CONSTRAINT unique_tags_seq UNIQUE (original_id, seq, tool_id)
 );
 
