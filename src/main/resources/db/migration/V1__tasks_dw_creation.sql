@@ -315,7 +315,7 @@ CREATE TABLE IF NOT EXISTS tags(
     is_current BOOLEAN NOT NULL DEFAULT TRUE,
 
     CONSTRAINT fk_tags_projects FOREIGN KEY (project_id) REFERENCES projects(project_id),
-    CONSTRAINT unique_tags_seq UNIQUE (original_id, seq, tool_id)
+    CONSTRAINT unique_tags_seq UNIQUE (original_id, seq, project_id)
 );
 
 CREATE OR REPLACE TRIGGER stories_scd2_trigger
