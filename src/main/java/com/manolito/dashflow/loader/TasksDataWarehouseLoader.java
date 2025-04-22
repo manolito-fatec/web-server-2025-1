@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static com.manolito.dashflow.enums.Schema.DATAWAREHOUSE;
 import static org.apache.spark.sql.functions.col;
 
 /**
@@ -32,7 +33,6 @@ public class TasksDataWarehouseLoader {
     private Map<String, ToolMetadata> toolCache = new ConcurrentHashMap<>();
     private Dataset<Row> cachedDates;
     private Dataset<Row> cachedTools;
-    private final String DW_TABLE = "dw_dashflow.";
 
     @Value("${spring.datasource.url}")
     public String jdbcUrl;
@@ -67,7 +67,7 @@ public class TasksDataWarehouseLoader {
         return spark.read()
                 .format("jdbc")
                 .option("url", jdbcUrl)
-                .option("dbtable", DW_TABLE + tableName)
+                .option("dbtable", DATAWAREHOUSE+ "." + tableName)
                 .option("user", dbUser)
                 .option("password", dbPassword)
                 .load()
@@ -79,7 +79,7 @@ public class TasksDataWarehouseLoader {
         return spark.read()
                 .format("jdbc")
                 .option("url", jdbcUrl)
-                .option("dbtable", DW_TABLE + tableName)
+                .option("dbtable", DATAWAREHOUSE + "." + tableName)
                 .option("user", dbUser)
                 .option("password", dbPassword)
                 .load()
@@ -90,7 +90,7 @@ public class TasksDataWarehouseLoader {
         return spark.read()
                 .format("jdbc")
                 .option("url", jdbcUrl)
-                .option("dbtable", DW_TABLE + tableName)
+                .option("dbtable", DATAWAREHOUSE + "." + tableName)
                 .option("user", dbUser)
                 .option("password", dbPassword)
                 .load();
@@ -105,7 +105,7 @@ public class TasksDataWarehouseLoader {
             filteredData.write()
                     .format("jdbc")
                     .option("url", jdbcUrl)
-                    .option("dbtable", DW_TABLE + tableName)
+                    .option("dbtable", DATAWAREHOUSE + "." + tableName)
                     .option("user", dbUser)
                     .option("password", dbPassword)
                     .option("batchsize", 10000)
@@ -143,7 +143,7 @@ public class TasksDataWarehouseLoader {
         Dataset<Row> tools = spark.read()
                 .format("jdbc")
                 .option("url", jdbcUrl)
-                .option("dbtable", DW_TABLE + "tools")
+                .option("dbtable", DATAWAREHOUSE + ".tools")
                 .option("user", dbUser)
                 .option("password", dbPassword)
                 .load()
@@ -170,7 +170,7 @@ public class TasksDataWarehouseLoader {
         this.cachedDates = spark.read()
                 .format("jdbc")
                 .option("url", jdbcUrl)
-                .option("dbtable", DW_TABLE + "dates")
+                .option("dbtable", DATAWAREHOUSE + ".dates")
                 .option("user", dbUser)
                 .option("password", dbPassword)
                 .load()
@@ -181,7 +181,7 @@ public class TasksDataWarehouseLoader {
         return spark.read()
                 .format("jdbc")
                 .option("url", jdbcUrl)
-                .option("dbtable", DW_TABLE + tableName)
+                .option("dbtable", DATAWAREHOUSE + "." + tableName)
                 .option("user", dbUser)
                 .option("password", dbPassword)
                 .load()
