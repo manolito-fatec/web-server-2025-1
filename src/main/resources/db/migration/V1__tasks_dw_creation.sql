@@ -1,7 +1,7 @@
 ---- TASKS DATA WAREHOUSE CREATION ----
 
-CREATE SCHEMA IF NOT EXISTS dw_tasks;
-SET search_path TO dw_tasks;
+CREATE SCHEMA IF NOT EXISTS dw_dashflow;
+SET search_path TO dw_dashflow;
 
 ----------------------------------------
 
@@ -68,7 +68,7 @@ BEGIN
     -- Get the maximum sequence number for the tool name
     SELECT COALESCE(MAX(seq), 0)
     INTO max_seq
-    FROM dw_tasks.tools
+    FROM dw_dashflow.tools
     WHERE tool_name = NEW.tool_name;
 
     -- Set the new sequence number
@@ -76,7 +76,7 @@ BEGIN
 
     -- If this is not the first row, update the previous row
     IF max_seq > 0 THEN
-        UPDATE dw_tasks.tools
+        UPDATE dw_dashflow.tools
         SET end_date = CURRENT_DATE, is_current = FALSE
         WHERE tool_name = NEW.tool_name AND is_current = TRUE;
     END IF;
@@ -97,7 +97,7 @@ CREATE OR REPLACE TRIGGER tools_scd2_trigger
     FOR EACH ROW
 EXECUTE FUNCTION manage_scd2_tools();
 
-INSERT INTO dw_tasks.tools(
+INSERT INTO dw_dashflow.tools(
     tool_name)
 VALUES ('taiga');
 ---------------------------------
@@ -227,7 +227,7 @@ EXECUTE FUNCTION manage_scd2('original_id');
 CREATE OR REPLACE FUNCTION create_epicless_epic()
 RETURNS TRIGGER AS $$
 BEGIN
-INSERT INTO dw_tasks.epics (
+INSERT INTO dw_dashflow.epics (
     original_id,
     project_id,
     epic_name,
@@ -244,7 +244,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER trg_project_create_epicless
-    AFTER INSERT ON dw_tasks.projects
+    AFTER INSERT ON dw_dashflow.projects
     FOR EACH ROW
     EXECUTE FUNCTION create_epicless_epic();
 
