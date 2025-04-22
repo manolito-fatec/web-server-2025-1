@@ -78,7 +78,7 @@ public class SparkUtils {
             String query = String.format(
                     "SELECT column_name " +
                             "FROM information_schema.columns " +
-                            "WHERE table_schema = '" + DATAWAREHOUSE + "' AND table_name = '%s'",
+                            "WHERE table_schema = '" + DATAWAREHOUSE.getSchema() + "' AND table_name = '%s'",
                     tableName);
 
             ResultSet resultSet = statement.executeQuery(query);
