@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS issue_status(
     is_current BOOLEAN NOT NULL DEFAULT TRUE,
 
     CONSTRAINT fk_issue_status_projects FOREIGN KEY (project_id) REFERENCES projects(project_id),
-    CONSTRAINT unique_status_seq UNIQUE (original_id, seq, project_id)
+    CONSTRAINT unique_issues_status_seq UNIQUE (original_id, seq, project_id)
 );
 
 CREATE OR REPLACE TRIGGER issue_status_scd2_trigger
