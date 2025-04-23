@@ -25,9 +25,9 @@ public class TasksDataWarehouseRepository {
                 "FROM dashflow_appl.users u " +
                 "LEFT JOIN dashflow_appl.accounts acc " +
                 "ON u.user_id = acc.user_id " +
-                "LEFT JOIN dw_tasks.users tu " +
+                "LEFT JOIN dw_dashflow.users tu " +
                 "ON acc.account = tu.original_id " +
-                "LEFT JOIN dw_tasks.fact_tasks ft " +
+                "LEFT JOIN dw_dashflow.fact_tasks ft " +
                 "ON tu.user_id = ft.assignee_id " +
                 "WHERE u.user_id = :userId GROUP BY u.user_id";
 
@@ -49,11 +49,11 @@ public class TasksDataWarehouseRepository {
         String sql = "SELECT COUNT(ft.task_id) AS total_task_count " +
                 "FROM dashflow_appl.users u " +
                 "LEFT JOIN dashflow_appl.accounts acc ON u.user_id = acc.user_id " +
-                "LEFT JOIN dw_tasks.users tu ON acc.account = tu.original_id " +
-                "LEFT JOIN dw_tasks.fact_tasks ft ON tu.user_id = ft.assignee_id " +
-                "LEFT JOIN dw_tasks.dates created_date ON ft.created_at = created_date.date_id " +
-                "LEFT JOIN dw_tasks.dates completed_date ON ft.completed_at = completed_date.date_id " +
-                "LEFT JOIN dw_tasks.dates due_date ON ft.due_date = due_date.date_id " +
+                "LEFT JOIN dw_dashflow.users tu ON acc.account = tu.original_id " +
+                "LEFT JOIN dw_dashflow.fact_tasks ft ON tu.user_id = ft.assignee_id " +
+                "LEFT JOIN dw_dashflow.dates created_date ON ft.created_at = created_date.date_id " +
+                "LEFT JOIN dw_dashflow.dates completed_date ON ft.completed_at = completed_date.date_id " +
+                "LEFT JOIN dw_dashflow.dates due_date ON ft.due_date = due_date.date_id " +
                 "WHERE u.user_id = :userId " +
                 "AND created_date.date_date BETWEEN :start AND :end " +
                 "AND completed_date.date_date BETWEEN :start AND :end " +
@@ -81,10 +81,10 @@ public class TasksDataWarehouseRepository {
         "COUNT(DISTINCT CASE WHEN completed_date.date_date BETWEEN :start AND :end THEN ft.task_id END) AS completed_task_count " +
         "FROM dashflow_appl.users u " +
         "LEFT JOIN dashflow_appl.accounts acc ON u.user_id = acc.user_id "  +
-        "LEFT JOIN dw_tasks.users tu ON acc.account = tu.original_id " +
-        "LEFT JOIN dw_tasks.fact_tasks ft ON tu.user_id = ft.assignee_id " +
-        "LEFT JOIN dw_tasks.dates created_date ON ft.created_at = created_date.date_id " +
-        "LEFT JOIN dw_tasks.dates completed_date ON ft.completed_at = completed_date.date_id " +
+        "LEFT JOIN dw_dashflow.users tu ON acc.account = tu.original_id " +
+        "LEFT JOIN dw_dashflow.fact_tasks ft ON tu.user_id = ft.assignee_id " +
+        "LEFT JOIN dw_dashflow.dates created_date ON ft.created_at = created_date.date_id " +
+        "LEFT JOIN dw_dashflow.dates completed_date ON ft.completed_at = completed_date.date_id " +
         "WHERE u.user_id = 1 " +
         "GROUP BY u.user_id;";
 
@@ -107,12 +107,12 @@ public class TasksDataWarehouseRepository {
 
         String sql = "SELECT COUNT(DISTINCT CASE WHEN created_date.date_date BETWEEN :start AND :end THEN ft.task_id END) AS created_task_count, " +
                 "COUNT(DISTINCT CASE WHEN completed_date.date_date BETWEEN :start AND :end THEN ft.task_id END) AS completed_task_count " +
-                "FROM dw_tasks.projects prj " +
-                "LEFT JOIN dw_tasks.epics ep ON prj.project_id = ep.project_id " +
-                "LEFT JOIN dw_tasks.stories st ON ep.epic_id = st.epic_id " +
-                "LEFT JOIN dw_tasks.fact_tasks ft ON st.story_id = ft.story_id " +
-                "LEFT JOIN dw_tasks.dates created_date ON ft.created_at = created_date.date_id  " +
-                "LEFT JOIN dw_tasks.dates completed_date ON ft.completed_at = completed_date.date_id " +
+                "FROM dw_dashflow.projects prj " +
+                "LEFT JOIN dw_dashflow.epics ep ON prj.project_id = ep.project_id " +
+                "LEFT JOIN dw_dashflow.stories st ON ep.epic_id = st.epic_id " +
+                "LEFT JOIN dw_dashflow.fact_tasks ft ON st.story_id = ft.story_id " +
+                "LEFT JOIN dw_dashflow.dates created_date ON ft.created_at = created_date.date_id  " +
+                "LEFT JOIN dw_dashflow.dates completed_date ON ft.completed_at = completed_date.date_id " +
                 "WHERE prj.original_id = :projectId";
 
         Map<String, Object> params = new HashMap<>();
@@ -140,15 +140,15 @@ public class TasksDataWarehouseRepository {
                 "FROM dashflow_appl.users u " +
                 "LEFT JOIN dashflow_appl.accounts acc " +
                 "ON u.user_id = acc.user_id " +
-                "LEFT JOIN dw_tasks.users tu " +
+                "LEFT JOIN dw_dashflow.users tu " +
                 "ON acc.account = tu.original_id " +
-                "LEFT JOIN dw_tasks.fact_tasks ft " +
+                "LEFT JOIN dw_dashflow.fact_tasks ft " +
                 "ON tu.user_id = ft.assignee_id " +
-                "LEFT JOIN dw_tasks.stories st " +
+                "LEFT JOIN dw_dashflow.stories st " +
                 "ON ft.story_id = st.story_id " +
-                "LEFT JOIN dw_tasks.epics ep " +
+                "LEFT JOIN dw_dashflow.epics ep " +
                 "ON st.epic_id = ep.epic_id " +
-                "LEFT JOIN dw_tasks.projects prj " +
+                "LEFT JOIN dw_dashflow.projects prj " +
                 "ON ep.project_id = prj.project_id " +
                 "WHERE u.user_id = :userId GROUP BY u.user_id";
 
@@ -167,13 +167,13 @@ public class TasksDataWarehouseRepository {
                 "FROM dashflow_appl.users u " +
                 "LEFT JOIN dashflow_appl.accounts acc " +
                 "ON u.user_id = acc.user_id " +
-                "LEFT JOIN dw_tasks.users tu " +
+                "LEFT JOIN dw_dashflow.users tu " +
                 "ON acc.account = tu.original_id " +
-                "LEFT JOIN dw_tasks.fact_tasks ft " +
+                "LEFT JOIN dw_dashflow.fact_tasks ft " +
                 "ON tu.user_id = ft.assignee_id " +
-                "LEFT JOIN dw_tasks.status st " +
+                "LEFT JOIN dw_dashflow.status st " +
                 "ON ft.status_id = st.status_id " +
-                "LEFT JOIN dw_tasks.projects prj " +
+                "LEFT JOIN dw_dashflow.projects prj " +
                 "ON st.project_id = prj.project_id " +
                 "WHERE u.user_id = :userId " +
                 "AND prj.original_id = :projectId " +
@@ -197,11 +197,11 @@ public class TasksDataWarehouseRepository {
 
     public List<StatusCountDto> getTaskCountGroupByStatusByProjectId(String projectId) {
         String sql = "SELECT st.status_name, COUNT(ft.task_id) as task_count " +
-                "FROM dw_tasks.projects prj " +
-                "LEFT JOIN dw_tasks.epics ep ON prj.project_id = ep.project_id " +
-                "LEFT JOIN dw_tasks.stories sto ON ep.epic_id = sto.epic_id " +
-                "LEFT JOIN dw_tasks.fact_tasks ft ON sto.story_id = ft.story_id " +
-                "LEFT JOIN dw_tasks.status st " +
+                "FROM dw_dashflow.projects prj " +
+                "LEFT JOIN dw_dashflow.epics ep ON prj.project_id = ep.project_id " +
+                "LEFT JOIN dw_dashflow.stories sto ON ep.epic_id = sto.epic_id " +
+                "LEFT JOIN dw_dashflow.fact_tasks ft ON sto.story_id = ft.story_id " +
+                "LEFT JOIN dw_dashflow.status st " +
                 "ON ft.status_id = st.status_id " +
                 "WHERE prj.original_id = :projectId " +
                 "AND st.is_current = TRUE " +
@@ -222,10 +222,10 @@ public class TasksDataWarehouseRepository {
 
     public Optional<Double> getAverageTimeCard(Integer userId) {
         String sql = "SELECT ROUND((AVG(completed.date_date - created.date_date)/3),2) AS average_time " +
-                "FROM dw_tasks.fact_tasks ft " +
-                "JOIN dw_tasks.dates created ON ft.created_at = created.date_id " +
-                "JOIN dw_tasks.dates completed ON ft.completed_at = completed.date_id " +
-                "JOIN dw_tasks.users u ON assignee_id  = u.user_id " +
+                "FROM dw_dashflow.fact_tasks ft " +
+                "JOIN dw_dashflow.dates created ON ft.created_at = created.date_id " +
+                "JOIN dw_dashflow.dates completed ON ft.completed_at = completed.date_id " +
+                "JOIN dw_dashflow.users u ON assignee_id  = u.user_id " +
                 "WHERE ft.completed_at IS NOT NULL " +
                 "AND u.user_id = :userId";
 
@@ -241,12 +241,12 @@ public class TasksDataWarehouseRepository {
 
     public Optional<Double> getAverageTimeCardByProjectId(String projectId) {
         String sql = "SELECT ROUND((AVG(completed.date_date - created.date_date)/3),2) AS average_time " +
-                "FROM dw_tasks.fact_tasks ft " +
-                "JOIN dw_tasks.dates created ON ft.created_at = created.date_id " +
-                "JOIN dw_tasks.dates completed ON ft.completed_at = completed.date_id " +
-                "JOIN dw_tasks.stories st ON ft.story_id = ft.story_id " +
-                "JOIN dw_tasks.epics ep ON ep.epic_id = st.epic_id " +
-                "JOIN dw_tasks.projects prj ON prj.project_id = ep.project_id " +
+                "FROM dw_dashflow.fact_tasks ft " +
+                "JOIN dw_dashflow.dates created ON ft.created_at = created.date_id " +
+                "JOIN dw_dashflow.dates completed ON ft.completed_at = completed.date_id " +
+                "JOIN dw_dashflow.stories st ON ft.story_id = ft.story_id " +
+                "JOIN dw_dashflow.epics ep ON ep.epic_id = st.epic_id " +
+                "JOIN dw_dashflow.projects prj ON prj.project_id = ep.project_id " +
                 "WHERE ft.completed_at IS NOT NULL " +
                 "AND prj.original_id = :projectId";
 
@@ -264,10 +264,10 @@ public class TasksDataWarehouseRepository {
         String sql = "SELECT COUNT(ft.task_id) AS total_cards " +
                 "FROM dataflow_appl.users u " +
                 "LEFT JOIN dataflow_appl.accounts acc ON u.user_id = acc.user_id " +
-                "LEFT JOIN dw_tasks.users tu ON acc.account = tu.original_id " +
-                "LEFT JOIN dw_tasks.fact_tasks ft ON tu.user_id = ft.assignee_id " +
-                "LEFT JOIN dw_tasks.status st ON ft.status_id = st.status_id " +
-                "LEFT JOIN dw_tasks.projects prj ON st.project_id = prj.project_id " +
+                "LEFT JOIN dw_dashflow.users tu ON acc.account = tu.original_id " +
+                "LEFT JOIN dw_dashflow.fact_tasks ft ON tu.user_id = ft.assignee_id " +
+                "LEFT JOIN dw_dashflow.status st ON ft.status_id = st.status_id " +
+                "LEFT JOIN dw_dashflow.projects prj ON st.project_id = prj.project_id " +
                 "WHERE u.user_id = :userId " +
                 "AND prj.is_current = TRUE " +
                 "AND st.is_current = TRUE " +
@@ -286,15 +286,15 @@ public class TasksDataWarehouseRepository {
 
     public List<TaskTagDto> getTaskCountGroupByTagByProjectId(String projectId) {
         String sql = "SELECT tag.tag_name, COUNT(ft.task_id) as task_count " +
-                "FROM dw_tasks.projects prj " +
-                "LEFT JOIN dw_tasks.epics ep ON prj.project_id = ep.project_id " +
-                "LEFT JOIN dw_tasks.stories sto ON ep.epic_id = sto.epic_id " +
-                "LEFT JOIN dw_tasks.fact_tasks ft ON sto.story_id = ft.story_id " +
-                "LEFT JOIN dw_tasks.status st " +
+                "FROM dw_dashflow.projects prj " +
+                "LEFT JOIN dw_dashflow.epics ep ON prj.project_id = ep.project_id " +
+                "LEFT JOIN dw_dashflow.stories sto ON ep.epic_id = sto.epic_id " +
+                "LEFT JOIN dw_dashflow.fact_tasks ft ON sto.story_id = ft.story_id " +
+                "LEFT JOIN dw_dashflow.status st " +
                 "ON ft.status_id = st.status_id " +
-                "LEFT JOIN dw_tasks.task_tag tt" +
+                "LEFT JOIN dw_dashflow.task_tag tt" +
                 "ON tt.task_id = ft.task_id " +
-                "LEFT JOIN dw_tasks.tags tag " +
+                "LEFT JOIN dw_dashflow.tags tag " +
                 "ON tt.tag_id = tag.tag_id "+
                 "WHERE prj.original_id = :projectId " +
                 "AND tag.is_current = TRUE " +

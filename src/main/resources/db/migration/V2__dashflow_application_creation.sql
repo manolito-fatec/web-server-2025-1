@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS tools(
     tool_name VARCHAR(255) NOT NULL
 );
 
-INSERT INTO dw_tasks.tools(
+INSERT INTO dw_dashflow.tools(
     tool_name)
 VALUES ('taiga');
 
