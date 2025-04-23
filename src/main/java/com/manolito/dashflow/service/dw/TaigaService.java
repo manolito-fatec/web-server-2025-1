@@ -507,6 +507,31 @@ public class TaigaService {
         );
     }
 
+    public static Dataset<Row> joinFactIssue(Dataset<Row> issuesDF,
+                                             Dataset<Row> statusDF,
+                                             Dataset<Row> userDF,
+                                             Dataset<Row> projectDF,
+                                             Dataset<Row> datesDF) {
+
+        Dataset<Row> joinedDF = issuesDF
+                .join(statusDF, issuesDF.col("status_id").equalTo(statusDF.col("original_id")))
+                .join(userDF, issuesDF.col("user_id").equalTo(userDF.col("original_id")))
+                .join(projectDF, issuesDF.col("project_id").equalTo(projectDF.col("original_id")));
+
+        joinedDF = mapDateColumn(joinedDF, datesDF, "created_at", "created_date_id");
+        joinedDF = mapDateColumn(joinedDF, datesDF, "completed_at", "completed_date_id");
+
+        return joinedDF.select(
+                issuesDF.col("original_id"),
+                statusDF.col("status_id"),
+                userDF.col("user_id").as("assignee_id"),
+                projectDF.col("project_id"),
+                col("created_date_id").as("created_at"),
+                col("completed_date_id").as("completed_at"),
+                issuesDF.col("issue_name")
+        );
+    }
+
     /**
      * Helper method that maps a date column to its corresponding date dimension key.
      * Performs a left join with the date dimension table and renames the resulting date_id column.
@@ -552,7 +577,7 @@ public class TaigaService {
 
             processFactTasks(transformer);
 
-            processIssuesData(transformer);
+            processFactIssues(transformer);
 
             saveRelationshipData();
         } catch (Exception e) {
@@ -620,11 +645,20 @@ public class TaigaService {
     }
 
     private void processIssuesData(TaigaTransformer transformer) {
+    private void processFactIssues(TaigaTransformer transformer) {
         List<Dataset<Row>> issuesList = handleIssues();
-        for (Dataset<Row> issueDF : issuesList) {
-            Dataset<Row> transformedIssue = transformer.transformIssues(issueDF);
+        for (Dataset<Row> factIssueDF : issuesList) {
+            Dataset<Row> transformedStatusIssues = transformer.transformStatus(factIssueDF);
+            transformedStatusIssues = joinStatusProject(transformedStatusIssues, dataWarehouseLoader.loadDimensionWithoutTool("projects"));
+            dataWarehouseLoader.save(transformedStatusIssues, "issue_status");
 
-//            dataWarehouseLoader.save(transformedIssue, "issues"); remove coment when issue is in DW
+            Dataset<Row> transformedFactIssue = transformer.transformIssues(factIssueDF);
+            transformedFactIssue = joinFactIssue(transformedFactIssue,
+                    dataWarehouseLoader.loadDimension("issue_status"),
+                    dataWarehouseLoader.loadDimension("users"),
+                    dataWarehouseLoader.loadDimensionWithoutTool("projects"),
+                    dataWarehouseLoader.loadDimensionWithoutIsCurrent("dates", "taiga"));
+            dataWarehouseLoader.save(transformedFactIssue, "fact_issues");
         }
     }
 
