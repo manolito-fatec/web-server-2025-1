@@ -552,8 +552,14 @@ public class TaigaService {
     }
 
     /**
-     * Executes the complete Taiga ETL process including authentication, data extraction,
-     * transformation and loading of projects, tasks, epics and user stories.
+     * Executes the complete Taiga ETL (Extract, Transform, Load) process.
+     * The process includes:
+     * Authentication with Taiga API
+     * Data extraction for projects, tasks, epics, and user stories
+     * Transformation of the extracted data
+     * Loading the transformed data into the data warehouse
+     * Processing of fact tables and relationships
+     *
      *
      * @throws RuntimeException if any error occurs during the ETL process
      * @throws IllegalStateException if authentication fails or no projects are found
@@ -585,6 +591,12 @@ public class TaigaService {
         }
     }
 
+    /**
+     * Processes project-related data including projects, roles, and users.
+     * Transforms the raw project data and saves it to the data warehouse.
+     *
+     * @param transformer The transformer instance to use for data transformation
+     */
     private void processProjectsData(TaigaTransformer transformer) {
         List<Dataset<Row>> projectsList = handleProjects();
         for (Dataset<Row> projectDF : projectsList) {
@@ -598,6 +610,12 @@ public class TaigaService {
         }
     }
 
+    /**
+     * Processes task-related data including status and tags.
+     * Transforms the raw task data and saves it to the data warehouse.
+     *
+     * @param transformer The transformer instance to use for data transformation
+     */
     private void processTasksData(TaigaTransformer transformer) {
         List<Dataset<Row>> tasksList = handleTasks();
         for (Dataset<Row> taskDF : tasksList) {
@@ -611,6 +629,12 @@ public class TaigaService {
         }
     }
 
+    /**
+     * Processes epic-related data.
+     * Transforms the raw epic data and saves it to the data warehouse.
+     *
+     * @param transformer The transformer instance to use for data transformation
+     */
     private void processEpicsData(TaigaTransformer transformer) {
         List<Dataset<Row>> epicsList = handleEpics();
         for (Dataset<Row> epicDF : epicsList) {
@@ -620,17 +644,30 @@ public class TaigaService {
         }
     }
 
+    /**
+     * Processes user story-related data.
+     * Transforms the raw user story data and saves it to the data warehouse.
+     *
+     * @param transformer The transformer instance to use for data transformation
+     */
     private void processUserStoriesData(TaigaTransformer transformer) {
         List<Dataset<Row>> storiesList = handleUserStories();
         for (Dataset<Row> storiesDF : storiesList) {
             Dataset<Row> transformedStories = transformer.transformUserStories(storiesDF);
-            transformedStories = joinStoryProjectAndEpic(transformedStories, dataWarehouseLoader.loadDimensionWithoutTool("projects"),
+            transformedStories = joinStoryProjectAndEpic(transformedStories,
+                    dataWarehouseLoader.loadDimensionWithoutTool("projects"),
                     dataWarehouseLoader.loadDimensionWithoutTool("epics")
             );
             dataWarehouseLoader.save(transformedStories, "stories");
         }
     }
 
+    /**
+     * Processes fact data for tasks.
+     * Transforms the raw task data into fact format and saves it to the data warehouse.
+     *
+     * @param transformer The transformer instance to use for data transformation
+     */
     private void processFactTasks(TaigaTransformer transformer) {
         List<Dataset<Row>> tasksList = handleTasks();
         for (Dataset<Row> factTaskDF : tasksList) {
@@ -644,7 +681,12 @@ public class TaigaService {
         }
     }
 
-    private void processIssuesData(TaigaTransformer transformer) {
+    /**
+     * Processes fact data for issues.
+     * Transforms the raw issue data into fact format and saves it to the data warehouse.
+     *
+     * @param transformer The transformer instance to use for data transformation
+     */
     private void processFactIssues(TaigaTransformer transformer) {
         List<Dataset<Row>> issuesList = handleIssues();
         for (Dataset<Row> factIssueDF : issuesList) {
@@ -662,6 +704,10 @@ public class TaigaService {
         }
     }
 
+    /**
+     * Saves relationship data to the data warehouse.
+     * Processes and saves user-role and task-tag relationships.
+     */
     private void saveRelationshipData() {
         Dataset<Row> userRole = saveUserRoleToDatabase();
         dataWarehouseLoader.save(userRole,"user_role");
