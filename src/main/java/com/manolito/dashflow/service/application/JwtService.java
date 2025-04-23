@@ -25,13 +25,13 @@ public class JwtService {
     }
 
     public String extractUserEmail(String token) {
-        return extractClaim(token, claims -> claims.get("username", String.class));
+        return extractClaim(token, claims -> claims.get("email", String.class));
     }
 
     public String generateToken(ApplicationUser user) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("role", user.getRoles());
-        claims.put("username", user.getUsername());
+        claims.put("email", user.getEmail());
         return generateToken(claims, user);
     }
 
