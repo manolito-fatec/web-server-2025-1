@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 import java.util.*;
 
 import com.manolito.dashflow.dto.dw.CreatedDoneDto;
+import com.manolito.dashflow.dto.dw.TaskTagDto;
 import com.manolito.dashflow.repository.application.TasksDataWarehouseRepository;
 import com.manolito.dashflow.service.application.TasksService;
 import org.junit.jupiter.api.DisplayName;
@@ -282,5 +283,51 @@ class TasksServiceTest {
 
         assertEquals("projectId cannot be null", exception.getMessage());
         verify(tasksDataWarehouseRepository, never()).getAverageTimeCardByProjectId(anyString());
+    }
+
+    @Test
+    @DisplayName("getTaskCountByTagByProjectId - should return task counts by tag when tasks exist")
+    void getTaskCountByTagByProjectId_whenTasksExist_shouldReturnCounts() {
+        List<TaskTagDto> expectedResults = List.of(
+                new TaskTagDto("UI", 5),
+                new TaskTagDto("Backend", 3),
+                new TaskTagDto("Bug", 2)
+        );
+
+        when(tasksDataWarehouseRepository.getTaskCountGroupByTagByProjectId(TEST_PROJECT_ID))
+                .thenReturn(expectedResults);
+
+        List<TaskTagDto> actualResults = tasksService.getTaskCountByTagByProjectId(TEST_PROJECT_ID);
+
+        assertNotNull(actualResults);
+        assertEquals(3, actualResults.size());
+        assertEquals("UI", actualResults.get(0).getTagName());
+        assertEquals(5, actualResults.get(0).getCount());
+        assertEquals("Backend", actualResults.get(1).getTagName());
+        assertEquals(3, actualResults.get(1).getCount());
+        verify(tasksDataWarehouseRepository).getTaskCountGroupByTagByProjectId(TEST_PROJECT_ID);
+    }
+
+    @Test
+    @DisplayName("getTaskCountByTagByProjectId - should throw when no tasks found")
+    void getTaskCountByTagByProjectId_whenNoTasks_shouldThrow() {
+        when(tasksDataWarehouseRepository.getTaskCountGroupByTagByProjectId(TEST_PROJECT_ID))
+                .thenReturn(Collections.emptyList());
+
+        NoSuchElementException exception = assertThrows(NoSuchElementException.class,
+                () -> tasksService.getTaskCountByTagByProjectId(TEST_PROJECT_ID));
+
+        assertEquals("No tasks found", exception.getMessage());
+        verify(tasksDataWarehouseRepository).getTaskCountGroupByTagByProjectId(TEST_PROJECT_ID);
+    }
+
+    @Test
+    @DisplayName("getTaskCountByTagByProjectId - should throw when projectId is null")
+    void getTaskCountByTagByProjectId_whenProjectIdIsNull_shouldThrow() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> tasksService.getTaskCountByTagByProjectId(null));
+
+        assertEquals("projectId cannot be null", exception.getMessage());
+        verify(tasksDataWarehouseRepository, never()).getTaskCountGroupByTagByProjectId(anyString());
     }
 }

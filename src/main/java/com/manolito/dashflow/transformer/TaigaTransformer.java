@@ -44,9 +44,8 @@ public class TaigaTransformer {
                 to_date(col("created_date")).as("created_at"),
                 to_date(col("modified_date")).as("updated_at"),
                 col("subject").as("issue_name"),
-                col("description"),
                 col("is_blocked"),
-                col("is_closed").as("is_resolved")
+                col("status_extra_info.is_closed").as("is_resolved")
         );
     }
 
@@ -94,7 +93,7 @@ public class TaigaTransformer {
     public Dataset<Row> transformEpics(Dataset<Row> rawEpics) {
         return rawEpics.select(
                 col("id").as("original_id"),
-                lit(1).as("project_id"),
+                col("project").as("project_id"),
                 col("subject").as("epic_name")
         );
     }
