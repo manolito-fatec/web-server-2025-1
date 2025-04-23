@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS fact_issues(
     created_at INT NOT NULL,
     completed_at INT,
 
-    task_name VARCHAR(255) NOT NULL,
+    issue_name VARCHAR(255) NOT NULL,
     description TEXT,
     story_points INT,
     is_blocked BOOLEAN,
