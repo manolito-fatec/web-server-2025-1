@@ -196,7 +196,7 @@ CREATE TABLE IF NOT EXISTS status(
     CONSTRAINT unique_status_seq UNIQUE (original_id, seq, project_id)
 );
 
-CREATE OR REPLACE TRIGGER projects_scd2_trigger
+CREATE OR REPLACE TRIGGER status_scd2_trigger
     BEFORE INSERT ON status
     FOR EACH ROW
 EXECUTE FUNCTION manage_scd2('original_id');
@@ -318,7 +318,7 @@ CREATE TABLE IF NOT EXISTS tags(
     CONSTRAINT unique_tags_seq UNIQUE (original_id, seq, project_id)
 );
 
-CREATE OR REPLACE TRIGGER stories_scd2_trigger
+CREATE OR REPLACE TRIGGER tags_scd2_trigger
     BEFORE INSERT ON tags
     FOR EACH ROW
 EXECUTE FUNCTION manage_scd2('original_id');
