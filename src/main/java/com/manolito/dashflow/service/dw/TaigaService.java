@@ -507,6 +507,17 @@ public class TaigaService {
         );
     }
 
+    /**
+     * Joins issue dataset with status, user, project and date datasets to create a consolidated fact table for issues.
+     *
+     * @param issuesDF Dataset containing issue information with original IDs
+     * @param statusDF Dataset containing status information with original and mapped IDs
+     * @param userDF Dataset containing user information with original and mapped IDs
+     * @param projectDF Dataset containing project information with original and mapped IDs
+     * @param datesDF Dataset containing date dimension information
+     * @return Dataset containing issue original_id, status_id, assignee_id, project_id, created_at,
+     *         completed_at, and issue_name
+     */
     public static Dataset<Row> joinFactIssue(Dataset<Row> issuesDF,
                                              Dataset<Row> statusDF,
                                              Dataset<Row> userDF,
