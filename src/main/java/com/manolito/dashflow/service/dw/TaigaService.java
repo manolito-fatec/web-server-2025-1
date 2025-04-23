@@ -393,7 +393,6 @@ public class TaigaService {
      * @param statusDF The dataset containing status information with original project IDs
      * @param projectsDF The dataset containing project information with original and new IDs
      * @return A new dataset with updated project IDs, containing original_id, status_name, and project_id columns
-     * @throws NullPointerException if either statusDF or projectsDF is null
      */
     public static Dataset<Row> joinStatusProject(Dataset<Row> statusDF, Dataset<Row> projectsDF) {
         Dataset<Row> joined = statusDF
@@ -411,7 +410,6 @@ public class TaigaService {
      * @param epicsDF Dataset containing epic information with original project IDs
      * @param projectsDF Dataset containing project information with original and mapped IDs
      * @return Dataset containing epic original_id, mapped project_id, and epic_name
-     * @throws NullPointerException if either epicsDF or projectsDF is null
      */
     public static Dataset<Row> joinEpicProject(Dataset<Row> epicsDF,
                                                Dataset<Row> projectsDF) {
@@ -432,7 +430,6 @@ public class TaigaService {
      * @param projectsDF Dataset containing project information with original and mapped IDs
      * @param epicsDF Dataset containing epic information with original IDs
      * @return Dataset containing story original_id, mapped project_id, epic_id, story_name, and is_finished
-     * @throws NullPointerException if either storiesDF, projectsDF or epicsDF is null
      */
     public static Dataset<Row> joinStoryProjectAndEpic(Dataset<Row> storiesDF,
                                                        Dataset<Row> projectsDF,
@@ -465,7 +462,6 @@ public class TaigaService {
      * @param datesDF Dataset containing date dimension information
      * @return Dataset containing task original_id, status_id, assignee_id, tool_id, story_id, created_at,
      *         completed_at, due_date, task_name, is_blocked, and is_storyless
-     * @throws NullPointerException if any of the input datasets is null
      */
     public static Dataset<Row> joinFactTask(Dataset<Row> tasksDF,
                                             Dataset<Row> statusDF,
