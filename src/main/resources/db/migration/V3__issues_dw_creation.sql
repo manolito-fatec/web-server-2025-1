@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS issue_status(
 );
 
 CREATE OR REPLACE TRIGGER issue_status_scd2_trigger
-    BEFORE INSERT ON status
+    BEFORE INSERT ON issue_status
     FOR EACH ROW
 EXECUTE FUNCTION manage_scd2('original_id');
 ----------------------------------------
