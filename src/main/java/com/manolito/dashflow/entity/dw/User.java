@@ -12,7 +12,7 @@ import java.time.LocalDate;
 @Getter
 @Setter
 @Entity
-@Table(name = "users", schema = "dw_tasks")
+@Table(name = "users", schema = "dw_dashflow")
 public class User {
 
     @Id

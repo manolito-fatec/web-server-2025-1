@@ -11,7 +11,7 @@ import java.time.LocalDate;
 @Getter
 @Setter
 @Entity
-@Table(name = "tools", schema = "dw_tasks")
+@Table(name = "tools", schema = "dw_dashflow")
 public class Tool {
 
     @Id

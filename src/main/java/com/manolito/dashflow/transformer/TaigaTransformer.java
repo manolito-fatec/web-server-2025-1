@@ -38,14 +38,11 @@ public class TaigaTransformer {
         return rawIssues.select(
                 col("id").as("original_id"),
                 col("status").as("status_id"),
-                col("owner").as("owner_id"),
-                lit(TOOL_ID).as("tool_id"),
+                col("owner").as("user_id"),
                 col("project").as("project_id"),
-                to_date(col("created_date")).as("created_at"),
-                to_date(col("modified_date")).as("updated_at"),
-                col("subject").as("issue_name"),
-                col("is_blocked"),
-                col("status_extra_info.is_closed").as("is_resolved")
+                (col("created_date")).cast("date").as("created_at"),
+                (col("modified_date")).cast("date").as("completed_at"),
+                col("subject").as("issue_name")
         );
     }
 
@@ -100,12 +97,12 @@ public class TaigaTransformer {
 
     public Dataset<Row> transformTags(Dataset<Row> rawTags) {
         return rawTags.select(
-                        lit(TOOL_ID).as("tool_id"),
+                        col("project").as("project_id"),
                         explode(col("tags")).as("tag") // Explodes the "tags" array into separate rows
                 )
                 .select(
                         col("tag").getItem(0).as("original_id"),
-                        col("tool_id"),
+                        col("project_id"),
                         col("tag").getItem(0).as("tag_name")
                 )
                 .distinct();
