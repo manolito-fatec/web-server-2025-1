@@ -100,12 +100,12 @@ public class TaigaTransformer {
 
     public Dataset<Row> transformTags(Dataset<Row> rawTags) {
         return rawTags.select(
-                        lit(TOOL_ID).as("tool_id"),
+                        col("project").as("project_id"),
                         explode(col("tags")).as("tag") // Explodes the "tags" array into separate rows
                 )
                 .select(
                         col("tag").getItem(0).as("original_id"),
-                        col("tool_id"),
+                        col("project_id"),
                         col("tag").getItem(0).as("tag_name")
                 )
                 .distinct();
