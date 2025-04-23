@@ -415,11 +415,32 @@ public class TaigaService {
                                                Dataset<Row> projectsDF) {
 
         Dataset<Row> joinedWithProjects = epicsDF
+        Dataset<Row> joinedDF = epicsDF
                 .join(projectsDF, epicsDF.col("project_id").equalTo(projectsDF.col("original_id")));
         return joinedWithProjects.select(
+        return joinedDF.select(
                 epicsDF.col("original_id"),
                 projectsDF.col("project_id"),
                 epicsDF.col("epic_name")
+        );
+    }
+
+    /**
+     * Joins tags dataset with projects dataset to associate tags with their corresponding project IDs.
+     *
+     * @param tagsDF Dataset containing tag information with original project IDs
+     * @param projectsDF Dataset containing project information with original and mapped IDs
+     * @return Dataset containing tag original_id, mapped project_id, and tag_name
+     */
+    public static Dataset<Row> joinTagProject(Dataset<Row> tagsDF,
+                                              Dataset<Row> projectsDF) {
+
+        Dataset<Row> joinedDF = tagsDF
+                .join(projectsDF, tagsDF.col("project_id").equalTo(projectsDF.col("original_id")));
+        return joinedDF.select(
+                tagsDF.col("original_id"),
+                projectsDF.col("project_id"),
+                tagsDF.col("tag_name")
         );
     }
 
@@ -550,6 +571,7 @@ public class TaigaService {
             Dataset<Row> transformedStatus = transformer.transformStatus(taskDF);
             transformedStatus = joinStatusProject(transformedStatus, dataWarehouseLoader.loadDimensionWithoutTool("projects"));
             Dataset<Row> transformedTags = transformer.transformTags(taskDF);
+            transformedTags = joinTagProject(transformedTags, dataWarehouseLoader.loadDimensionWithoutTool("projects"));
 
             dataWarehouseLoader.save(transformedStatus, "status");
             dataWarehouseLoader.save(transformedTags, "tags");
