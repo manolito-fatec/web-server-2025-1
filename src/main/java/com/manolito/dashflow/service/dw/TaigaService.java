@@ -414,10 +414,8 @@ public class TaigaService {
     public static Dataset<Row> joinEpicProject(Dataset<Row> epicsDF,
                                                Dataset<Row> projectsDF) {
 
-        Dataset<Row> joinedWithProjects = epicsDF
         Dataset<Row> joinedDF = epicsDF
                 .join(projectsDF, epicsDF.col("project_id").equalTo(projectsDF.col("original_id")));
-        return joinedWithProjects.select(
         return joinedDF.select(
                 epicsDF.col("original_id"),
                 projectsDF.col("project_id"),
@@ -455,16 +453,11 @@ public class TaigaService {
     public static Dataset<Row> joinStoryProjectAndEpic(Dataset<Row> storiesDF,
                                                        Dataset<Row> projectsDF,
                                                        Dataset<Row> epicsDF) {
-        Dataset<Row> joinedWithProjects = storiesDF
-                .join(projectsDF,
-                        storiesDF.col("project_id").equalTo(projectsDF.col("original_id")));
+        Dataset<Row> joinedDF = storiesDF
+                .join(projectsDF, storiesDF.col("project_id").equalTo(projectsDF.col("original_id")))
+                .join(epicsDF, storiesDF.col("epic_id").equalTo(epicsDF.col("original_id")), "left");
 
-        Dataset<Row> joinedWithEpics = joinedWithProjects
-                .join(epicsDF,
-                        joinedWithProjects.col("epic_id").equalTo(epicsDF.col("original_id")),
-                        "left");
-
-        return joinedWithEpics.select(
+        return joinedDF.select(
                 storiesDF.col("original_id"),
                 projectsDF.col("project_id"),
                 storiesDF.col("epic_id").alias("epic_id"),
@@ -490,43 +483,16 @@ public class TaigaService {
                                             Dataset<Row> storiesDF,
                                             Dataset<Row> datesDF) {
 
-        Dataset<Row> joinedWithStatus = tasksDF
-                .join(statusDF,
-                        tasksDF.col("status_id").equalTo(statusDF.col("original_id")));
+        Dataset<Row> joinedDF = tasksDF
+                .join(statusDF, tasksDF.col("status_id").equalTo(statusDF.col("original_id")))
+                .join(userDF, tasksDF.col("user_id").equalTo(userDF.col("original_id")))
+                .join(storiesDF, tasksDF.col("story_id").equalTo(storiesDF.col("original_id")));
 
-        Dataset<Row> joinedWithUser = joinedWithStatus
-                .join(userDF,
-                        joinedWithStatus.col("user_id").equalTo(userDF.col("original_id")));
+        joinedDF = mapDateColumn(joinedDF, datesDF, "created_at", "created_date_id");
+        joinedDF = mapDateColumn(joinedDF, datesDF, "completed_at", "completed_date_id");
+        joinedDF = mapDateColumn(joinedDF, datesDF, "due_date", "due_date_id");
 
-        Dataset<Row> joinedWithStories = joinedWithUser
-                .join(storiesDF,
-                        joinedWithUser.col("story_id").equalTo(storiesDF.col("original_id")));
-
-        Dataset<Row> withCreatedDate = joinedWithStories
-                .join(datesDF,
-                        joinedWithStories.col("created_at").cast("date").equalTo(datesDF.col("date_date")),
-                        "left")
-                .withColumnRenamed("date_id", "created_date_id")
-                .drop("date_date", "month", "year", "quarter", "day_of_week",
-                        "day_of_month", "day_of_year", "is_weekend");
-
-        Dataset<Row> withCompletedDate = withCreatedDate
-                .join(datesDF,
-                        withCreatedDate.col("completed_at").cast("date").equalTo(datesDF.col("date_date")),
-                        "left")
-                .withColumnRenamed("date_id", "completed_date_id")
-                .drop("date_date", "month", "year", "quarter", "day_of_week",
-                        "day_of_month", "day_of_year", "is_weekend");
-
-        Dataset<Row> withDueDate = withCompletedDate
-                .join(datesDF,
-                        withCompletedDate.col("due_date").cast("date").equalTo(datesDF.col("date_date")),
-                        "left")
-                .withColumnRenamed("date_id", "due_date_id")
-                .drop("date_date", "month", "year", "quarter", "day_of_week",
-                        "day_of_month", "day_of_year", "is_weekend");
-
-        return withDueDate.select(
+        return joinedDF.select(
                 tasksDF.col("original_id"),
                 statusDF.col("status_id"),
                 userDF.col("user_id").as("assignee_id"),
@@ -542,6 +508,25 @@ public class TaigaService {
     }
 
     /**
+     * Helper method that maps a date column to its corresponding date dimension key.
+     * Performs a left join with the date dimension table and renames the resulting date_id column.
+     *
+     * @param df Input DataFrame containing the date column to be mapped
+     * @param datesDF Date dimension DataFrame (must include: date_date, date_id)
+     * @param dateColumn Name of the date column in the input DataFrame to be mapped
+     * @param outputColumn Name to be given to the resulting date dimension key column
+     * @return DataFrame with the date column mapped to its dimension key
+     */
+    private static Dataset<Row> mapDateColumn(Dataset<Row> df, Dataset<Row> datesDF, String dateColumn, String outputColumn) {
+        return df.join(datesDF,
+                        df.col(dateColumn).cast("date").equalTo(datesDF.col("date_date")),
+                        "left")
+                .withColumnRenamed("date_id", outputColumn)
+                .drop("date_date", "month", "year", "quarter", "day_of_week",
+                        "day_of_month", "day_of_year", "is_weekend");
+    }
+
+    /**
      * Executes the complete Taiga ETL process including authentication, data extraction,
      * transformation and loading of projects, tasks, epics and user stories.
      *
@@ -551,10 +536,31 @@ public class TaigaService {
     //Remove post construct annotation after login is done
     @PostConstruct
     public void taigaEtl() {
-        authenticateTaiga("Man_Olito", "Manolito");
-        TaigaTransformer transformer = new TaigaTransformer(spark.emptyDataFrame());
-        getProjectWhereUserIsMember();
+        try {
+            authenticateTaiga("Man_Olito", "Manolito");
 
+            TaigaTransformer transformer = new TaigaTransformer(spark.emptyDataFrame());
+            getProjectWhereUserIsMember();
+
+            processProjectsData(transformer);
+
+            processTasksData(transformer);
+
+            processEpicsData(transformer);
+
+            processUserStoriesData(transformer);
+
+            processFactTasks(transformer);
+
+            processIssuesData(transformer);
+
+            saveRelationshipData();
+        } catch (Exception e) {
+            throw new RuntimeException("Taiga ETL process failed", e);
+        }
+    }
+
+    private void processProjectsData(TaigaTransformer transformer) {
         List<Dataset<Row>> projectsList = handleProjects();
         for (Dataset<Row> projectDF : projectsList) {
             Dataset<Row> transformedProject = transformer.transformProjects(projectDF);
@@ -565,7 +571,9 @@ public class TaigaService {
             dataWarehouseLoader.save(transformedRoles, "roles");
             dataWarehouseLoader.save(transformedUsers, "users");
         }
+    }
 
+    private void processTasksData(TaigaTransformer transformer) {
         List<Dataset<Row>> tasksList = handleTasks();
         for (Dataset<Row> taskDF : tasksList) {
             Dataset<Row> transformedStatus = transformer.transformStatus(taskDF);
@@ -576,14 +584,18 @@ public class TaigaService {
             dataWarehouseLoader.save(transformedStatus, "status");
             dataWarehouseLoader.save(transformedTags, "tags");
         }
+    }
 
+    private void processEpicsData(TaigaTransformer transformer) {
         List<Dataset<Row>> epicsList = handleEpics();
         for (Dataset<Row> epicDF : epicsList) {
             Dataset<Row> transformedEpic = transformer.transformEpics(epicDF);
             transformedEpic = joinEpicProject(transformedEpic, dataWarehouseLoader.loadDimensionWithoutTool("projects"));
             dataWarehouseLoader.save(transformedEpic, "epics");
         }
+    }
 
+    private void processUserStoriesData(TaigaTransformer transformer) {
         List<Dataset<Row>> storiesList = handleUserStories();
         for (Dataset<Row> storiesDF : storiesList) {
             Dataset<Row> transformedStories = transformer.transformUserStories(storiesDF);
@@ -592,7 +604,10 @@ public class TaigaService {
             );
             dataWarehouseLoader.save(transformedStories, "stories");
         }
+    }
 
+    private void processFactTasks(TaigaTransformer transformer) {
+        List<Dataset<Row>> tasksList = handleTasks();
         for (Dataset<Row> factTaskDF : tasksList) {
             Dataset<Row> transformedFactTask = transformer.transformTasks(factTaskDF);
             transformedFactTask = joinFactTask(transformedFactTask,
@@ -602,14 +617,18 @@ public class TaigaService {
                 dataWarehouseLoader.loadDimensionWithoutIsCurrent("dates", "taiga"));
             dataWarehouseLoader.save(transformedFactTask, "fact_tasks");
         }
+    }
 
+    private void processIssuesData(TaigaTransformer transformer) {
         List<Dataset<Row>> issuesList = handleIssues();
         for (Dataset<Row> issueDF : issuesList) {
             Dataset<Row> transformedIssue = transformer.transformIssues(issueDF);
 
 //            dataWarehouseLoader.save(transformedIssue, "issues"); remove coment when issue is in DW
         }
+    }
 
+    private void saveRelationshipData() {
         Dataset<Row> userRole = saveUserRoleToDatabase();
         dataWarehouseLoader.save(userRole,"user_role");
 
