@@ -9,7 +9,7 @@
 		<relativePath/>
 	</parent>
 	<groupId>com.manolito</groupId>
-	<artifactId>dashflow_server</artifactId>
+	<artifactId>web-server</artifactId>
 	<packaging>war</packaging>
 	<name>dashflow</name>
 	<description>Dashflow - Project management centralized and visualized</description>

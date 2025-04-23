@@ -49,5 +49,5 @@ jobs:
           username: ${{ secrets.MANOLITO_VM_USR }}
           password: ${{ secrets.MANOLITO_VM_PSW }}
           source: "target/*.war"
-          target: "/opt/tomcat/webapps/web-server/"
+          target: "/opt/tomcat/webapps/"
           strip_components: 1
