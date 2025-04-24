@@ -292,7 +292,7 @@ public class TasksDataWarehouseRepository {
                 "LEFT JOIN dw_dashflow.fact_tasks ft ON sto.story_id = ft.story_id " +
                 "LEFT JOIN dw_dashflow.status st " +
                 "ON ft.status_id = st.status_id " +
-                "LEFT JOIN dw_dashflow.task_tag tt" +
+                "LEFT JOIN dw_dashflow.task_tag tt " +
                 "ON tt.task_id = ft.task_id " +
                 "LEFT JOIN dw_dashflow.tags tag " +
                 "ON tt.tag_id = tag.tag_id "+
