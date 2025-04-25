@@ -2,6 +2,7 @@ package com.manolito.dashflow.repository.application;
 
 import com.manolito.dashflow.dto.dw.CreatedDoneDto;
 import com.manolito.dashflow.dto.dw.StatusCountDto;
+import com.manolito.dashflow.dto.dw.TaskOperatorDto;
 import com.manolito.dashflow.dto.dw.TaskTagDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -309,6 +310,37 @@ public class TasksDataWarehouseRepository {
                 (rs, rowNum) -> new TaskTagDto(
                         rs.getString("tag_name"),
                         rs.getInt("task_count")
+                )
+        );
+    }
+
+    public List<TaskOperatorDto> getTaskCountGroupByOperatorByProjectId(String projectId) {
+        String sql = """
+                SELECT
+                    us.user_name,
+                    us.user_id,
+                    COUNT(ft.task_id) AS total_cards
+                FROM dw_dashflow.projects prj
+                LEFT JOIN dw_dashflow.epics ep ON prj.project_id = ep.project_id
+                LEFT JOIN dw_dashflow.stories sto ON ep.epic_id = sto.epic_id
+                LEFT JOIN dw_dashflow.fact_tasks ft ON sto.story_id = ft.story_id
+                LEFT JOIN dw_dashflow.users us ON ft.assignee_id = us.user_id
+                WHERE prj.original_id = :projectId
+                AND prj.is_current = TRUE
+                AND ft.is_current = TRUE
+                GROUP BY ft.task_id
+                """;
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("projectId", projectId);
+
+        return jdbcTemplate.query(
+                sql,
+                params,
+                (rs, rowNum) -> new TaskOperatorDto(
+                        rs.getString("user_name"),
+                        rs.getInt("user_id"),
+                        rs.getInt("total_cards")
                 )
         );
     }
