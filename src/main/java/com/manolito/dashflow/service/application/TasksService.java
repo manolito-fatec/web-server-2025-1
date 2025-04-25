@@ -160,6 +160,7 @@ public class TasksService {
      * @param projectId the ID of the project to query tasks for
      * @return a list of {@link TaskTagDto} objects representing task counts by tags
      * @throws NoSuchElementException if no tasks are found within the given date range
+     * @throws IllegalArgumentException if no project id is given
      */
     public List<TaskTagDto> getTaskCountByTagByProjectId(String projectId) {
         List<TaskTagDto> taskCount = tasksDataWarehouseRepository.getTaskCountGroupByTagByProjectId(projectId);

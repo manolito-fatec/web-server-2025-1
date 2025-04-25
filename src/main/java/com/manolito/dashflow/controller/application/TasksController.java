@@ -207,7 +207,7 @@ public class TasksController {
             @ApiResponse(responseCode = "500", description = "Erro interno do servidor ao tentar buscar tasks por tags de um projeto.")
     })
     public ResponseEntity<?> getTotalTasksByTagByProjectId(
-            @Parameter(description = "Id do usuario", required = true) @PathVariable String projectId
+            @Parameter(description = "Id do projeto", required = true) @PathVariable String projectId
     ) {
         try {
             return ResponseEntity.ok().body(tasksService.getTaskCountByTagByProjectId(projectId));
