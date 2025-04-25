@@ -380,4 +380,52 @@ class TasksServiceTest {
         assertEquals("projectId cannot be null", exception.getMessage());
         verify(tasksDataWarehouseRepository, never()).getTaskCountGroupByOperatorByProjectId(anyString());
     }
+
+    @Test
+    @DisplayName("getReworksByProjectId - should return rework count when tasks exist")
+    void getReworksByProjectId_whenTasksExist_shouldReturnCount() {
+        Integer expectedCount = 3;
+        when(tasksDataWarehouseRepository.getTaskReworksByProjectId(TEST_PROJECT_ID))
+                .thenReturn(Optional.of(expectedCount));
+
+        Integer result = tasksService.getReworksByProjectId(TEST_PROJECT_ID);
+
+        assertEquals(expectedCount, result);
+        verify(tasksDataWarehouseRepository).getTaskReworksByProjectId(TEST_PROJECT_ID);
+    }
+
+    @Test
+    @DisplayName("getReworksByProjectId - should throw when no response from repository")
+    void getReworksByProjectId_whenNoResponse_shouldThrow() {
+        when(tasksDataWarehouseRepository.getTaskReworksByProjectId(TEST_PROJECT_ID))
+                .thenReturn(Optional.empty());
+
+        NoSuchElementException exception = assertThrows(NoSuchElementException.class,
+                () -> tasksService.getReworksByProjectId(TEST_PROJECT_ID));
+
+        assertEquals("Null response", exception.getMessage());
+        verify(tasksDataWarehouseRepository).getTaskReworksByProjectId(TEST_PROJECT_ID);
+    }
+
+    @Test
+    @DisplayName("getReworksByProjectId - should throw when projectId is null")
+    void getReworksByProjectId_whenProjectIdIsNull_shouldThrow() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> tasksService.getReworksByProjectId(null));
+
+        assertEquals("projectId cannot be null", exception.getMessage());
+        verify(tasksDataWarehouseRepository, never()).getTaskReworksByProjectId(anyString());
+    }
+
+    @Test
+    @DisplayName("getReworksByProjectId - should return zero when zero reworks exist")
+    void getReworksByProjectId_whenZeroReworks_shouldReturnZero() {
+        when(tasksDataWarehouseRepository.getTaskReworksByProjectId(TEST_PROJECT_ID))
+                .thenReturn(Optional.of(0));
+
+        Integer result = tasksService.getReworksByProjectId(TEST_PROJECT_ID);
+
+        assertEquals(0, result);
+        verify(tasksDataWarehouseRepository).getTaskReworksByProjectId(TEST_PROJECT_ID);
+    }
 }

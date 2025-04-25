@@ -192,4 +192,23 @@ public class TasksService {
         }
         return taskCount;
     }
+
+    /**
+     * Retrieves the count of tasks considered as reworks for a specific project.
+     *
+     * @param projectId the ID of the project to query tasks for
+     * @return the amount of tasks considered as reworks
+     * @throws NoSuchElementException if nothing is returned in the query (nothing is not zero)
+     * @throws IllegalArgumentException if no project id is given
+     */
+    public Integer getReworksByProjectId(String projectId) {
+        Optional<Integer> taskCount = tasksDataWarehouseRepository.getTaskReworksByProjectId(projectId);
+        if (projectId == null) {
+            throw new IllegalArgumentException("projectId cannot be null");
+        }
+        if (taskCount.isEmpty()) {
+            throw new NoSuchElementException("Null response");
+        }
+        return taskCount.get();
+    }
 }

@@ -242,4 +242,27 @@ public class TasksController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal Server Error " + runtimeException.getMessage());
         }
     }
+
+    @GetMapping("/{projectId}/reworks")
+    @Operation(summary = "Busca o total de retrabalhos de um projeto", description = "Faz uma requisição ao DB e retorna o total de Tasks consideradas como retrabalhos de um projeto")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Total de retrabalhos de um projeto extraido com sucesso."),
+            @ApiResponse(responseCode = "400", description = "Requisição mal formulada."),
+            @ApiResponse(responseCode = "404", description = "Tasks não existem."),
+            @ApiResponse(responseCode = "408", description = "Tempo de resposta excedido."),
+            @ApiResponse(responseCode = "500", description = "Erro interno do servidor ao tentar buscar tasks por operador de um projeto.")
+    })
+    public ResponseEntity<?> getReworksByProjectId(
+            @Parameter(description = "Id do projeto", required = true) @PathVariable String projectId
+    ) {
+        try {
+            return ResponseEntity.ok().body(tasksService.getReworksByProjectId(projectId));
+        } catch (NoSuchElementException noSuchElementException) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(noSuchElementException.getMessage());
+        } catch (IllegalArgumentException illegalArgumentException) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        } catch (RuntimeException runtimeException) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal Server Error " + runtimeException.getMessage());
+        }
+    }
 }
