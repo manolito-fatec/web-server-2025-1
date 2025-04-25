@@ -1,6 +1,7 @@
 package com.manolito.dashflow.service.application;
 
 import com.manolito.dashflow.dto.dw.CreatedDoneDto;
+import com.manolito.dashflow.dto.dw.TaskOperatorDto;
 import com.manolito.dashflow.dto.dw.TaskTagDto;
 import com.manolito.dashflow.repository.application.TasksDataWarehouseRepository;
 import lombok.RequiredArgsConstructor;
@@ -159,9 +160,30 @@ public class TasksService {
      * @param projectId the ID of the project to query tasks for
      * @return a list of {@link TaskTagDto} objects representing task counts by tags
      * @throws NoSuchElementException if no tasks are found within the given date range
+     * @throws IllegalArgumentException if no project id is given
      */
     public List<TaskTagDto> getTaskCountByTagByProjectId(String projectId) {
         List<TaskTagDto> taskCount = tasksDataWarehouseRepository.getTaskCountGroupByTagByProjectId(projectId);
+        if (projectId == null) {
+            throw new IllegalArgumentException("projectId cannot be null");
+        }
+        if (taskCount.isEmpty()) {
+            throw new NoSuchElementException("No tasks found");
+        }
+        return taskCount;
+    }
+
+    /**
+     * Retrieves a list of task counts grouped by their assignees for a specific project.
+     * Each element in the list contains the username, user id and the corresponding count.
+     *
+     * @param projectId the ID of the project to query tasks for
+     * @return a list of {@link TaskOperatorDto} objects representing task counts by tags
+     * @throws NoSuchElementException if no tasks are found within the given date range
+     * @throws IllegalArgumentException if no project id is given
+     */
+    public List<TaskOperatorDto> getTaskCountByOperatorByProjectId(String projectId) {
+        List<TaskOperatorDto> taskCount = tasksDataWarehouseRepository.getTaskCountGroupByOperatorByProjectId(projectId);
         if (projectId == null) {
             throw new IllegalArgumentException("projectId cannot be null");
         }

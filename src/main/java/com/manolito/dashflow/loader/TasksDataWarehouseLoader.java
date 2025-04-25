@@ -187,4 +187,26 @@ public class TasksDataWarehouseLoader {
                 .load()
                 .filter(col("is_current").equalTo(true));
     }
+
+    public void purgeTable(String tableName) {
+        try {
+            spark.read()
+                    .format("jdbc")
+                    .option("url", jdbcUrl)
+                    .option("dbtable", DATAWAREHOUSE.getSchema() + "." + tableName)
+                    .option("user", dbUser)
+                    .option("password", dbPassword)
+                    .load()
+                    .write()
+                    .format("jdbc")
+                    .option("url", jdbcUrl)
+                    .option("dbtable", DATAWAREHOUSE.getSchema() + "." + tableName)
+                    .option("user", dbUser)
+                    .option("password", dbPassword)
+                    .mode(SaveMode.Overwrite)
+                    .save();
+        } catch (Exception e) {
+            throw new RuntimeException("Error purging table: " + tableName, e);
+        }
+    }
 }
