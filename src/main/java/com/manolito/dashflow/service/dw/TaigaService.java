@@ -717,9 +717,12 @@ public class TaigaService {
 
     /**
      * Saves relationship data to the data warehouse.
-     * Processes and saves user-role and task-tag relationships.
+     * Processes and saves user-role and task-tag relationships by purging and then populating the table with new data.
      */
     private void saveRelationshipData() {
+        dataWarehouseLoader.purgeTable("user_role");
+        dataWarehouseLoader.purgeTable("task_tag");
+
         Dataset<Row> userRole = saveUserRoleToDatabase();
         dataWarehouseLoader.save(userRole,"user_role");
 
