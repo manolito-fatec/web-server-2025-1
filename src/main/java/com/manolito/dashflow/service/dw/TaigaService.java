@@ -765,6 +765,12 @@ public class TaigaService {
         }
     }
 
+    /**
+     * Processes issue type data.
+     * Transforms the raw issue type data and saves it to the data warehouse.
+     *
+     * @param transformer The transformer instance to use for data transformation
+     */
     private void processIssuesType(TaigaTransformer transformer) {
         List<Dataset<Row>> issuesList = handleIssueType();
         for (Dataset<Row> issueDF : issuesList) {
@@ -775,16 +781,28 @@ public class TaigaService {
         }
     }
 
+    /**
+     * Processes issue priority data.
+     * Transforms the raw issue priority data and saves it to the data warehouse.
+     *
+     * @param transformer The transformer instance to use for data transformation
+     */
     private void processIssuePriority(TaigaTransformer transformer) {
         List<Dataset<Row>> issuePriorityList = handleIssuePriority();
         for (Dataset<Row> issuePriorityDF : issuePriorityList) {
-            Dataset<Row> transformedIssuePriority = transformer.transformissuePriority(issuePriorityDF);
+            Dataset<Row> transformedIssuePriority = transformer.transformIssuePriority(issuePriorityDF);
             transformedIssuePriority = joinIssueProject(transformedIssuePriority,
                     dataWarehouseLoader.loadDimensionWithoutTool("projects"), "priority_name");
             dataWarehouseLoader.save(transformedIssuePriority, "issue_priority");
         }
     }
 
+    /**
+     * Processes issue severity data.
+     * Transforms the raw issue severity data and saves it to the data warehouse.
+     *
+     * @param transformer The transformer instance to use for data transformation
+     */
     private void processIssueSeverity(TaigaTransformer transformer) {
         List<Dataset<Row>> issueSeverityList = handleIssueSeverity();
         for (Dataset<Row> issueSeverityDF : issueSeverityList) {

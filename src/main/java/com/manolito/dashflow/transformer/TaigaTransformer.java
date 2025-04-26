@@ -65,7 +65,7 @@ public class TaigaTransformer {
         );
     }
 
-    public Dataset<Row> transformissuePriority(Dataset<Row> rawIssuePriority) {
+    public Dataset<Row> transformIssuePriority(Dataset<Row> rawIssuePriority) {
         return rawIssuePriority.select(
                 col("id").as("original_id"),
                 col("priority_name"),
