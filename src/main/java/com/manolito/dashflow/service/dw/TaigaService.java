@@ -58,6 +58,9 @@ public class TaigaService {
             case "roles" -> "role_name";
             case "users" -> "user_name";
             case "tags" -> "tag_name";
+            case "issue_type" -> "type_name";
+            case "issue_severity" -> "severity_name";
+            case "issue_priority" -> "priority_name";
             case "fact_tasks" -> "task_name";
             default -> throw new IllegalArgumentException("Unsupported table for name field mapping: " + tableName);
         };
@@ -153,6 +156,49 @@ public class TaigaService {
         }
 
         return issuesData;
+    }
+
+    public List<Dataset<Row>> handleIssueType() {
+        List<Dataset<Row>> issueTypesData = new ArrayList<>();
+        for (Long projectId : projectIds) {
+            String endpoint = ISSUE_TYPES.getPath() + "?project=" + projectId;
+            Dataset<Row> issueTypeDF = fetchAndConvertToDataFrame(endpoint, "issue_type");
+
+            if (issueTypeDF != null && !issueTypeDF.isEmpty()) {
+                issueTypesData.add(issueTypeDF);
+            }
+        }
+
+        return issueTypesData;
+    }
+
+    public List<Dataset<Row>> handleIssuePriority() {
+        List<Dataset<Row>> issuePriorityData = new ArrayList<>();
+        for (Long projectId : projectIds) {
+            String endpoint = ISSUE_PRIORITY.getPath() + "?project=" + projectId;
+            Dataset<Row> issuePriorityDF = fetchAndConvertToDataFrame(endpoint, "issue_priority");
+
+            if (issuePriorityDF != null && !issuePriorityDF.isEmpty()) {
+                issuePriorityData.add(issuePriorityDF);
+            }
+        }
+
+        return issuePriorityData;
+    }
+
+    public List<Dataset<Row>> handleIssueSeverity() {
+        List<Dataset<Row>> issueSeverityData = new ArrayList<>();
+        for (Long projectId : projectIds) {
+            String endpoint = ISSUE_SEVERITY.getPath() + "?project=" + projectId;
+            Dataset<Row> issueSeverityDF = fetchAndConvertToDataFrame(endpoint, "issue_severity");
+
+            if (issueSeverityDF != null && !issueSeverityDF.isEmpty()) {
+                issueSeverityData.add(issueSeverityDF);
+            }
+
+        }
+
+        return issueSeverityData;
     }
 
     /**
@@ -423,6 +469,18 @@ public class TaigaService {
         );
     }
 
+    public static Dataset<Row> joinIssueProject(Dataset<Row> issuesDF,
+                                                Dataset<Row> projectsDF,
+                                                String name) {
+        Dataset<Row> joinedDF = issuesDF
+                .join(projectsDF, issuesDF.col("project_id").equalTo(projectsDF.col("original_id")));
+        return joinedDF.select(
+                issuesDF.col("original_id"),
+                projectsDF.col("project_id"),
+                issuesDF.col(name)
+        );
+    }
+
     /**
      * Joins tags dataset with projects dataset to associate tags with their corresponding project IDs.
      *
@@ -584,19 +642,25 @@ public class TaigaService {
             TaigaTransformer transformer = new TaigaTransformer(spark.emptyDataFrame());
             getProjectWhereUserIsMember();
 
-            processProjectsData(transformer);
+//            processProjectsData(transformer);
+//
+//            processTasksData(transformer);
+//
+//            processEpicsData(transformer);
+//
+//            processUserStoriesData(transformer);
+//
+//            processFactTasks(transformer);
 
-            processTasksData(transformer);
+            processIssuesType(transformer);
 
-            processEpicsData(transformer);
+            processIssuePriority(transformer);
 
-            processUserStoriesData(transformer);
+            processIssueSeverity(transformer);
 
-            processFactTasks(transformer);
+//            processFactIssues(transformer);
 
-            processFactIssues(transformer);
-
-            saveRelationshipData();
+//            saveRelationshipData();
         } catch (Exception e) {
             throw new RuntimeException("Taiga ETL process failed", e);
         }
@@ -689,6 +753,36 @@ public class TaigaService {
                 dataWarehouseLoader.loadDimension("stories"),
                 dataWarehouseLoader.loadDimensionWithoutIsCurrent("dates", "taiga"));
             dataWarehouseLoader.save(transformedFactTask, "fact_tasks");
+        }
+    }
+
+    private void processIssuesType(TaigaTransformer transformer) {
+        List<Dataset<Row>> issuesList = handleIssueType();
+        for (Dataset<Row> issueDF : issuesList) {
+            Dataset<Row> transformedIssueType = transformer.transformIssueTypes(issueDF);
+            transformedIssueType = joinIssueProject(transformedIssueType,
+                    dataWarehouseLoader.loadDimensionWithoutTool("projects"), "type_name");
+            dataWarehouseLoader.save(transformedIssueType, "issue_type");
+        }
+    }
+
+    private void processIssuePriority(TaigaTransformer transformer) {
+        List<Dataset<Row>> issuePriorityList = handleIssuePriority();
+        for (Dataset<Row> issuePriorityDF : issuePriorityList) {
+            Dataset<Row> transformedIssuePriority = transformer.transformissuePriority(issuePriorityDF);
+            transformedIssuePriority = joinIssueProject(transformedIssuePriority,
+                    dataWarehouseLoader.loadDimensionWithoutTool("projects"), "priority_name");
+            dataWarehouseLoader.save(transformedIssuePriority, "issue_priority");
+        }
+    }
+
+    private void processIssueSeverity(TaigaTransformer transformer) {
+        List<Dataset<Row>> issueSeverityList = handleIssueSeverity();
+        for (Dataset<Row> issueSeverityDF : issueSeverityList) {
+            Dataset<Row> transformedIssueSeverity = transformer.transformissueSeverity(issueSeverityDF);
+            transformedIssueSeverity = joinIssueProject(transformedIssueSeverity,
+                    dataWarehouseLoader.loadDimensionWithoutTool("projects"), "severity_name");
+            dataWarehouseLoader.save(transformedIssueSeverity, "issue_severity");
         }
     }
 
