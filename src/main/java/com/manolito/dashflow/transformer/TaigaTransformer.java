@@ -46,6 +46,30 @@ public class TaigaTransformer {
         );
     }
 
+    public Dataset<Row> transformIssueTypes(Dataset<Row> rawIssueTypes) {
+        return rawIssueTypes.select(
+                col("id").as("original_id"),
+                col("type_name"),
+                col("project").as("project_id")
+        );
+    }
+
+    public Dataset<Row> transformissueSeverity(Dataset<Row> rawIssueSeverities) {
+        return rawIssueSeverities.select(
+                col("id").as("original_id"),
+                col("severity_name"),
+                col("project").as("project_id")
+        );
+    }
+
+    public Dataset<Row> transformissuePriority(Dataset<Row> rawIssuePriority) {
+        return rawIssuePriority.select(
+                col("id").as("original_id"),
+                col("priority_name"),
+                col("project").as("project_id")
+        );
+    }
+
     public Dataset<Row> transformUsers(Dataset<Row> rawUsers) {
         return rawUsers.select(
                 col("id").as("original_id"),
