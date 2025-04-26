@@ -57,7 +57,7 @@ public class TaigaTransformer {
         );
     }
 
-    public Dataset<Row> transformissueSeverity(Dataset<Row> rawIssueSeverities) {
+    public Dataset<Row> transformIssueSeverity(Dataset<Row> rawIssueSeverities) {
         return rawIssueSeverities.select(
                 col("id").as("original_id"),
                 col("severity_name"),

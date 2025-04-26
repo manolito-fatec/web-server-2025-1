@@ -788,7 +788,7 @@ public class TaigaService {
     private void processIssueSeverity(TaigaTransformer transformer) {
         List<Dataset<Row>> issueSeverityList = handleIssueSeverity();
         for (Dataset<Row> issueSeverityDF : issueSeverityList) {
-            Dataset<Row> transformedIssueSeverity = transformer.transformissueSeverity(issueSeverityDF);
+            Dataset<Row> transformedIssueSeverity = transformer.transformIssueSeverity(issueSeverityDF);
             transformedIssueSeverity = joinIssueProject(transformedIssueSeverity,
                     dataWarehouseLoader.loadDimensionWithoutTool("projects"), "severity_name");
             dataWarehouseLoader.save(transformedIssueSeverity, "issue_severity");
