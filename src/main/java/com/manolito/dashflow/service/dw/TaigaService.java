@@ -580,12 +580,18 @@ public class TaigaService {
                                              Dataset<Row> statusDF,
                                              Dataset<Row> userDF,
                                              Dataset<Row> projectDF,
+                                             Dataset<Row> issueTypeDF,
+                                             Dataset<Row> issueSeverityDF,
+                                             Dataset<Row> issuePriorityDF,
                                              Dataset<Row> datesDF) {
 
         Dataset<Row> joinedDF = issuesDF
                 .join(statusDF, issuesDF.col("status_id").equalTo(statusDF.col("original_id")))
                 .join(userDF, issuesDF.col("user_id").equalTo(userDF.col("original_id")))
-                .join(projectDF, issuesDF.col("project_id").equalTo(projectDF.col("original_id")));
+                .join(projectDF, issuesDF.col("project_id").equalTo(projectDF.col("original_id")))
+                .join(issueTypeDF, issuesDF.col("type_id").equalTo(issueTypeDF.col("original_id")))
+                .join(issuePriorityDF, issuesDF.col("priority_id").equalTo(issuePriorityDF.col("original_id")))
+                .join(issueSeverityDF, issuesDF.col("severity_id").equalTo(issueSeverityDF.col("original_id")));
 
         joinedDF = mapDateColumn(joinedDF, datesDF, "created_at", "created_date_id");
         joinedDF = mapDateColumn(joinedDF, datesDF, "completed_at", "completed_date_id");
@@ -595,6 +601,9 @@ public class TaigaService {
                 statusDF.col("status_id"),
                 userDF.col("user_id").as("assignee_id"),
                 projectDF.col("project_id"),
+                issueTypeDF.col("type_id"),
+                issueSeverityDF.col("severity_id"),
+                issuePriorityDF.col("priority_id"),
                 col("created_date_id").as("created_at"),
                 col("completed_date_id").as("completed_at"),
                 issuesDF.col("issue_name")
@@ -804,6 +813,9 @@ public class TaigaService {
                     dataWarehouseLoader.loadDimension("issue_status"),
                     dataWarehouseLoader.loadDimension("users"),
                     dataWarehouseLoader.loadDimensionWithoutTool("projects"),
+                    dataWarehouseLoader.loadDimension("issue_type"),
+                    dataWarehouseLoader.loadDimension("issue_severity"),
+                    dataWarehouseLoader.loadDimension("issue_priority"),
                     dataWarehouseLoader.loadDimensionWithoutIsCurrent("dates", "taiga"));
             dataWarehouseLoader.save(transformedFactIssue, "fact_issues");
         }
