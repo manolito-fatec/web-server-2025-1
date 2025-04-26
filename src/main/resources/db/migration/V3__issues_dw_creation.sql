@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS issue_type(
     CONSTRAINT unique_issues_type_seq UNIQUE (original_id, seq, project_id)
 );
 
-CREATE OR REPLACE TRIGGER issue_status_scd2_trigger
+CREATE OR REPLACE TRIGGER issue_type_scd2_trigger
     BEFORE INSERT ON issue_type
     FOR EACH ROW
 EXECUTE FUNCTION manage_scd2('original_id');
@@ -58,7 +58,7 @@ CREATE TABLE IF NOT EXISTS issue_severity(
     CONSTRAINT unique_issues_severity_seq UNIQUE (original_id, seq, project_id)
 );
 
-CREATE OR REPLACE TRIGGER issue_status_scd2_trigger
+CREATE OR REPLACE TRIGGER issue_severity_scd2_trigger
     BEFORE INSERT ON issue_severity
     FOR EACH ROW
 EXECUTE FUNCTION manage_scd2('original_id');
@@ -78,7 +78,7 @@ CREATE TABLE IF NOT EXISTS issue_priority(
      CONSTRAINT unique_issues_priority_seq UNIQUE (original_id, seq, project_id)
 );
 
-CREATE OR REPLACE TRIGGER issue_status_scd2_trigger
+CREATE OR REPLACE TRIGGER issue_priority_scd2_trigger
     BEFORE INSERT ON issue_priority
     FOR EACH ROW
 EXECUTE FUNCTION manage_scd2('original_id');
