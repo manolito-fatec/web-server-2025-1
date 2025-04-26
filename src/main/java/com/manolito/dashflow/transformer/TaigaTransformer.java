@@ -40,6 +40,9 @@ public class TaigaTransformer {
                 col("status").as("status_id"),
                 col("owner").as("user_id"),
                 col("project").as("project_id"),
+                col("severity").as("severity_id"),
+                col("priority").as("priority_id"),
+                col("type").as("type_id"),
                 (col("created_date")).cast("date").as("created_at"),
                 (col("modified_date")).cast("date").as("completed_at"),
                 col("subject").as("issue_name")
