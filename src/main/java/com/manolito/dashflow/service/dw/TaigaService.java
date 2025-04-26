@@ -58,15 +58,19 @@ public class TaigaService {
             case "roles" -> "role_name";
             case "users" -> "user_name";
             case "tags" -> "tag_name";
+            case "issue_type" -> "type_name";
+            case "issue_severity" -> "severity_name";
+            case "issue_priority" -> "priority_name";
             case "fact_tasks" -> "task_name";
             default -> throw new IllegalArgumentException("Unsupported table for name field mapping: " + tableName);
         };
     }
 
     /**
-     * Fetches the data in the given endpoint and convert it into dataframe
+     * Fetches project data from the API endpoint for each project ID and converts it into a DataFrame.
+     * Each project's data is retrieved individually and added to the resulting list.
      *
-     * @return A ArrayList of Datasets from each endpoint
+     * @return List of Datasets containing project data, one Dataset per project ID
      */
     public List<Dataset<Row>> handleProjects() {
         List<Dataset<Row>> projectsData = new ArrayList<>();
@@ -81,9 +85,10 @@ public class TaigaService {
     }
 
     /**
-     * Fetches the data in the given endpoint and convert it into dataframe
+     * Fetches task data from the API endpoint for each project ID and converts it into a DataFrame.
+     * The tasks are filtered by project ID in the API query parameters.
      *
-     * @return A ArrayList of Datasets from each endpoint
+     * @return List of Datasets containing task data, one Dataset per project ID
      */
     public List<Dataset<Row>> handleTasks() {
         List<Dataset<Row>> tasksData = new ArrayList<>();
@@ -99,9 +104,10 @@ public class TaigaService {
 
 
     /**
-     * Fetches the data in the given endpoint and convert it into dataframe
+     * Fetches user story data from the API endpoint for each project ID and converts it into a DataFrame.
+     * The user stories are filtered by project ID in the API query parameters.
      *
-     * @return A ArrayList of Datasets from each endpoint
+     * @return List of Datasets containing user story data, one Dataset per project ID
      */
     public List<Dataset<Row>> handleUserStories() {
         List<Dataset<Row>> userStoriesData = new ArrayList<>();
@@ -116,9 +122,11 @@ public class TaigaService {
     }
 
     /**
-     * Fetches the data in the given endpoint and convert it into dataframe
+     * Fetches epic data from the API endpoint for each project ID and converts it into a DataFrame.
+     * Only non-empty DataFrames are included in the result. Epics are filtered by project ID
+     * in the API query parameters.
      *
-     * @return A ArrayList of Datasets from each endpoint
+     * @return List of non-empty Datasets containing epic data, one Dataset per project ID
      */
     public List<Dataset<Row>> handleEpics() {
         List<Dataset<Row>> epicsData = new ArrayList<>();
@@ -136,9 +144,11 @@ public class TaigaService {
     }
 
     /**
-     * Fetches the data in the given endpoint and convert it into dataframe
+     * Fetches issue data from the API endpoint for each project ID and converts it into a DataFrame.
+     * Only non-empty DataFrames are included in the result. Issues are filtered by project ID
+     * in the API query parameters.
      *
-     * @return A ArrayList of Datasets from each endpoint
+     * @return List of non-empty Datasets containing issue data, one Dataset per project ID
      */
     public List<Dataset<Row>> handleIssues() {
         List<Dataset<Row>> issuesData = new ArrayList<>();
@@ -153,6 +163,70 @@ public class TaigaService {
         }
 
         return issuesData;
+    }
+
+    /**
+     * Fetches issue type data from the API endpoint for each project ID and converts it into a DataFrame.
+     * Only non-empty DataFrames are included in the result. Issue types are filtered by project ID
+     * in the API query parameters.
+     *
+     * @return List of non-empty Datasets containing issue type data, one Dataset per project ID
+     */
+    public List<Dataset<Row>> handleIssueType() {
+        List<Dataset<Row>> issueTypesData = new ArrayList<>();
+        for (Long projectId : projectIds) {
+            String endpoint = ISSUE_TYPES.getPath() + "?project=" + projectId;
+            Dataset<Row> issueTypeDF = fetchAndConvertToDataFrame(endpoint, "issue_type");
+
+            if (issueTypeDF != null && !issueTypeDF.isEmpty()) {
+                issueTypesData.add(issueTypeDF);
+            }
+        }
+
+        return issueTypesData;
+    }
+
+    /**
+     * Fetches issue priority data from the API endpoint for each project ID and converts it into a DataFrame.
+     * Only non-empty DataFrames are included in the result. Issue priorities are filtered by project ID
+     * in the API query parameters.
+     *
+     * @return List of non-empty Datasets containing issue priority data, one Dataset per project ID
+     */
+    public List<Dataset<Row>> handleIssuePriority() {
+        List<Dataset<Row>> issuePriorityData = new ArrayList<>();
+        for (Long projectId : projectIds) {
+            String endpoint = ISSUE_PRIORITY.getPath() + "?project=" + projectId;
+            Dataset<Row> issuePriorityDF = fetchAndConvertToDataFrame(endpoint, "issue_priority");
+
+            if (issuePriorityDF != null && !issuePriorityDF.isEmpty()) {
+                issuePriorityData.add(issuePriorityDF);
+            }
+        }
+
+        return issuePriorityData;
+    }
+
+    /**
+     * Fetches issue severity data from the API endpoint for each project ID and converts it into a DataFrame.
+     * Only non-empty DataFrames are included in the result. Issue severities are filtered by project ID
+     * in the API query parameters.
+     *
+     * @return List of non-empty Datasets containing issue severity data, one Dataset per project ID
+     */
+    public List<Dataset<Row>> handleIssueSeverity() {
+        List<Dataset<Row>> issueSeverityData = new ArrayList<>();
+        for (Long projectId : projectIds) {
+            String endpoint = ISSUE_SEVERITY.getPath() + "?project=" + projectId;
+            Dataset<Row> issueSeverityDF = fetchAndConvertToDataFrame(endpoint, "issue_severity");
+
+            if (issueSeverityDF != null && !issueSeverityDF.isEmpty()) {
+                issueSeverityData.add(issueSeverityDF);
+            }
+
+        }
+
+        return issueSeverityData;
     }
 
     /**
@@ -423,6 +497,18 @@ public class TaigaService {
         );
     }
 
+    public static Dataset<Row> joinIssueProject(Dataset<Row> issuesDF,
+                                                Dataset<Row> projectsDF,
+                                                String name) {
+        Dataset<Row> joinedDF = issuesDF
+                .join(projectsDF, issuesDF.col("project_id").equalTo(projectsDF.col("original_id")));
+        return joinedDF.select(
+                issuesDF.col("original_id"),
+                projectsDF.col("project_id"),
+                issuesDF.col(name)
+        );
+    }
+
     /**
      * Joins tags dataset with projects dataset to associate tags with their corresponding project IDs.
      *
@@ -522,12 +608,18 @@ public class TaigaService {
                                              Dataset<Row> statusDF,
                                              Dataset<Row> userDF,
                                              Dataset<Row> projectDF,
+                                             Dataset<Row> issueTypeDF,
+                                             Dataset<Row> issueSeverityDF,
+                                             Dataset<Row> issuePriorityDF,
                                              Dataset<Row> datesDF) {
 
         Dataset<Row> joinedDF = issuesDF
                 .join(statusDF, issuesDF.col("status_id").equalTo(statusDF.col("original_id")))
                 .join(userDF, issuesDF.col("user_id").equalTo(userDF.col("original_id")))
-                .join(projectDF, issuesDF.col("project_id").equalTo(projectDF.col("original_id")));
+                .join(projectDF, issuesDF.col("project_id").equalTo(projectDF.col("original_id")))
+                .join(issueTypeDF, issuesDF.col("type_id").equalTo(issueTypeDF.col("original_id")))
+                .join(issuePriorityDF, issuesDF.col("priority_id").equalTo(issuePriorityDF.col("original_id")))
+                .join(issueSeverityDF, issuesDF.col("severity_id").equalTo(issueSeverityDF.col("original_id")));
 
         joinedDF = mapDateColumn(joinedDF, datesDF, "created_at", "created_date_id");
         joinedDF = mapDateColumn(joinedDF, datesDF, "completed_at", "completed_date_id");
@@ -537,6 +629,9 @@ public class TaigaService {
                 statusDF.col("status_id"),
                 userDF.col("user_id").as("assignee_id"),
                 projectDF.col("project_id"),
+                issueTypeDF.col("type_id"),
+                issueSeverityDF.col("severity_id"),
+                issuePriorityDF.col("priority_id"),
                 col("created_date_id").as("created_at"),
                 col("completed_date_id").as("completed_at"),
                 issuesDF.col("issue_name")
@@ -593,6 +688,12 @@ public class TaigaService {
             processUserStoriesData(transformer);
 
             processFactTasks(transformer);
+
+            processIssuesType(transformer);
+
+            processIssuePriority(transformer);
+
+            processIssueSeverity(transformer);
 
             processFactIssues(transformer);
 
@@ -693,6 +794,54 @@ public class TaigaService {
     }
 
     /**
+     * Processes issue type data.
+     * Transforms the raw issue type data and saves it to the data warehouse.
+     *
+     * @param transformer The transformer instance to use for data transformation
+     */
+    private void processIssuesType(TaigaTransformer transformer) {
+        List<Dataset<Row>> issuesList = handleIssueType();
+        for (Dataset<Row> issueDF : issuesList) {
+            Dataset<Row> transformedIssueType = transformer.transformIssueTypes(issueDF);
+            transformedIssueType = joinIssueProject(transformedIssueType,
+                    dataWarehouseLoader.loadDimensionWithoutTool("projects"), "type_name");
+            dataWarehouseLoader.save(transformedIssueType, "issue_type");
+        }
+    }
+
+    /**
+     * Processes issue priority data.
+     * Transforms the raw issue priority data and saves it to the data warehouse.
+     *
+     * @param transformer The transformer instance to use for data transformation
+     */
+    private void processIssuePriority(TaigaTransformer transformer) {
+        List<Dataset<Row>> issuePriorityList = handleIssuePriority();
+        for (Dataset<Row> issuePriorityDF : issuePriorityList) {
+            Dataset<Row> transformedIssuePriority = transformer.transformIssuePriority(issuePriorityDF);
+            transformedIssuePriority = joinIssueProject(transformedIssuePriority,
+                    dataWarehouseLoader.loadDimensionWithoutTool("projects"), "priority_name");
+            dataWarehouseLoader.save(transformedIssuePriority, "issue_priority");
+        }
+    }
+
+    /**
+     * Processes issue severity data.
+     * Transforms the raw issue severity data and saves it to the data warehouse.
+     *
+     * @param transformer The transformer instance to use for data transformation
+     */
+    private void processIssueSeverity(TaigaTransformer transformer) {
+        List<Dataset<Row>> issueSeverityList = handleIssueSeverity();
+        for (Dataset<Row> issueSeverityDF : issueSeverityList) {
+            Dataset<Row> transformedIssueSeverity = transformer.transformIssueSeverity(issueSeverityDF);
+            transformedIssueSeverity = joinIssueProject(transformedIssueSeverity,
+                    dataWarehouseLoader.loadDimensionWithoutTool("projects"), "severity_name");
+            dataWarehouseLoader.save(transformedIssueSeverity, "issue_severity");
+        }
+    }
+
+    /**
      * Processes fact data for issues.
      * Transforms the raw issue data into fact format and saves it to the data warehouse.
      *
@@ -710,6 +859,9 @@ public class TaigaService {
                     dataWarehouseLoader.loadDimension("issue_status"),
                     dataWarehouseLoader.loadDimension("users"),
                     dataWarehouseLoader.loadDimensionWithoutTool("projects"),
+                    dataWarehouseLoader.loadDimension("issue_type"),
+                    dataWarehouseLoader.loadDimension("issue_severity"),
+                    dataWarehouseLoader.loadDimension("issue_priority"),
                     dataWarehouseLoader.loadDimensionWithoutIsCurrent("dates", "taiga"));
             dataWarehouseLoader.save(transformedFactIssue, "fact_issues");
         }
