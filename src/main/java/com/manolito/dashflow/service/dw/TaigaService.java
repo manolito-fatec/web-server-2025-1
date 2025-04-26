@@ -67,9 +67,10 @@ public class TaigaService {
     }
 
     /**
-     * Fetches the data in the given endpoint and convert it into dataframe
+     * Fetches project data from the API endpoint for each project ID and converts it into a DataFrame.
+     * Each project's data is retrieved individually and added to the resulting list.
      *
-     * @return A ArrayList of Datasets from each endpoint
+     * @return List of Datasets containing project data, one Dataset per project ID
      */
     public List<Dataset<Row>> handleProjects() {
         List<Dataset<Row>> projectsData = new ArrayList<>();
@@ -84,9 +85,10 @@ public class TaigaService {
     }
 
     /**
-     * Fetches the data in the given endpoint and convert it into dataframe
+     * Fetches task data from the API endpoint for each project ID and converts it into a DataFrame.
+     * The tasks are filtered by project ID in the API query parameters.
      *
-     * @return A ArrayList of Datasets from each endpoint
+     * @return List of Datasets containing task data, one Dataset per project ID
      */
     public List<Dataset<Row>> handleTasks() {
         List<Dataset<Row>> tasksData = new ArrayList<>();
@@ -102,9 +104,10 @@ public class TaigaService {
 
 
     /**
-     * Fetches the data in the given endpoint and convert it into dataframe
+     * Fetches user story data from the API endpoint for each project ID and converts it into a DataFrame.
+     * The user stories are filtered by project ID in the API query parameters.
      *
-     * @return A ArrayList of Datasets from each endpoint
+     * @return List of Datasets containing user story data, one Dataset per project ID
      */
     public List<Dataset<Row>> handleUserStories() {
         List<Dataset<Row>> userStoriesData = new ArrayList<>();
@@ -119,9 +122,11 @@ public class TaigaService {
     }
 
     /**
-     * Fetches the data in the given endpoint and convert it into dataframe
+     * Fetches epic data from the API endpoint for each project ID and converts it into a DataFrame.
+     * Only non-empty DataFrames are included in the result. Epics are filtered by project ID
+     * in the API query parameters.
      *
-     * @return A ArrayList of Datasets from each endpoint
+     * @return List of non-empty Datasets containing epic data, one Dataset per project ID
      */
     public List<Dataset<Row>> handleEpics() {
         List<Dataset<Row>> epicsData = new ArrayList<>();
@@ -139,9 +144,11 @@ public class TaigaService {
     }
 
     /**
-     * Fetches the data in the given endpoint and convert it into dataframe
+     * Fetches issue data from the API endpoint for each project ID and converts it into a DataFrame.
+     * Only non-empty DataFrames are included in the result. Issues are filtered by project ID
+     * in the API query parameters.
      *
-     * @return A ArrayList of Datasets from each endpoint
+     * @return List of non-empty Datasets containing issue data, one Dataset per project ID
      */
     public List<Dataset<Row>> handleIssues() {
         List<Dataset<Row>> issuesData = new ArrayList<>();
@@ -158,6 +165,13 @@ public class TaigaService {
         return issuesData;
     }
 
+    /**
+     * Fetches issue type data from the API endpoint for each project ID and converts it into a DataFrame.
+     * Only non-empty DataFrames are included in the result. Issue types are filtered by project ID
+     * in the API query parameters.
+     *
+     * @return List of non-empty Datasets containing issue type data, one Dataset per project ID
+     */
     public List<Dataset<Row>> handleIssueType() {
         List<Dataset<Row>> issueTypesData = new ArrayList<>();
         for (Long projectId : projectIds) {
@@ -172,6 +186,13 @@ public class TaigaService {
         return issueTypesData;
     }
 
+    /**
+     * Fetches issue priority data from the API endpoint for each project ID and converts it into a DataFrame.
+     * Only non-empty DataFrames are included in the result. Issue priorities are filtered by project ID
+     * in the API query parameters.
+     *
+     * @return List of non-empty Datasets containing issue priority data, one Dataset per project ID
+     */
     public List<Dataset<Row>> handleIssuePriority() {
         List<Dataset<Row>> issuePriorityData = new ArrayList<>();
         for (Long projectId : projectIds) {
@@ -186,6 +207,13 @@ public class TaigaService {
         return issuePriorityData;
     }
 
+    /**
+     * Fetches issue severity data from the API endpoint for each project ID and converts it into a DataFrame.
+     * Only non-empty DataFrames are included in the result. Issue severities are filtered by project ID
+     * in the API query parameters.
+     *
+     * @return List of non-empty Datasets containing issue severity data, one Dataset per project ID
+     */
     public List<Dataset<Row>> handleIssueSeverity() {
         List<Dataset<Row>> issueSeverityData = new ArrayList<>();
         for (Long projectId : projectIds) {
