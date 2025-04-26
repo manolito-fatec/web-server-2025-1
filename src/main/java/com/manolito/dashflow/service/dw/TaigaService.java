@@ -642,15 +642,15 @@ public class TaigaService {
             TaigaTransformer transformer = new TaigaTransformer(spark.emptyDataFrame());
             getProjectWhereUserIsMember();
 
-//            processProjectsData(transformer);
-//
-//            processTasksData(transformer);
-//
-//            processEpicsData(transformer);
-//
-//            processUserStoriesData(transformer);
-//
-//            processFactTasks(transformer);
+            processProjectsData(transformer);
+
+            processTasksData(transformer);
+
+            processEpicsData(transformer);
+
+            processUserStoriesData(transformer);
+
+            processFactTasks(transformer);
 
             processIssuesType(transformer);
 
@@ -658,9 +658,9 @@ public class TaigaService {
 
             processIssueSeverity(transformer);
 
-//            processFactIssues(transformer);
+            processFactIssues(transformer);
 
-//            saveRelationshipData();
+            saveRelationshipData();
         } catch (Exception e) {
             throw new RuntimeException("Taiga ETL process failed", e);
         }
