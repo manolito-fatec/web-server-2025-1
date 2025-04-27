@@ -20,9 +20,9 @@ public class IssuesService {
 
         Map<String, Integer> result = new HashMap<>();
 
-        result.put("bug", issuesDataWarehouseRepository.getIssueCountByType(projectId, severity.getValue(), priority.getValue(), "bug").orElse(0));
-        result.put("enhancement", issuesDataWarehouseRepository.getIssueCountByType(projectId, severity.getValue(), priority.getValue(), "enhancement").orElse(0));
-        result.put("question", issuesDataWarehouseRepository.getIssueCountByType(projectId, severity.getValue(), priority.getValue(), "question").orElse(0));
+        result.put("Bug", issuesDataWarehouseRepository.getIssueCountByType(projectId, severity.getValue(), priority.getValue(), "Bug").orElse(0));
+        result.put("Enhancement", issuesDataWarehouseRepository.getIssueCountByType(projectId, severity.getValue(), priority.getValue(), "Enhancement").orElse(0));
+        result.put("Question", issuesDataWarehouseRepository.getIssueCountByType(projectId, severity.getValue(), priority.getValue(), "Question").orElse(0));
 
         if (result.values().stream().allMatch(count -> count == 0)) {
             throw new NoSuchElementException("No issues found for the given criteria");
