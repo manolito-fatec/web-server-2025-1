@@ -44,9 +44,9 @@ public class IssuesServiceTest {
                 TEST_PROJECT_ID, TEST_SEVERITY, TEST_PRIORITY);
 
         assertEquals(3, result.size());
-        assertTrue(result.contains(new IssueCountDto("Bug", 5)));
-        assertTrue(result.contains(new IssueCountDto("Enhancement", 3)));
-        assertTrue(result.contains(new IssueCountDto("Question", 1)));
+        assertTrue(result.stream().anyMatch(ic -> "Bug".equals(ic.getType()) && ic.getCount() == 5));
+        assertTrue(result.stream().anyMatch(ic -> "Enhancement".equals(ic.getType()) && ic.getCount() == 3));
+        assertTrue(result.stream().anyMatch(ic -> "Question".equals(ic.getType()) && ic.getCount() == 1));
 
         verify(issuesDataWarehouseRepository, times(3)).getIssueCountByType(anyString(), anyString(), anyString(), anyString());
     }
