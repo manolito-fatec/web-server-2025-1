@@ -15,6 +15,15 @@ import java.util.NoSuchElementException;
 public class IssuesService {
     private final IssuesDataWarehouseRepository issuesDataWarehouseRepository;
 
+    /**
+     * Retrieves the count of issues for a specific project, severity, and priority, grouped by issue type.
+     *
+     * @param projectId the ID of the project to query issues for
+     * @param severity the severity level of the issues to filter
+     * @param priority the priority level of the issues to filter
+     * @return a map where the key is the issue type ("Bug", "Enhancement", "Question") and the value is the count
+     * @throws NoSuchElementException if no issues are found for the given criteria
+     */
     public Map<String, Integer> getIssueCountsByProjectSeverityAndPriority(
             int projectId, IssueSeverity severity, IssuePriority priority) {
 
@@ -30,7 +39,14 @@ public class IssuesService {
 
         return result;
     }
-
+    
+    /**
+     * Retrieves all current issues for a specific project, grouped by issue type.
+     *
+     * @param projectId the ID of the project to query issues for
+     * @return a map where the key is the issue type and the value is the count of issues
+     * @throws NoSuchElementException if no issues are found for the given project
+     */
     public Map<String, Integer> getAllCurrentIssuesGroupedByType(int projectId) {
         Map<String, Integer> issuesGrouped = issuesDataWarehouseRepository.getAllCurrentIssuesGroupedByType(projectId);
 
