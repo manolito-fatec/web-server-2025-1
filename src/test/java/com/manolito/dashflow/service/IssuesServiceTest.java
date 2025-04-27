@@ -52,8 +52,8 @@ public class IssuesServiceTest {
     }
 
     @Test
-    @DisplayName("getIssueCountsByProjectSeverityAndPriority - should throw when no issues found")
-    void getIssueCountsByProjectSeverityAndPriority_whenNoIssues_shouldThrow() {
+    @DisplayName("getIssueCountsByProjectSeverityAndPriority - should return empty list when no issues found")
+    void getIssueCountsByProjectSeverityAndPriority_whenNoIssues_shouldReturnEmptyList() {
         when(issuesDataWarehouseRepository.getIssueCountByType(TEST_PROJECT_ID, TEST_SEVERITY.getValue(), TEST_PRIORITY.getValue(), "Bug"))
                 .thenReturn(Optional.of(0));
         when(issuesDataWarehouseRepository.getIssueCountByType(TEST_PROJECT_ID, TEST_SEVERITY.getValue(), TEST_PRIORITY.getValue(), "Enhancement"))
@@ -61,9 +61,13 @@ public class IssuesServiceTest {
         when(issuesDataWarehouseRepository.getIssueCountByType(TEST_PROJECT_ID, TEST_SEVERITY.getValue(), TEST_PRIORITY.getValue(), "Question"))
                 .thenReturn(Optional.of(0));
 
-        assertThrows(NoSuchElementException.class,
-                () -> issuesService.getIssueCountsByProjectSeverityAndPriority(
-                        TEST_PROJECT_ID, TEST_SEVERITY, TEST_PRIORITY));
+        List<IssueCountDto> result = issuesService.getIssueCountsByProjectSeverityAndPriority(
+                TEST_PROJECT_ID, TEST_SEVERITY, TEST_PRIORITY);
+
+        assertEquals(3, result.size());
+        assertEquals(0, result.get(0).getCount());
+        assertEquals(0, result.get(1).getCount());
+        assertEquals(0, result.get(2).getCount());
 
         verify(issuesDataWarehouseRepository, times(3)).getIssueCountByType(anyString(), anyString(), anyString(), anyString());
     }

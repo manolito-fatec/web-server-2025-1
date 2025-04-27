@@ -37,10 +37,6 @@ public class IssuesService {
         result.add(new IssueCountDto("Question",
                 issuesDataWarehouseRepository.getIssueCountByType(projectId, severity.getValue(), priority.getValue(), "Question").orElse(0)));
 
-        if (result.stream().allMatch(issueCount -> issueCount.getCount() == 0)) {
-            throw new NoSuchElementException("No issues found for the given criteria");
-        }
-
         return result;
     }
     
