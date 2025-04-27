@@ -14,6 +14,29 @@ import java.util.Optional;
 public class IssuesDataWarehouseRepository {
     private final NamedParameterJdbcTemplate jdbcTemplate;
 
+    public Map<String, Integer> getAllCurrentIssuesGroupedByType(int projectId) {
+        String sql = "SELECT typ.type_name, COUNT(fi.issue_id) AS issue_count " +
+                "FROM dw_dashflow.fact_issues fi " +
+                "JOIN dw_dashflow.issue_severity sev ON fi.severity_id = sev.severity_id " +
+                "JOIN dw_dashflow.issue_priority pri ON fi.priority_id = pri.priority_id " +
+                "JOIN dw_dashflow.issue_type typ ON fi.type_id = typ.type_id " +
+                "WHERE fi.project_id = :projectId " +
+                "AND sev.is_current = TRUE " +
+                "AND pri.is_current = TRUE " +
+                "AND typ.is_current = TRUE " +
+                "GROUP BY typ.type_name";
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("projectId", projectId);
+
+        Map<String, Integer> result = new HashMap<>();
+        jdbcTemplate.query(sql, params, rs -> {
+            result.put(rs.getString("type_name").toLowerCase(), rs.getInt("issue_count"));
+        });
+
+        return result;
+    }
+
     public Optional<Integer> getIssueCountByType(int projectId, String severity, String priority, String type) {
         String sql = "SELECT COUNT(fi.issue_id) AS issue_count " +
                 "FROM dw_dashflow.fact_issues fi " +
