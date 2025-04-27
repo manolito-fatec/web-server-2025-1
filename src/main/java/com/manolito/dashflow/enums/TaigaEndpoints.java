@@ -15,6 +15,12 @@ public enum TaigaEndpoints{
 
     ISSUES("/api/v1/issues"),
 
+    ISSUE_TYPES("/api/v1/issue-types"),
+
+    ISSUE_PRIORITY("/api/v1/priorities"),
+
+    ISSUE_SEVERITY("/api/v1/severities"),
+
     EPICS("/api/v1/epics"),
 
     ROLES("/api/v1/roles");

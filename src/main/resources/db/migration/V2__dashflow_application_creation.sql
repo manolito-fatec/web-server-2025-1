@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS tools(
     tool_name VARCHAR(255) NOT NULL
 );
 
-INSERT INTO dw_tasks.tools(
+INSERT INTO dw_dashflow.tools(
     tool_name)
 VALUES ('taiga');
 
@@ -73,7 +73,7 @@ CREATE TABLE IF NOT EXISTS role_permissions (
 
 --- roles ---
 INSERT INTO roles (role_name) VALUES
-('ROLE_USER'),
+('ROLE_OPERATOR'),
 ('ROLE_MANAGER'),
 ('ROLE_ADMIN')
 ON CONFLICT (role_name) DO NOTHING;

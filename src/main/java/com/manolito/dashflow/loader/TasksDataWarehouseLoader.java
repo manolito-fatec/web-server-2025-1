@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static com.manolito.dashflow.enums.Schema.DATAWAREHOUSE;
 import static org.apache.spark.sql.functions.col;
 
 /**
@@ -66,7 +67,7 @@ public class TasksDataWarehouseLoader {
         return spark.read()
                 .format("jdbc")
                 .option("url", jdbcUrl)
-                .option("dbtable", "dw_tasks." + tableName)
+                .option("dbtable", DATAWAREHOUSE.getSchema()+ "." + tableName)
                 .option("user", dbUser)
                 .option("password", dbPassword)
                 .load()
@@ -74,11 +75,11 @@ public class TasksDataWarehouseLoader {
                 .filter(col("is_current").equalTo(true));
     }
 
-    public Dataset<Row> loadDimensionWithoutTool(String tableName, String toolName) {
+    public Dataset<Row> loadDimensionWithoutTool(String tableName) {
         return spark.read()
                 .format("jdbc")
                 .option("url", jdbcUrl)
-                .option("dbtable", "dw_tasks." + tableName)
+                .option("dbtable", DATAWAREHOUSE.getSchema() + "." + tableName)
                 .option("user", dbUser)
                 .option("password", dbPassword)
                 .load()
@@ -89,7 +90,7 @@ public class TasksDataWarehouseLoader {
         return spark.read()
                 .format("jdbc")
                 .option("url", jdbcUrl)
-                .option("dbtable", "dw_tasks." + tableName)
+                .option("dbtable", DATAWAREHOUSE.getSchema() + "." + tableName)
                 .option("user", dbUser)
                 .option("password", dbPassword)
                 .load();
@@ -105,7 +106,7 @@ public class TasksDataWarehouseLoader {
             filteredData.write()
                     .format("jdbc")
                     .option("url", jdbcUrl)
-                    .option("dbtable", "dw_tasks." + tableName)
+                    .option("dbtable", DATAWAREHOUSE.getSchema() + "." + tableName)
                     .option("user", dbUser)
                     .option("password", dbPassword)
                     .option("batchsize", 10000)
@@ -158,7 +159,7 @@ public class TasksDataWarehouseLoader {
         Dataset<Row> tools = spark.read()
                 .format("jdbc")
                 .option("url", jdbcUrl)
-                .option("dbtable", "dw_tasks.tools")
+                .option("dbtable", DATAWAREHOUSE.getSchema() + ".tools")
                 .option("user", dbUser)
                 .option("password", dbPassword)
                 .load()
@@ -185,7 +186,7 @@ public class TasksDataWarehouseLoader {
         this.cachedDates = spark.read()
                 .format("jdbc")
                 .option("url", jdbcUrl)
-                .option("dbtable", "dw_tasks.dates")
+                .option("dbtable", DATAWAREHOUSE.getSchema() + ".dates")
                 .option("user", dbUser)
                 .option("password", dbPassword)
                 .load()
@@ -196,10 +197,32 @@ public class TasksDataWarehouseLoader {
         return spark.read()
                 .format("jdbc")
                 .option("url", jdbcUrl)
-                .option("dbtable", "dw_tasks." + tableName)
+                .option("dbtable", DATAWAREHOUSE.getSchema() + "." + tableName)
                 .option("user", dbUser)
                 .option("password", dbPassword)
                 .load()
                 .filter(col("is_current").equalTo(true));
+    }
+
+    public void purgeTable(String tableName) {
+        try {
+            spark.read()
+                    .format("jdbc")
+                    .option("url", jdbcUrl)
+                    .option("dbtable", DATAWAREHOUSE.getSchema() + "." + tableName)
+                    .option("user", dbUser)
+                    .option("password", dbPassword)
+                    .load()
+                    .write()
+                    .format("jdbc")
+                    .option("url", jdbcUrl)
+                    .option("dbtable", DATAWAREHOUSE.getSchema() + "." + tableName)
+                    .option("user", dbUser)
+                    .option("password", dbPassword)
+                    .mode(SaveMode.Overwrite)
+                    .save();
+        } catch (Exception e) {
+            throw new RuntimeException("Error purging table: " + tableName, e);
+        }
     }
 }

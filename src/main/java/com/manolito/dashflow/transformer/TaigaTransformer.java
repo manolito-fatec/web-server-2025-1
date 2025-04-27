@@ -38,15 +38,38 @@ public class TaigaTransformer {
         return rawIssues.select(
                 col("id").as("original_id"),
                 col("status").as("status_id"),
-                col("owner").as("owner_id"),
-                lit(TOOL_ID).as("tool_id"),
+                col("owner").as("user_id"),
                 col("project").as("project_id"),
-                to_date(col("created_date")).as("created_at"),
-                to_date(col("modified_date")).as("updated_at"),
-                col("subject").as("issue_name"),
-                col("description"),
-                col("is_blocked"),
-                col("is_closed").as("is_resolved")
+                col("severity").as("severity_id"),
+                col("priority").as("priority_id"),
+                col("type").as("type_id"),
+                (col("created_date")).cast("date").as("created_at"),
+                (col("modified_date")).cast("date").as("completed_at"),
+                col("subject").as("issue_name")
+        );
+    }
+
+    public Dataset<Row> transformIssueTypes(Dataset<Row> rawIssueTypes) {
+        return rawIssueTypes.select(
+                col("id").as("original_id"),
+                col("type_name"),
+                col("project").as("project_id")
+        );
+    }
+
+    public Dataset<Row> transformIssueSeverity(Dataset<Row> rawIssueSeverities) {
+        return rawIssueSeverities.select(
+                col("id").as("original_id"),
+                col("severity_name"),
+                col("project").as("project_id")
+        );
+    }
+
+    public Dataset<Row> transformIssuePriority(Dataset<Row> rawIssuePriority) {
+        return rawIssuePriority.select(
+                col("id").as("original_id"),
+                col("priority_name"),
+                col("project").as("project_id")
         );
     }
 
@@ -94,19 +117,19 @@ public class TaigaTransformer {
     public Dataset<Row> transformEpics(Dataset<Row> rawEpics) {
         return rawEpics.select(
                 col("id").as("original_id"),
-                lit(1).as("project_id"),
+                col("project").as("project_id"),
                 col("subject").as("epic_name")
         );
     }
 
     public Dataset<Row> transformTags(Dataset<Row> rawTags) {
         return rawTags.select(
-                        lit(TOOL_ID).as("tool_id"),
+                        col("project").as("project_id"),
                         explode(col("tags")).as("tag") // Explodes the "tags" array into separate rows
                 )
                 .select(
                         col("tag").getItem(0).as("original_id"),
-                        col("tool_id"),
+                        col("project_id"),
                         col("tag").getItem(0).as("tag_name")
                 )
                 .distinct();
