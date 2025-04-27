@@ -1,5 +1,6 @@
 package com.manolito.dashflow.service;
 
+import com.manolito.dashflow.dto.dw.IssueCountDto;
 import com.manolito.dashflow.enums.IssuePriority;
 import com.manolito.dashflow.enums.IssueSeverity;
 import com.manolito.dashflow.repository.application.IssuesDataWarehouseRepository;
@@ -17,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
- public class IssuesServiceTest {
+public class IssuesServiceTest {
 
     @Mock
     private IssuesDataWarehouseRepository issuesDataWarehouseRepository;
@@ -25,7 +26,7 @@ import static org.mockito.Mockito.*;
     @InjectMocks
     private IssuesService issuesService;
 
-    private final int TEST_PROJECT_ID = 123;
+    private final String TEST_PROJECT_ID = "123";
     private final IssueSeverity TEST_SEVERITY = IssueSeverity.IMPORTANT;
     private final IssuePriority TEST_PRIORITY = IssuePriority.HIGH;
 
@@ -39,20 +40,20 @@ import static org.mockito.Mockito.*;
         when(issuesDataWarehouseRepository.getIssueCountByType(TEST_PROJECT_ID, TEST_SEVERITY.getValue(), TEST_PRIORITY.getValue(), "Question"))
                 .thenReturn(Optional.of(1));
 
-        Map<String, Integer> result = issuesService.getIssueCountsByProjectSeverityAndPriority(
+        List<IssueCountDto> result = issuesService.getIssueCountsByProjectSeverityAndPriority(
                 TEST_PROJECT_ID, TEST_SEVERITY, TEST_PRIORITY);
 
         assertEquals(3, result.size());
-        assertEquals(5, result.get("Bug"));
-        assertEquals(3, result.get("Enhancement"));
-        assertEquals(1, result.get("Question"));
+        assertTrue(result.stream().anyMatch(ic -> "Bug".equals(ic.getType()) && ic.getCount() == 5));
+        assertTrue(result.stream().anyMatch(ic -> "Enhancement".equals(ic.getType()) && ic.getCount() == 3));
+        assertTrue(result.stream().anyMatch(ic -> "Question".equals(ic.getType()) && ic.getCount() == 1));
 
-        verify(issuesDataWarehouseRepository, times(3)).getIssueCountByType(anyInt(), anyString(), anyString(), anyString());
+        verify(issuesDataWarehouseRepository, times(3)).getIssueCountByType(anyString(), anyString(), anyString(), anyString());
     }
 
     @Test
-    @DisplayName("getIssueCountsByProjectSeverityAndPriority - should throw when no issues found")
-    void getIssueCountsByProjectSeverityAndPriority_whenNoIssues_shouldThrow() {
+    @DisplayName("getIssueCountsByProjectSeverityAndPriority - should return empty list when no issues found")
+    void getIssueCountsByProjectSeverityAndPriority_whenNoIssues_shouldReturnEmptyList() {
         when(issuesDataWarehouseRepository.getIssueCountByType(TEST_PROJECT_ID, TEST_SEVERITY.getValue(), TEST_PRIORITY.getValue(), "Bug"))
                 .thenReturn(Optional.of(0));
         when(issuesDataWarehouseRepository.getIssueCountByType(TEST_PROJECT_ID, TEST_SEVERITY.getValue(), TEST_PRIORITY.getValue(), "Enhancement"))
@@ -60,26 +61,32 @@ import static org.mockito.Mockito.*;
         when(issuesDataWarehouseRepository.getIssueCountByType(TEST_PROJECT_ID, TEST_SEVERITY.getValue(), TEST_PRIORITY.getValue(), "Question"))
                 .thenReturn(Optional.of(0));
 
-        assertThrows(NoSuchElementException.class,
-                () -> issuesService.getIssueCountsByProjectSeverityAndPriority(
-                        TEST_PROJECT_ID, TEST_SEVERITY, TEST_PRIORITY));
+        List<IssueCountDto> result = issuesService.getIssueCountsByProjectSeverityAndPriority(
+                TEST_PROJECT_ID, TEST_SEVERITY, TEST_PRIORITY);
 
-        verify(issuesDataWarehouseRepository, times(3)).getIssueCountByType(anyInt(), anyString(), anyString(), anyString());
+        assertEquals(3, result.size());
+        assertEquals(0, result.get(0).getCount());
+        assertEquals(0, result.get(1).getCount());
+        assertEquals(0, result.get(2).getCount());
+
+        verify(issuesDataWarehouseRepository, times(3)).getIssueCountByType(anyString(), anyString(), anyString(), anyString());
     }
 
     @Test
     @DisplayName("getAllCurrentIssuesGroupedByType - should return grouped issues when they exist")
-    void getAllCurrentIssuesGroupedByType_whenIssuesExist_shouldReturnGroupedMap() {
-        Map<String, Integer> expected = new HashMap<>();
-        expected.put("Bug", 5);
-        expected.put("Enhancement", 3);
+    void getAllCurrentIssuesGroupedByType_whenIssuesExist_shouldReturnGroupedList() {
+        List<IssueCountDto> expected = List.of(
+                new IssueCountDto("Bug", 5),
+                new IssueCountDto("Enhancement", 3)
+        );
 
         when(issuesDataWarehouseRepository.getAllCurrentIssuesGroupedByType(TEST_PROJECT_ID))
                 .thenReturn(expected);
 
-        Map<String, Integer> result = issuesService.getAllCurrentIssuesGroupedByType(TEST_PROJECT_ID);
+        List<IssueCountDto> result = issuesService.getAllCurrentIssuesGroupedByType(TEST_PROJECT_ID);
 
-        assertEquals(expected, result);
+        assertEquals(expected.size(), result.size());
+        assertTrue(result.containsAll(expected));
         verify(issuesDataWarehouseRepository).getAllCurrentIssuesGroupedByType(TEST_PROJECT_ID);
     }
 
@@ -87,7 +94,7 @@ import static org.mockito.Mockito.*;
     @DisplayName("getAllCurrentIssuesGroupedByType - should throw when no issues found")
     void getAllCurrentIssuesGroupedByType_whenNoIssues_shouldThrow() {
         when(issuesDataWarehouseRepository.getAllCurrentIssuesGroupedByType(TEST_PROJECT_ID))
-                .thenReturn(Collections.emptyMap());
+                .thenReturn(Collections.emptyList());
 
         assertThrows(NoSuchElementException.class,
                 () -> issuesService.getAllCurrentIssuesGroupedByType(TEST_PROJECT_ID));
