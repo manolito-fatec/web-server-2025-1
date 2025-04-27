@@ -31,4 +31,13 @@ public class IssuesService {
         return result;
     }
 
+    public Map<String, Integer> getAllCurrentIssuesGroupedByType(int projectId) {
+        Map<String, Integer> issuesGrouped = issuesDataWarehouseRepository.getAllCurrentIssuesGroupedByType(projectId);
+
+        if (issuesGrouped.isEmpty()) {
+            throw new NoSuchElementException("No issues found for the given project");
+        }
+
+        return issuesGrouped;
+    }
 }
