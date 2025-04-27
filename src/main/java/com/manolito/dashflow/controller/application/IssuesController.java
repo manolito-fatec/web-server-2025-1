@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
 import java.util.NoSuchElementException;
 
 @Tag(name = "Issues Controller", description = "Endpoints para a consulta de issues no Data Warehouse de Issues")
@@ -52,6 +53,28 @@ public class IssuesController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Internal Server Error: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/gestor/current-issues/{projectId}")
+    @Operation(summary = "Busca todas as issues atuais agrupadas por tipo",
+            description = "Retorna a quantidade de bugs, enhancements e questions do projeto atual.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Contagem de issues agrupada extraída com sucesso."),
+            @ApiResponse(responseCode = "404", description = "Nenhuma issue encontrada para o projeto informado."),
+            @ApiResponse(responseCode = "500", description = "Erro interno do servidor.")
+    })
+    public ResponseEntity<Map<String, Integer>> getAllCurrentIssuesGroupedByType(
+            @Parameter(description = "ID do projeto", required = true)
+            @PathVariable int projectId) {
+
+        try {
+            Map<String, Integer> groupedIssues = issuesService.getAllCurrentIssuesGroupedByType(projectId);
+            return ResponseEntity.ok(groupedIssues);
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 }
