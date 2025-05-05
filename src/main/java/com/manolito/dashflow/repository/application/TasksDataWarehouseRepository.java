@@ -347,23 +347,33 @@ public class TasksDataWarehouseRepository {
 
     public Optional<Integer> getTaskReworksByProjectId(String projectId) {
         String sql = """
-                SELECT
-                    COUNT(ft.task_id) AS total
-                FROM dw_dashflow.projects prj
-                LEFT JOIN dw_dashflow.epics ep ON prj.project_id = ep.project_id
-                LEFT JOIN dw_dashflow.stories sto ON ep.epic_id = sto.epic_id
-                LEFT JOIN dw_dashflow.fact_tasks ft ON sto.story_id = ft.story_id
-                LEFT JOIN dw_dashflow.users us ON ft.assignee_id = us.user_id
-                WHERE prj.original_id = :projectId
-                AND prj.is_current = TRUE
-                AND ft.is_current = TRUE
-                AND ft.completed_at IS NULL
-                AND EXISTS (
-                    SELECT 1 FROM dw_dashflow.fact_tasks ft_hist
-                    WHERE ft_hist.original_id = ft.original_id
-                    AND ft_hist.completed_at IS NOT NULL
-                    AND ft_hist.is_current = FALSE
-                )
+                WITH current_tasks AS (
+                                SELECT\s
+                                    ft.original_id,
+                                    ft.task_id,
+                                    ft.completed_at
+                                FROM dw_dashflow.projects prj
+                                JOIN dw_dashflow.epics ep ON prj.project_id = ep.project_id
+                                JOIN dw_dashflow.stories sto ON ep.epic_id = sto.epic_id
+                                JOIN dw_dashflow.fact_tasks ft ON sto.story_id = ft.story_id
+                                WHERE prj.original_id = :projectId
+                                AND prj.is_current = TRUE
+                                AND ft.task_id = (
+                                    SELECT MAX(ft2.task_id)
+                                    FROM dw_dashflow.fact_tasks ft2
+                                    WHERE ft2.original_id = ft.original_id
+                                )
+                            )
+                            SELECT COUNT(*) AS total
+                            FROM current_tasks ct
+                            WHERE ct.completed_at IS NULL
+                            AND EXISTS (
+                                SELECT 1
+                                FROM dw_dashflow.fact_tasks ft_hist
+                                WHERE ft_hist.original_id = ct.original_id
+                                AND ft_hist.task_id < ct.task_id
+                                AND ft_hist.completed_at IS NOT NULL
+                            )
                 """;
 
 
