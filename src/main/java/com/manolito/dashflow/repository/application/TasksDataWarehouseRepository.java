@@ -260,8 +260,8 @@ public class TasksDataWarehouseRepository {
 
     public Optional<Integer> getTotalCardsForManager(int userId) {
         String sql = "SELECT COUNT(ft.task_id) AS total_cards " +
-                "FROM dataflow_appl.users u " +
-                "LEFT JOIN dataflow_appl.accounts acc ON u.user_id = acc.user_id " +
+                "FROM dashflow_appl.users u " +
+                "LEFT JOIN dashflow_appl.accounts acc ON u.user_id = acc.user_id " +
                 "LEFT JOIN dw_dashflow.users tu ON acc.account = tu.original_id " +
                 "LEFT JOIN dw_dashflow.fact_tasks ft ON tu.user_id = ft.assignee_id " +
                 "LEFT JOIN dw_dashflow.status st ON ft.status_id = st.status_id " +
@@ -407,11 +407,9 @@ public class TasksDataWarehouseRepository {
                 LEFT JOIN dw_dashflow.fact_tasks ft ON tu.user_id = ft.assignee_id
                 LEFT JOIN dw_dashflow.status st ON ft.status_id = st.status_id
                 LEFT JOIN dw_dashflow.projects prj ON st.project_id = prj.project_id
-                WHERE u.user_id = :userId
-                AND prj.is_current = TRUE
+                WHERE prj.is_current = TRUE
                 AND st.is_current = TRUE
-                AND tu.is_current = TRUE
-                GROUP BY prj.project_name
+                GROUP BY prj.project_name, prj.original_id
                 """;
 
         return jdbcTemplate.query(
