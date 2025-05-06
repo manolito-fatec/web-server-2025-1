@@ -382,12 +382,8 @@ public class TasksDataWarehouseRepository {
                 FROM dw_dashflow.projects prj
                 WHERE prj.is_current = TRUE
                 """;
-
-        Map<String, Object> params = new HashMap<>();
-        params.put("projectId", projectId);
-
         try {
-            Integer result = jdbcTemplate.queryForObject(sql, params, Integer.class);
+            Integer result = jdbcTemplate.queryForObject(sql, new HashMap<>(), Integer.class);
             return Optional.ofNullable(result);
         } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
