@@ -378,10 +378,13 @@ public class TasksDataWarehouseRepository {
     public Optional<Integer> getTaskCountByProjectId(String projectId) {
         String sql = """
                 SELECT
-                    COUNT(prj.original_id) AS total
-                FROM dw_dashflow.projects prj
-                WHERE prj.original_id = :projectId
-                AND prj.is_current = TRUE
+                    COUNT(ft.task_id) AS total_cards
+                FROM dw_dashflow.fact_tasks ft
+                LEFT JOIN dw_dashflow.status st ON ft.status_id = st.status_id
+                LEFT JOIN dw_dashflow.projects prj ON st.project_id = prj.project_id
+                WHERE prj.is_current = TRUE
+                AND st.is_current = TRUE
+                AND prj.original_id = :projectId
                 """;
 
         Map<String, Object> params = new HashMap<>();
