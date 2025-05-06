@@ -1,9 +1,6 @@
 package com.manolito.dashflow.repository.application;
 
-import com.manolito.dashflow.dto.dw.CreatedDoneDto;
-import com.manolito.dashflow.dto.dw.StatusCountDto;
-import com.manolito.dashflow.dto.dw.TaskOperatorDto;
-import com.manolito.dashflow.dto.dw.TaskTagDto;
+import com.manolito.dashflow.dto.dw.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -376,5 +373,54 @@ public class TasksDataWarehouseRepository {
         } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
         }
+    }
+
+    public Optional<Integer> getTaskCountByProjectId(String projectId) {
+        String sql = """
+                SELECT
+                    COUNT(prj.original_id) AS total
+                FROM dw_dashflow.projects prj
+                WHERE prj.original_id = :projectId
+                AND prj.is_current = TRUE
+                """;
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("projectId", projectId);
+
+        try {
+            Integer result = jdbcTemplate.queryForObject(sql, params, Integer.class);
+            return Optional.ofNullable(result);
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
+    }
+
+    public List<TaskProjectDto> getTaskCountGroupByProject() {
+        String sql = """
+                SELECT
+                    COUNT(ft.task_id) AS total_cards,
+                    prj.original_id,
+                    prj.project_name
+                FROM dataflow_appl.users u
+                LEFT JOIN dataflow_appl.accounts acc ON u.user_id = acc.user_id
+                LEFT JOIN dw_dashflow.users tu ON acc.account = tu.original_id
+                LEFT JOIN dw_dashflow.fact_tasks ft ON tu.user_id = ft.assignee_id
+                LEFT JOIN dw_dashflow.status st ON ft.status_id = st.status_id
+                LEFT JOIN dw_dashflow.projects prj ON st.project_id = prj.project_id
+                WHERE u.user_id = :userId
+                AND prj.is_current = TRUE
+                AND st.is_current = TRUE
+                AND tu.is_current = TRUE
+                GROUP BY prj.project_name
+                """;
+
+        return jdbcTemplate.query(
+                sql,
+                (rs, rowNum) -> new TaskProjectDto(
+                        rs.getString("project_name"),
+                        rs.getString("original_id"),
+                        rs.getInt("total_cards")
+                )
+        );
     }
 }
