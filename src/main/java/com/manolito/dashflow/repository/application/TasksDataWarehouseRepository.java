@@ -401,10 +401,7 @@ public class TasksDataWarehouseRepository {
                     COUNT(ft.task_id) AS total_cards,
                     prj.original_id,
                     prj.project_name
-                FROM dataflow_appl.users u
-                LEFT JOIN dataflow_appl.accounts acc ON u.user_id = acc.user_id
-                LEFT JOIN dw_dashflow.users tu ON acc.account = tu.original_id
-                LEFT JOIN dw_dashflow.fact_tasks ft ON tu.user_id = ft.assignee_id
+                FROM dw_dashflow.fact_tasks ft
                 LEFT JOIN dw_dashflow.status st ON ft.status_id = st.status_id
                 LEFT JOIN dw_dashflow.projects prj ON st.project_id = prj.project_id
                 WHERE prj.is_current = TRUE
