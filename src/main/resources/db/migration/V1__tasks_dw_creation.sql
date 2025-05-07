@@ -235,20 +235,45 @@ EXECUTE FUNCTION manage_scd2('original_id');
 
 CREATE OR REPLACE FUNCTION create_epicless_epic()
 RETURNS TRIGGER AS $$
+DECLARE
+    max_seq INT;
 BEGIN
-INSERT INTO dw_dashflow.epics (
-    original_id,
-    project_id,
-    epic_name,
-    is_finished
-)
+    SELECT COALESCE(MAX(seq), 0)
+    INTO max_seq
+    FROM dw_dashflow.epics
+    WHERE original_id = '0' AND project_id = NEW.project_id;
 
-VALUES (
-        '0',
+    -- Insert an epicless epic for a new project
+    INSERT INTO dw_dashflow.epics (
+        original_id,
+        project_id,
+        epic_name,
+        is_finished,
+        seq,
+        start_date,
+        end_date,
+        is_current
+    ) VALUES (
+        '0',          -- original_id for epicless epics
         NEW.project_id,
         'epicless',
-        FALSE);
-RETURN NEW;
+        FALSE,
+        max_seq + 1,  -- Increment sequence
+        CURRENT_DATE, -- Start date
+        NULL,         -- End date (NULL for current record)
+        TRUE          -- Mark as current
+    );
+
+    IF max_seq > 0 THEN
+        UPDATE dw_dashflow.epics
+        SET end_date = CURRENT_DATE,
+            is_current = FALSE
+        WHERE original_id = '0'
+          AND project_id = NEW.project_id
+          AND is_current = TRUE;
+    END IF;
+
+    RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -279,6 +304,56 @@ CREATE OR REPLACE TRIGGER stories_scd2_trigger
     BEFORE INSERT ON stories
     FOR EACH ROW
 EXECUTE FUNCTION manage_scd2('original_id');
+
+CREATE OR REPLACE FUNCTION create_storyless_story()
+RETURNS TRIGGER AS $$
+DECLARE
+    max_seq INT;
+BEGIN
+    -- Get the maximum sequence number for storyless stories in this epic
+    SELECT COALESCE(MAX(seq), 0)
+    INTO max_seq
+    FROM dw_dashflow.stories
+    WHERE original_id = '0' AND epic_id = NEW.epic_id;
+
+    -- Insert a storyless story for the new epic
+    INSERT INTO dw_dashflow.stories (
+        original_id,
+        epic_id,
+        story_name,
+        is_finished,
+        seq,
+        start_date,
+        end_date,
+        is_current
+    ) VALUES (
+        '0',              -- original_id for storyless stories
+        NEW.epic_id,
+        'storyless',
+        FALSE,            -- not finished
+        max_seq + 1,      -- increment sequence
+        CURRENT_DATE,     -- start date
+        NULL,             -- end date (NULL for current)
+        TRUE              -- mark as current
+    );
+
+    IF max_seq > 0 THEN
+        UPDATE dw_dashflow.stories
+        SET end_date = CURRENT_DATE,
+            is_current = FALSE
+        WHERE original_id = '0'
+          AND epic_id = NEW.epic_id
+          AND is_current = TRUE;
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_epic_create_storyless
+    AFTER INSERT ON dw_dashflow.epics
+    FOR EACH ROW
+    EXECUTE FUNCTION create_storyless_story();
 
 -------------------------------------
 
