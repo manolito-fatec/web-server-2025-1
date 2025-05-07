@@ -7,6 +7,7 @@ import java.util.*;
 
 import com.manolito.dashflow.dto.dw.CreatedDoneDto;
 import com.manolito.dashflow.dto.dw.TaskOperatorDto;
+import com.manolito.dashflow.dto.dw.TaskProjectDto;
 import com.manolito.dashflow.dto.dw.TaskTagDto;
 import com.manolito.dashflow.repository.application.TasksDataWarehouseRepository;
 import com.manolito.dashflow.service.application.TasksService;
@@ -427,5 +428,67 @@ class TasksServiceTest {
 
         assertEquals(0, result);
         verify(tasksDataWarehouseRepository).getTaskReworksByProjectId(TEST_PROJECT_ID);
+    }
+
+    @Test
+    @DisplayName("getTaskCountGroupByProject - should return task counts grouped by project when projects exist")
+    void getTaskCountGroupByProject_whenProjectsExist_shouldReturnCounts() {
+        // Create test data
+        List<TaskProjectDto> expectedResults = List.of(
+                new TaskProjectDto("Project A", "111", 10),
+                new TaskProjectDto("Project B", "123", 5),
+                new TaskProjectDto("Project C", "77777", 3)
+        );
+
+        when(tasksDataWarehouseRepository.getTaskCountGroupByProject())
+                .thenReturn(expectedResults);
+
+        List<TaskProjectDto> actualResults = tasksService.getTaskCountGroupByProject();
+
+        assertNotNull(actualResults);
+        assertEquals(3, actualResults.size());
+        assertEquals("Project A", actualResults.get(0).getProjectName());
+        assertEquals("111", actualResults.get(0).getProjectId());
+        assertEquals(10, actualResults.get(0).getCount());
+        verify(tasksDataWarehouseRepository).getTaskCountGroupByProject();
+    }
+
+    @Test
+    @DisplayName("getTaskCountGroupByProject - should return empty list when no projects exist")
+    void getTaskCountGroupByProject_whenNoProjects_shouldReturnEmptyList() {
+        when(tasksDataWarehouseRepository.getTaskCountGroupByProject())
+                .thenReturn(Collections.emptyList());
+
+        List<TaskProjectDto> actualResults = tasksService.getTaskCountGroupByProject();
+
+        assertNotNull(actualResults);
+        assertTrue(actualResults.isEmpty());
+        verify(tasksDataWarehouseRepository).getTaskCountGroupByProject();
+    }
+
+    @Test
+    @DisplayName("getProjectCount - should return count when projects exist")
+    void getProjectCount_whenProjectsExist_shouldReturnCount() {
+        int expectedCount = 5;
+        when(tasksDataWarehouseRepository.getProjectCount())
+                .thenReturn(Optional.of(expectedCount));
+
+        Optional<Integer> result = tasksService.getProjectCount();
+
+        assertTrue(result.isPresent());
+        assertEquals(expectedCount, result.get());
+        verify(tasksDataWarehouseRepository).getProjectCount();
+    }
+
+    @Test
+    @DisplayName("getProjectCount - should return empty optional when no projects exist")
+    void getProjectCount_whenNoProjects_shouldReturnEmptyOptional() {
+        when(tasksDataWarehouseRepository.getProjectCount())
+                .thenReturn(Optional.empty());
+
+        Optional<Integer> result = tasksService.getProjectCount();
+
+        assertFalse(result.isPresent());
+        verify(tasksDataWarehouseRepository).getProjectCount();
     }
 }

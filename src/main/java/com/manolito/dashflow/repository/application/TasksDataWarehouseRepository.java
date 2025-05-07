@@ -375,7 +375,7 @@ public class TasksDataWarehouseRepository {
         }
     }
 
-    public Optional<Integer> getProjectCount(String projectId) {
+    public Optional<Integer> getProjectCount() {
         String sql = """
                 SELECT
                     COUNT(prj.original_id)
