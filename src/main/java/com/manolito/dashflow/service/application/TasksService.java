@@ -2,6 +2,7 @@ package com.manolito.dashflow.service.application;
 
 import com.manolito.dashflow.dto.dw.CreatedDoneDto;
 import com.manolito.dashflow.dto.dw.TaskOperatorDto;
+import com.manolito.dashflow.dto.dw.TaskProjectDto;
 import com.manolito.dashflow.dto.dw.TaskTagDto;
 import com.manolito.dashflow.repository.application.TasksDataWarehouseRepository;
 import lombok.RequiredArgsConstructor;
@@ -210,5 +211,24 @@ public class TasksService {
             throw new NoSuchElementException("Null response");
         }
         return taskCount.get();
+    }
+
+    /**
+     * Retrieves a list of task counts grouped by projects.
+     * Each element in the list contains the project name, project id and the corresponding count.
+     *
+     * @return a list of {@link TaskProjectDto} objects representing task counts and their respective projects
+     */
+    public List<TaskProjectDto> getTaskCountGroupByProject() {
+        return tasksDataWarehouseRepository.getTaskCountGroupByProject();
+    }
+
+    /**
+     * Retrieves the amount of projects that exist in the platform.
+     *
+     * @return a list of {@link TaskProjectDto} objects representing task counts and their respective projects
+     */
+    public Optional<Integer> getProjectCount() {
+        return tasksDataWarehouseRepository.getProjectCount();
     }
 }
