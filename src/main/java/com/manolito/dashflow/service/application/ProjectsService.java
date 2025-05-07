@@ -1,5 +1,6 @@
 package com.manolito.dashflow.service.application;
 
+import com.manolito.dashflow.dto.dw.TaskProjectDto;
 import com.manolito.dashflow.repository.application.TasksDataWarehouseRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,5 +19,14 @@ public class ProjectsService {
             throw new NoSuchElementException("No projects found for user id " + userId);
         }
         return projectCount.get();
+    }
+
+    /**
+     * Retrieves the amount of projects that exist in the platform.
+     *
+     * @return a list of {@link TaskProjectDto} objects representing task counts and their respective projects
+     */
+    public Optional<Integer> getProjectCount() {
+        return tasksDataWarehouseRepository.getProjectCount();
     }
 }

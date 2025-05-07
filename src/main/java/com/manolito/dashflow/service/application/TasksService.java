@@ -222,13 +222,4 @@ public class TasksService {
     public List<TaskProjectDto> getTaskCountGroupByProject() {
         return tasksDataWarehouseRepository.getTaskCountGroupByProject();
     }
-
-    /**
-     * Retrieves the amount of projects that exist in the platform.
-     *
-     * @return a list of {@link TaskProjectDto} objects representing task counts and their respective projects
-     */
-    public Optional<Integer> getProjectCount() {
-        return tasksDataWarehouseRepository.getProjectCount();
-    }
 }
