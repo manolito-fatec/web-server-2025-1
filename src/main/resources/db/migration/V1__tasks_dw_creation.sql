@@ -24,6 +24,15 @@ DECLARE
     business_key_value TEXT;
     business_key_column TEXT := TG_ARGV[0]; -- Get the business key column name from trigger argument
 BEGIN
+    -- Skip SCD2 processing for special records (original_id = '0')
+    IF NEW.original_id = '0' THEN
+        NEW.seq := 1;
+        NEW.start_date := CURRENT_DATE;
+        NEW.end_date := NULL;
+        NEW.is_current := TRUE;
+        RETURN NEW;
+    END IF;
+
     -- Get the business key value from the new row
     EXECUTE format(
         'SELECT ($1).%I',
