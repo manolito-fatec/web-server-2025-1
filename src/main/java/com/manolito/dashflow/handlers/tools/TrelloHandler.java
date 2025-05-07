@@ -11,7 +11,6 @@ public class TrelloHandler implements ToolHandler{
 
     private final TrelloService trelloService;
 
-
     @Override
     public void handleRequest(String endpoint) {
         TrelloEndpoints object = TrelloEndpoints.identifyObject(endpoint);

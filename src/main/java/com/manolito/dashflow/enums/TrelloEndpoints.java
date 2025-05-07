@@ -8,7 +8,9 @@ import lombok.Getter;
 public enum TrelloEndpoints {
 
     BOARDS("/members/me/boards?"),
+
     LIST("/boards/{boardId}/lists?"),
+
     CARDS("/boards/{boardId}/cards?");
 
     private final String path;
