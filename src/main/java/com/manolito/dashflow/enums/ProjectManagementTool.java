@@ -8,7 +8,7 @@ import lombok.Getter;
 public enum ProjectManagementTool {
 
     TAIGA("https://api.taiga.io"),
-    TRELLO("https://api.trello.com"),
+    TRELLO("https://api.trello.com/1"),
     CLICKUP("https://api.clickup.com/api");
 
     private final String baseUrl;
