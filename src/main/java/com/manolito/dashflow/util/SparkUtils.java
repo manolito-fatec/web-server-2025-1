@@ -51,6 +51,24 @@ public class SparkUtils {
         }
     }
 
+    public String fetchDataFromEndpointTrello(String url) {
+        try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
+            HttpGet request = new HttpGet(url);
+
+            request.addHeader("Accept", "application/json");
+
+            HttpResponse response = httpClient.execute(request);
+
+            if (response.getStatusLine().getStatusCode() != 200) {
+                throw new RuntimeException("Failed : HTTP error code : " + response.getStatusLine().getStatusCode());
+            }
+
+            return EntityUtils.toString(response.getEntity());
+        } catch (Exception e) {
+            throw new RuntimeException("Error fetching data from endpoint: " + url, e);
+        }
+    }
+
     /**
      * Converts a JSON response into a Spark DataFrame.
      *
