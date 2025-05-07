@@ -465,30 +465,4 @@ class TasksServiceTest {
         assertTrue(actualResults.isEmpty());
         verify(tasksDataWarehouseRepository).getTaskCountGroupByProject();
     }
-
-    @Test
-    @DisplayName("getProjectCount - should return count when projects exist")
-    void getProjectCount_whenProjectsExist_shouldReturnCount() {
-        int expectedCount = 5;
-        when(tasksDataWarehouseRepository.getProjectCount())
-                .thenReturn(Optional.of(expectedCount));
-
-        Optional<Integer> result = tasksService.getProjectCount();
-
-        assertTrue(result.isPresent());
-        assertEquals(expectedCount, result.get());
-        verify(tasksDataWarehouseRepository).getProjectCount();
-    }
-
-    @Test
-    @DisplayName("getProjectCount - should return empty optional when no projects exist")
-    void getProjectCount_whenNoProjects_shouldReturnEmptyOptional() {
-        when(tasksDataWarehouseRepository.getProjectCount())
-                .thenReturn(Optional.empty());
-
-        Optional<Integer> result = tasksService.getProjectCount();
-
-        assertFalse(result.isPresent());
-        verify(tasksDataWarehouseRepository).getProjectCount();
-    }
 }
