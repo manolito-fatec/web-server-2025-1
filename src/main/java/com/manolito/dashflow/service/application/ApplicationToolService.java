@@ -41,6 +41,14 @@ public class ApplicationToolService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Converts an ApplicationTool entity to its DTO representation.
+     *
+     * @param tool the ApplicationTool entity to convert (must not be null)
+     * @return the converted ApplicationToolDto containing the tool's information
+     * @see ApplicationTool
+     * @see ApplicationToolDto
+     */
     private ApplicationToolDto convertToDto(ApplicationTool tool) {
         return ApplicationToolDto.builder()
                 .id(tool.getId())
