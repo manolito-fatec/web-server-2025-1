@@ -9,10 +9,12 @@ import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.functions;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import static com.manolito.dashflow.enums.ProjectManagementTool.TRELLO;
+import static com.manolito.dashflow.enums.TrelloEndpoints.*;
 
 @Service
 @RequiredArgsConstructor
@@ -21,6 +23,9 @@ public class TrelloService {
     private final SparkSession spark;
     private final SparkUtils utils;
     private final TasksDataWarehouseLoader dataWarehouseLoader;
+    private List<String> projectIds;
+    private List<String> boardsIds;
+    private String keyToken;
 
     /**
      * Maps the "name" field to the appropriate column name based on the target table.
@@ -39,6 +44,12 @@ public class TrelloService {
         };
     }
 
+    /**
+     * Fetches data from the specified endpoint and converts it into a DataFrame.
+     *
+     * @param endpoint The endpoint path (e.g., PROJECTS.getPath()).
+     * @return A DataFrame containing the fetched data.
+     */
     private Dataset<Row> fetchAndConvertToDataFrame(String endpoint,String tableName) {
         String jsonResponse = utils.fetchDataFromEndpointTrello(TRELLO.getBaseUrl() + endpoint);
         Dataset<org.apache.spark.sql.Row> data = utils.fetchDataAsDataFrame(jsonResponse);
@@ -53,9 +64,24 @@ public class TrelloService {
         return data;
     }
 
-    public List<Dataset<Row>> handleBoards() {
-        //future implementation
-        return null;
+    /**
+     * Fetches project and board data from the Trello API endpoint and extracts unique project and board IDs.
+     * The method retrieves all boards and then collects distinct organization IDs (projects) and board IDs.
+     * The results are stored in class-level variables projectIds and boardsIds.
+     */
+    public void handleProjectsBoards() {
+        String jsonResponse = utils.fetchDataFromEndpointTrello(TRELLO.getBaseUrl() + BOARDS.getPath() + keyToken);
+        Dataset<Row> df = utils.fetchDataAsDataFrame(jsonResponse);
+
+        projectIds = df.select("idOrganization")
+                .dropDuplicates("idOrganization")
+                .as(Encoders.STRING())
+                .collectAsList();
+
+        boardsIds = df.select("id")
+                .dropDuplicates("id")
+                .as(Encoders.STRING())
+                .collectAsList();
     }
 
     public List<Dataset<Row>> handleList() {
