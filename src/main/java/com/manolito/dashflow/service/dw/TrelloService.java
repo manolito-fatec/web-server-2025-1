@@ -22,10 +22,18 @@ public class TrelloService {
     private final SparkUtils utils;
     private final TasksDataWarehouseLoader dataWarehouseLoader;
 
+    /**
+     * Maps the "name" field to the appropriate column name based on the target table.
+     *
+     * @param tableName The name of the target table.
+     * @return The mapped column name for the "name" field.
+     */
     private String mapNameField(String tableName) {
         return switch (tableName) {
-            case "boards" -> "project_name";
-            case "lists" -> "story_name";
+            case "projects" -> "project_name";
+            case "status" -> "status_name";
+            case "users" -> "user_name";
+            case "tags" -> "tag_name";
             case "cards" -> "task_name";
             default -> throw new IllegalArgumentException("Unsupported table for name field mapping: " + tableName);
         };
