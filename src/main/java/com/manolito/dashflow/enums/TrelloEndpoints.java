@@ -11,6 +11,8 @@ public enum TrelloEndpoints {
 
     USERS("/organizations/{IdOrganization}/members?"),
 
+    PROJECTS("/organizations/{idOrganization}?"),
+
     LISTS("/boards/{boardId}/lists?"),
 
     TAGS("/boards/{boardId}/labels?"),

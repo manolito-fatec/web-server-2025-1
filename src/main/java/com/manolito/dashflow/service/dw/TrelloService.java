@@ -82,6 +82,24 @@ public class TrelloService {
     }
 
     /**
+     * Fetches project data from the Trello API for each project ID.
+     * Retrieves all projects for each project ID stored in projectIds and converts them to DataFrames.
+     *
+     * @return List of Datasets containing project data, one Dataset per project ID
+     */
+    public List<Dataset<Row>> handleProjects() {
+        List<Dataset<Row>> projectsData = new ArrayList<>();
+
+        for (String projectId : projectIds) {
+            String endpoint = PROJECTS.getPath().replace("{idOrganization}", projectId) + keyToken;
+            Dataset<Row> projectsDF = fetchAndConvertToDataFrame(endpoint, "projects");
+            projectsData.add(projectsDF);
+            projectsDF.show();
+        }
+        return projectsData;
+    }
+
+    /**
      * Fetches list data (statuses) from the Trello API for each board.
      * Retrieves all lists for each board ID stored in boardsIds and converts them to DataFrames.
      *
