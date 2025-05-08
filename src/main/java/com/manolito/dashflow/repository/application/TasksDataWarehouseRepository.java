@@ -438,4 +438,33 @@ public class TasksDataWarehouseRepository {
                 )
         );
     }
+
+    public List<UserDto> getUsersByProjectId(String projectId) {
+        String sql = """
+                SELECT
+                    us.original_id,
+                    us.user_name
+                FROM dw_dashflow.users us
+                LEFT JOIN dw_dashflow.tools too
+                    ON us.tool_id = too.tool_id
+                LEFT JOIN dw_dashflow.projects prj
+                    ON too.tool_id = prj.tool_id
+                WHERE us.is_current = TRUE
+                AND too.is_current = TRUE
+                AND prj.is_currnet = TRUE
+                AND prj.original_id = :projectId
+                """;
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("projectId", projectId);
+
+        return jdbcTemplate.query(
+                sql,
+                params,
+                (rs, rowNum) -> new UserDto(
+                        rs.getString("original_id"),
+                        rs.getString("user_name")
+                )
+        );
+    }
 }
