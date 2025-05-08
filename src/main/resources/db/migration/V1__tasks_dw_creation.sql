@@ -109,6 +109,14 @@ EXECUTE FUNCTION manage_scd2_tools();
 INSERT INTO dw_dashflow.tools(
     tool_name)
 VALUES ('taiga');
+
+INSERT INTO dw_dashflow.tools(
+    tool_name)
+VALUES ('trello');
+
+INSERT INTO dw_dashflow.tools(
+    tool_name)
+VALUES ('jira');
 ---------------------------------
 
 CREATE TABLE IF NOT EXISTS roles(
