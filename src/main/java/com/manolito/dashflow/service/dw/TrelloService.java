@@ -3,10 +3,7 @@ package com.manolito.dashflow.service.dw;
 import com.manolito.dashflow.loader.TasksDataWarehouseLoader;
 import com.manolito.dashflow.util.SparkUtils;
 import lombok.RequiredArgsConstructor;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
-import org.apache.spark.sql.SparkSession;
-import org.apache.spark.sql.functions;
+import org.apache.spark.sql.*;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -84,14 +81,74 @@ public class TrelloService {
                 .collectAsList();
     }
 
-    public List<Dataset<Row>> handleList() {
-        //future implementation
-        return null;
+    /**
+     * Fetches list data (statuses) from the Trello API for each board.
+     * Retrieves all lists for each board ID stored in boardsIds and converts them to DataFrames.
+     *
+     * @return List of Datasets containing list/status data, one Dataset per board ID
+     */
+    public List<Dataset<Row>> handleLists() {
+        List<Dataset<Row>> statusData = new ArrayList<>();
+
+        for (String boardId : boardsIds) {
+            String endpoint = LISTS.getPath().replace("{boardId}", boardId) + keyToken;
+            Dataset<Row> statusDF = fetchAndConvertToDataFrame(endpoint, "status");
+            statusData.add(statusDF);
+        }
+
+        return statusData;
     }
 
+    /**
+     * Fetches user data from the Trello API for each project (organization).
+     * Retrieves all members for each project ID stored in projectIds and converts them to DataFrames.
+     *
+     * @return List of Datasets containing user data, one Dataset per project ID
+     */
+    public List<Dataset<Row>> handleUsers() {
+        List<Dataset<Row>> usersData = new ArrayList<>();
+
+        for (String projectId : projectIds) {
+            String endpoint = USERS.getPath().replace("{IdOrganization}", projectId) + keyToken;
+            Dataset<Row> usersDF = fetchAndConvertToDataFrame(endpoint, "users");
+            usersData.add(usersDF);
+        }
+
+        return usersData;
+    }
+
+    /**
+     * Fetches tag/label data from the Trello API for each board.
+     * Retrieves all labels for each board ID stored in boardsIds and converts them to DataFrames.
+     *
+     * @return List of Datasets containing tag/label data, one Dataset per board ID
+     */
+    public List<Dataset<Row>> handleTags() {
+        List<Dataset<Row>> tagsData = new ArrayList<>();
+        for (String boardId : boardsIds) {
+            String endpoint = TAGS.getPath().replace("{boardId}", boardId) + keyToken;
+            Dataset<Row> tagsDF = fetchAndConvertToDataFrame(endpoint, "tags");
+            tagsData.add(tagsDF);
+        }
+        return tagsData;
+    }
+
+    /**
+     * Fetches card data from the Trello API for each board.
+     * Retrieves all cards for each board ID stored in boardsIds and converts them to DataFrames.
+     *
+     * @return List of Datasets containing card data, one Dataset per board ID
+     */
     public List<Dataset<Row>> handleCards() {
-        //future implementation
-        return null;
+        List<Dataset<Row>> cardsData = new ArrayList<>();
+
+        for (String boardId: boardsIds) {
+            String endpoint = CARDS.getPath().replace("{boardId}", boardId) + keyToken;
+            Dataset<Row> cardsDF = fetchAndConvertToDataFrame(endpoint, "cards");
+            cardsData.add(cardsDF);
+        }
+
+        return cardsData;
     }
 
 }
