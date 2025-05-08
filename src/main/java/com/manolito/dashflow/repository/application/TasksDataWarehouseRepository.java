@@ -413,4 +413,29 @@ public class TasksDataWarehouseRepository {
                 )
         );
     }
+
+    public List<ProjectDto> getProjectsByTool(Integer toolId) {
+        String sql = """
+                SELECT
+                    prj.original_id,
+                    prj.project_name
+                FROM dw_dashflow.projects prj
+                LEFT JOIN dw_dashflow.tools too ON prj.tool_id = too.tool_id
+                WHERE prj.is_current = TRUE
+                AND too.is_current = TRUE
+                AND too.tool_id = :toolId
+                """;
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("toolId", toolId);
+
+        return jdbcTemplate.query(
+                sql,
+                params,
+                (rs, rowNum) -> new ProjectDto(
+                        rs.getString("user_name"),
+                        rs.getString("user_id")
+                )
+        );
+    }
 }

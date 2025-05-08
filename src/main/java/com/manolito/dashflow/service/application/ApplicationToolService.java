@@ -26,13 +26,13 @@ public class ApplicationToolService {
      * This method fetches all tools using the Spring Data JPA repository's built-in findAll() method.
      * </p>
      *
-     * Returns a list of all application tools.
-     * @see ApplicationTool
+     * Returns a list of all application tools in it's DTO representation.
+     * @see ApplicationToolDto
      *
      * @example
      * <pre>{@code
      * // Get all tools
-     * List<ApplicationTool> tools = applicationToolService.allTools;
+     * List<ApplicationToolDto> tools = applicationToolService.getAllTools;
      * }</pre>
      */
     public List<ApplicationToolDto> getAllTools() {
