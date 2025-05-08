@@ -1,5 +1,6 @@
 package com.manolito.dashflow.service;
 
+import com.manolito.dashflow.dto.dw.ProjectDto;
 import com.manolito.dashflow.repository.application.TasksDataWarehouseRepository;
 import com.manolito.dashflow.service.application.ProjectsService;
 import org.junit.jupiter.api.DisplayName;
@@ -9,6 +10,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
@@ -88,5 +91,49 @@ public class ProjectsServiceTest {
 
         assertFalse(result.isPresent());
         verify(tasksDataWarehouseRepository).getProjectCount();
+    }
+
+    @Test
+    @DisplayName("getProjectsByTool - should return projects when tool exists")
+    void getProjectsByTool_whenToolExists_shouldReturnProjects() {
+        Integer toolId = 5;
+        List<ProjectDto> expectedProjects = List.of(
+                new ProjectDto("12345", "Super projeto taiga"),
+                new ProjectDto("7777777", "Sete")
+        );
+
+        when(tasksDataWarehouseRepository.getProjectsByTool(toolId))
+                .thenReturn(expectedProjects);
+
+        List<ProjectDto> result = projectsService.getProjectsByTool(toolId);
+
+        assertEquals(expectedProjects.size(), result.size());
+        assertEquals(expectedProjects.get(0).getOriginalId(), result.get(0).getOriginalId());
+        verify(tasksDataWarehouseRepository).getProjectsByTool(toolId);
+    }
+
+    @Test
+    @DisplayName("getProjectsByTool - should return empty list when no projects exist for tool")
+    void getProjectsByTool_whenNoProjects_shouldReturnEmptyList() {
+        Integer toolId = 5;
+        when(tasksDataWarehouseRepository.getProjectsByTool(toolId))
+                .thenReturn(Collections.emptyList());
+
+        List<ProjectDto> result = projectsService.getProjectsByTool(toolId);
+
+        assertTrue(result.isEmpty());
+        verify(tasksDataWarehouseRepository).getProjectsByTool(toolId);
+    }
+
+    @Test
+    @DisplayName("getProjectsByTool - should throw when toolId is null")
+    void getProjectsByTool_whenToolIdIsNull_shouldThrow() {
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> projectsService.getProjectsByTool(null)
+        );
+
+        assertEquals("Tool ID cannot be null", exception.getMessage());
+        verify(tasksDataWarehouseRepository, never()).getProjectsByTool(anyInt());
     }
 }
