@@ -21,14 +21,17 @@ public class TrelloHandler implements ToolHandler{
 
         switch (object) {
             case BOARDS:
-                trelloService.handleBoards();
-                break;
-            case LIST:
-                trelloService.handleList();
+                trelloService.handleProjectsBoards();
                 break;
             case CARDS:
                 trelloService.handleCards();
                 break;
+            case USERS:
+                trelloService.handleUsers();
+            case LISTS:
+                trelloService.handleLists();
+            case TAGS:
+                trelloService.handleTags();
             default:
                 throw new RuntimeException("Unsupported Taiga Object");
         }

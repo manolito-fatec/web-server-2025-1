@@ -9,7 +9,11 @@ public enum TrelloEndpoints {
 
     BOARDS("/members/me/boards?"),
 
-    LIST("/boards/{boardId}/lists?"),
+    USERS("/organizations/{IdOrganization}/members?"),
+
+    LISTS("/boards/{boardId}/lists?"),
+
+    TAGS("/boards/{boardId}/labels?"),
 
     CARDS("/boards/{boardId}/cards?");
 
