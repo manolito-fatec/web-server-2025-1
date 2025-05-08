@@ -20,10 +20,6 @@ CREATE TABLE IF NOT EXISTS tools(
     tool_name VARCHAR(255) NOT NULL
 );
 
-INSERT INTO dw_dashflow.tools(
-    tool_name)
-VALUES ('taiga');
-
 ----- ACCOUNTS TABLE -----
 
 CREATE TABLE IF NOT EXISTS accounts (

@@ -33,7 +33,10 @@ public class SeedDataConfig implements CommandLineRunner {
     @Transactional
     public void run(String... args) {
         if (userRepository.count() == 0) {
-            ApplicationTool taiga = createTool("Taiga");
+            ApplicationTool taiga = createTool("taiga");
+            ApplicationTool trello = createTool("trello");
+            ApplicationTool jira = createTool("jira");
+
 
             ApplicationUser admin = createUser("admin", "admin@admin.com", "admin", "ROLE_ADMIN");
             ApplicationUser andre = createUser("Andre", "andre.andre@andre.com", "andre", "ROLE_OPERATOR");
