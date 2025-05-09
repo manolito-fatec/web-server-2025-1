@@ -93,11 +93,14 @@ public class TrelloService {
         for (String projectId : projectIds) {
             String endpoint = PROJECTS.getPath().replace("{idOrganization}", projectId) + keyToken;
             Dataset<Row> projectsDF = fetchAndConvertToDataFrame(endpoint, "projects");
-            projectsData.add(projectsDF);
-            projectsDF.show();
+            if (projectsDF != null && !projectsDF.isEmpty()) {
+                projectsData.add(projectsDF);
+            }
         }
+
         return projectsData;
     }
+
 
     /**
      * Fetches list data (statuses) from the Trello API for each board.
@@ -111,7 +114,9 @@ public class TrelloService {
         for (String boardId : boardsIds) {
             String endpoint = LISTS.getPath().replace("{boardId}", boardId) + keyToken;
             Dataset<Row> statusDF = fetchAndConvertToDataFrame(endpoint, "status");
-            statusData.add(statusDF);
+            if (statusDF != null && !statusDF.isEmpty()) {
+                statusData.add(statusDF);
+            }
         }
 
         return statusData;
@@ -129,7 +134,9 @@ public class TrelloService {
         for (String projectId : projectIds) {
             String endpoint = USERS.getPath().replace("{IdOrganization}", projectId) + keyToken;
             Dataset<Row> usersDF = fetchAndConvertToDataFrame(endpoint, "users");
-            usersData.add(usersDF);
+            if (usersDF != null && !usersDF.isEmpty()) {
+                usersData.add(usersDF);
+            }
         }
 
         return usersData;
@@ -143,11 +150,15 @@ public class TrelloService {
      */
     public List<Dataset<Row>> handleTags() {
         List<Dataset<Row>> tagsData = new ArrayList<>();
+
         for (String boardId : boardsIds) {
             String endpoint = TAGS.getPath().replace("{boardId}", boardId) + keyToken;
             Dataset<Row> tagsDF = fetchAndConvertToDataFrame(endpoint, "tags");
-            tagsData.add(tagsDF);
+            if (tagsDF != null && !tagsDF.isEmpty()) {
+                tagsData.add(tagsDF);
+            }
         }
+
         return tagsData;
     }
 
@@ -163,7 +174,9 @@ public class TrelloService {
         for (String boardId: boardsIds) {
             String endpoint = CARDS.getPath().replace("{boardId}", boardId) + keyToken;
             Dataset<Row> cardsDF = fetchAndConvertToDataFrame(endpoint, "cards");
-            cardsData.add(cardsDF);
+            if (cardsDF != null && !cardsDF.isEmpty()) {
+                cardsData.add(cardsDF);
+            }
         }
 
         return cardsData;
