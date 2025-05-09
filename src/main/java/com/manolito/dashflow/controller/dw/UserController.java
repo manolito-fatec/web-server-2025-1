@@ -1,7 +1,13 @@
 package com.manolito.dashflow.controller.dw;
 
 import com.manolito.dashflow.repository.dw.UserRepository;
+import com.manolito.dashflow.service.application.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -11,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
 
     private final UserRepository userRepository;
+    private final UserService userService;
 
     @GetMapping("/user")
     @ResponseBody
@@ -20,6 +27,26 @@ public class UserController {
             return ResponseEntity.ok(userId);
         } else {
             return ResponseEntity.notFound().build();
+        }
+    }
+
+    @GetMapping("/{projectId}")
+    @Operation(summary = "Busca todos os usuários de um projeto", description = "Faz uma requisição ao DB e retorna uma lista de usuários do data warehouse para um projeto dado")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Total de usuários de um projeto extraido com sucesso."),
+            @ApiResponse(responseCode = "400", description = "Requisição mal formulada."),
+            @ApiResponse(responseCode = "408", description = "Tempo de resposta excedido."),
+            @ApiResponse(responseCode = "500", description = "Erro interno do servidor ao tentar buscar o local.")
+    })
+    public ResponseEntity<?> getUsersByProjectId(
+            @Parameter(description = "Id do projeto", required = true) @PathVariable("projectId") String projectId
+    ) {
+        try {
+            return ResponseEntity.ok().body(userService.getUsersByProjectId(projectId));
+        } catch (IllegalArgumentException illegalArgumentException) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        } catch (RuntimeException runtimeException) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal Server Error " + runtimeException.getMessage());
         }
     }
 }
