@@ -37,7 +37,7 @@ public class UserServiceTest {
         when(dataWarehouseRepository.getUsersByProjectId(TEST_PROJECT_ID))
                 .thenReturn(expectedUsers);
 
-        List<UserDto> result = userService.getTaskCountByStatusByOperatorIdBetween(TEST_PROJECT_ID);
+        List<UserDto> result = userService.getUsersByProjectId(TEST_PROJECT_ID);
 
         assertEquals(2, result.size());
         assertEquals("12345", result.get(0).getOriginalId());
@@ -51,7 +51,7 @@ public class UserServiceTest {
         when(dataWarehouseRepository.getUsersByProjectId(TEST_PROJECT_ID))
                 .thenReturn(Collections.emptyList());
 
-        List<UserDto> result = userService.getTaskCountByStatusByOperatorIdBetween(TEST_PROJECT_ID);
+        List<UserDto> result = userService.getUsersByProjectId(TEST_PROJECT_ID);
 
         assertTrue(result.isEmpty());
         verify(dataWarehouseRepository).getUsersByProjectId(TEST_PROJECT_ID);
@@ -62,7 +62,7 @@ public class UserServiceTest {
     void shouldThrowWhenProjectIdIsNull() {
         IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class,
-                () -> userService.getTaskCountByStatusByOperatorIdBetween(null)
+                () -> userService.getUsersByProjectId(null)
         );
 
         assertEquals("projectId cannot be null", exception.getMessage());

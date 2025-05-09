@@ -28,7 +28,7 @@ public class UserService {
      * List<UserDto> users = userService.getTaskCountByStatusByOperatorIdBetween("45678");
      * }</pre>
      */
-    public List<UserDto> getTaskCountByStatusByOperatorIdBetween(String projectId) {
+    public List<UserDto> getUsersByProjectId(String projectId) {
         if (projectId == null) {
             throw new IllegalArgumentException("projectId cannot be null");
         }
