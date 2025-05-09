@@ -95,7 +95,6 @@ public class TrelloService {
             Dataset<Row> projectsDF = fetchAndConvertToDataFrame(endpoint, "projects");
             if (projectsDF != null && !projectsDF.isEmpty()) {
                 projectsData.add(projectsDF);
-                projectsDF.show();
             }
         }
 
