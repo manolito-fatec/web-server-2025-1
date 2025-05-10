@@ -1,6 +1,7 @@
 package com.manolito.dashflow.service.dw;
 
 import com.manolito.dashflow.loader.TasksDataWarehouseLoader;
+import com.manolito.dashflow.transformer.TrelloTransformer;
 import com.manolito.dashflow.util.SparkUtils;
 import lombok.RequiredArgsConstructor;
 import org.apache.spark.sql.*;
@@ -180,6 +181,41 @@ public class TrelloService {
         }
 
         return cardsData;
+    }
+
+    private void processProjectsData(TrelloTransformer transformer) {
+        List<Dataset<Row>> projectsData = handleProjects();
+        for (Dataset<Row> projectsDF : projectsData) {
+            Dataset<Row> transformedProject = transformer.transformProjects(projectsDF);
+            dataWarehouseLoader.save(transformedProject, "projects");
+        }
+    }
+
+    private void processUsersData(TrelloTransformer transformer) {
+        List<Dataset<Row>> usersData = handleUsers();
+        for (Dataset<Row> usersDF : usersData) {
+            Dataset<Row> transformedUser = transformer.transformUsers(usersDF);
+            dataWarehouseLoader.save(transformedUser, "users");
+        }
+    }
+
+    private void processStatusData(TrelloTransformer transformer) {
+        List<Dataset<Row>> statusData = handleLists();
+        for (Dataset<Row> statusDF : statusData) {
+            Dataset<Row> transformedStatus = transformer.transformStatus(statusDF);
+            transformedStatus = joinStatusProject(transformedStatus, dataWarehouseLoader.loadDimensionWithoutTool("projects"));
+            dataWarehouseLoader.save(transformedStatus, "status");
+        }
+    }
+
+    public static Dataset<Row> joinStatusProject(Dataset<Row> statusDF, Dataset<Row> projectsDF) {
+        Dataset<Row> joined = statusDF
+                .join(projectsDF, statusDF.col("project_id").equalTo(projectsDF.col("original_id")));
+        return joined.select(
+                statusDF.col("original_id"),
+                statusDF.col("status_name"),
+                projectsDF.col("project_id")
+        );
     }
 
 }
