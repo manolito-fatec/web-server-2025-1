@@ -16,7 +16,7 @@ public class TrelloTransformer {
         return rawData.select(
                 col("id").as("original_id"),
                 lit(TOOL_ID).as("tool_id"),
-                col("displayName").as("project_name"),
+                col("project_name"),
                 col("desc").as("description")
         );
     }
@@ -32,7 +32,8 @@ public class TrelloTransformer {
     public Dataset<Row> transformStatus(Dataset<Row> rawData) {
         return rawData.select(
                 col("id").as("original_id"),
-                col("status_name")
+                col("status_name"),
+                col("idBoard").as("project_id")
         );
     }
 
