@@ -122,7 +122,7 @@ public class TasksController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal Server Error " + runtimeException.getMessage());
         }
     }
-  
+
     @GetMapping("/average-time/{userId}")
     @Operation(summary = "Calcula a média de tempo de conclusão de tasks", description = "Faz uma requisição no BD, retornando a média de tempo que o usuário leva para concluir suas tasks")
     @ApiResponses(value = {
@@ -168,7 +168,6 @@ public class TasksController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal Server Error " + runtimeException.getMessage());
         }
     }
-  
     @GetMapping("/get-count/gestor/quantity-cards/{userId}")
     @Operation(summary = "Mostra contagem de tasks do gestor", description = "Retorna o número total de tasks em todos os projetos associados ao gestor")
     @ApiResponses(value = {
