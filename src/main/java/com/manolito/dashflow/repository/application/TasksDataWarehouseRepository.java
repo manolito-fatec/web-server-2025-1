@@ -8,10 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import java.sql.Date;
 import java.time.LocalDate;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @Repository
 @RequiredArgsConstructor
@@ -466,5 +463,63 @@ public class TasksDataWarehouseRepository {
                         rs.getString("user_name")
                 )
         );
+    }
+
+    public List<UserTableDto> getUsersPaginated(int page, int pageSize) {
+        String sql = """
+                 SELECT
+                     appu.user_id AS user_id,
+                     appu.username AS user_name,
+                     appr.role_name AS user_role,
+                     appt.tool_name,
+                     appt.tool_id,
+                     dwp.original_id AS project_id,
+                     dwp.project_name,
+                     appu.created_at AS created_at
+                 FROM dashflow_appl.users appu
+                 LEFT JOIN dashflow_appl.user_roles approle ON appu.user_id = approle.user_id
+                 LEFT JOIN dashflow_appl.roles appr ON approle.role_id = appr.role_id
+                 LEFT JOIN dashflow_appl.accounts appa ON appu.user_id = appa.user_id
+                 LEFT JOIN dashflow_appl.tools appt ON appa.tool_id = appt.tool_id
+                 LEFT JOIN dw_dashflow.users dwu ON appa.account = dwu.original_id AND dwu.is_current = TRUE
+                 LEFT JOIN dw_dashflow.fact_tasks dwft ON dwu.user_id = dwft.assignee_id
+                 LEFT JOIN dw_dashflow.stories dws ON dwft.story_id = dws.story_id AND dws.is_current = TRUE
+                 LEFT JOIN dw_dashflow.epics dwe ON dws.epic_id = dwe.epic_id AND dwe.is_current = TRUE
+                 LEFT JOIN dw_dashflow.projects dwp ON dwe.project_id = dwp.project_id AND dwp.is_current = TRUE
+                 WHERE appr.role_id <> 3 -- SKIP LISTING ADMINS
+                 GROUP BY
+                    appu.user_id, appu.username, appr.role_name, appt.tool_name,
+                    appt.tool_id, dwp.original_id, dwp.project_name, appu.created_at
+                 ORDER BY appu.username ASC
+                 LIMIT :limit OFFSET :offset
+                 """;
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("limit", pageSize);
+        params.put("offset", (page - 1) * pageSize);
+
+        return jdbcTemplate.query(
+                sql,
+                params,
+                (rs, rowNum) -> UserTableDto.builder()
+                        .originalId(String.valueOf(rs.getInt("originalId")))
+                        .userName(rs.getString("userName"))
+                        .userRole(rs.getString("userRole"))
+                        .toolName(rs.getString("toolName"))
+                        .toolId(rs.getObject("toolId", Integer.class))
+                        .projectId(rs.getString("projectId"))
+                        .projectName(rs.getString("projectName"))
+                        .createdAt(rs.getTimestamp("createdAt") != null ?
+                                rs.getTimestamp("createdAt").toLocalDateTime().toLocalDate() :
+                                null)
+                        .build()
+        );
+    }
+
+    public int countAllApplicationUsers() {
+        String sql = "SELECT COUNT(*) FROM dashflow_appl.users";
+
+        Integer count = jdbcTemplate.getJdbcOperations().queryForObject(sql, Integer.class);
+        return count != null ? count : 0;
     }
 }

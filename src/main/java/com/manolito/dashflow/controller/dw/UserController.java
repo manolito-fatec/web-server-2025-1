@@ -49,4 +49,28 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal Server Error " + runtimeException.getMessage());
         }
     }
+
+    @GetMapping("/paginated")
+    @Operation(summary = "Busca uma lista paginada de usuários", description = "Busca uma lista paginada de usuários da aplicação em seus respectivos projetos de uma ferramenta. Admins são excluídos.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Usuários paginados extraídos com sucesso"),
+            @ApiResponse(responseCode = "400", description = "Parâmetros paginados inválidos"),
+            @ApiResponse(responseCode = "500", description = "Erro interno do servidor ao tentar buscar usuários paginados")
+    })
+    public ResponseEntity<?> getUsersPaginated(
+            @Parameter(description = "Numero da pagina (1-based)", example = "1")
+            @RequestParam(defaultValue = "1") int page,
+
+            @Parameter(description = "Numero de itens por pagina (default = 10)", example = "10")
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        try {
+            return ResponseEntity.ok(userService.getUsersPaginated(page, size));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError()
+                    .body("Error retrieving users: " + e.getMessage());
+        }
+    }
 }
