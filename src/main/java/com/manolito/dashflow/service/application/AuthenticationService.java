@@ -32,6 +32,19 @@ public class AuthenticationService {
     private final ApplicationToolRepository applicationToolRepository;
     private final AccountRepository accountRepository;
 
+    /**
+     * Handles the user signup process by validating the input request,
+     * creating a new {@link ApplicationUser}, saving it to the repository,
+     * creating the associated {@link Account}, and returning a simplified DTO
+     * with user details.
+     *
+     * <p>This method is transactional to ensure that user creation and account
+     * creation happen atomically.</p>
+     *
+     * @param request the {@link SignupRequestDto} containing user registration data
+     * @return a {@link ResponseUserCreatedDto} containing selected details of the newly registered user
+     * @throws IllegalArgumentException if the request is invalid, roles are missing/invalid, or tool is not found
+     */
     @Transactional
     public ResponseUserCreatedDto signup(SignupRequestDto request) {
         validateRequest(request);
@@ -57,6 +70,17 @@ public class AuthenticationService {
                   registeredUser.getRoleNames().stream().findFirst().get());
     }
 
+    /**
+     * Authenticates a user using the provided login credentials and returns a JWT token upon success.
+     *
+     * <p>The method attempts to authenticate the user using the Spring Security {@link AuthenticationManager}.
+     * If authentication is successful, it retrieves the corresponding {@link ApplicationUser} from the repository
+     * and generates a JWT token using the {@link JwtService}.</p>
+     *
+     * @param request the {@link LoginRequestDto} containing the user's email and password
+     * @return a {@link JwtAuthenticationResponseDto} containing the generated JWT token
+     * @throws IllegalArgumentException if authentication fails or the user is not found
+     */
     public JwtAuthenticationResponseDto login(LoginRequestDto request) {
         try {
             authenticationManager.authenticate(
@@ -75,6 +99,15 @@ public class AuthenticationService {
         }
     }
 
+    /**
+     * Checks whether a user exists with the given username.
+     *
+     * <p>The method returns {@code true} if the provided username is not null,
+     * not blank, and a user with that username exists in the system.</p>
+     *
+     * @param username the username to search for
+     * @return {@code true} if the username is valid and exists; {@code false} otherwise
+     */
     public Boolean getUserByUsername(String username) {
         return username != null
                 && !username.isBlank()
