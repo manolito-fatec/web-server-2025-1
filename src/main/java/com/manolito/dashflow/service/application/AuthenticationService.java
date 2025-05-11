@@ -2,6 +2,7 @@ package com.manolito.dashflow.service.application;
 
 import com.manolito.dashflow.dto.application.auth.JwtAuthenticationResponseDto;
 import com.manolito.dashflow.dto.application.auth.LoginRequestDto;
+import com.manolito.dashflow.dto.application.auth.ResponseUserCreatedDto;
 import com.manolito.dashflow.dto.application.auth.SignupRequestDto;
 import com.manolito.dashflow.entity.application.*;
 import com.manolito.dashflow.repository.application.AccountRepository;
@@ -32,7 +33,7 @@ public class AuthenticationService {
     private final AccountRepository accountRepository;
 
     @Transactional
-    public JwtAuthenticationResponseDto signup(SignupRequestDto request) {
+    public ResponseUserCreatedDto signup(SignupRequestDto request) {
         validateRequest(request);
         Set<Role> roles = roleRepository.findByRoleNameIn(request.getRoles());
         Optional<ApplicationTool> tool = applicationToolRepository.findById(request.getToolId());
@@ -48,8 +49,12 @@ public class AuthenticationService {
 
         ApplicationUser registeredUser =  userRepository.save(user);
         createAccount(registeredUser, request.getToolUserId(), tool.get());
-        var jwt = jwtService.generateToken(user);
-        return JwtAuthenticationResponseDto.builder().token(jwt).build();
+
+        return new ResponseUserCreatedDto(
+                  registeredUser.getId(),
+                  registeredUser.getUsername(),
+                  registeredUser.getEmail(),
+                  registeredUser.getRoleNames().stream().findFirst().get());
     }
 
     public JwtAuthenticationResponseDto login(LoginRequestDto request) {
