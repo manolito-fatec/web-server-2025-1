@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 
 import javax.transaction.Transactional;
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
@@ -33,9 +34,11 @@ public class AuthenticationService {
 
     @Transactional
     public JwtAuthenticationResponseDto signup(SignupRequestDto request) {
+        validateRequest(request);
         Set<Role> roles = roleRepository.findByRoleNameIn(request.getRoles());
         Optional<ApplicationTool> tool = applicationToolRepository.findById(request.getToolId());
-        validateRequest(request, roles, tool);
+        validateFindRoleAndTool(roles, tool);
+
         var user = ApplicationUser
                 .builder()
                 .email(request.getEmail())
@@ -96,28 +99,27 @@ public class AuthenticationService {
     }
 
     /**
-     * Validates the provided signup request and its associated roles.
+     * Validates the contents of a {@link SignupRequestDto} object.
      *
-     * <p>This method checks that:
+     * <p>This method ensures that:
      * <ul>
-     *     <li>The request is not null</li>
-     *     <li>The number of roles provided matches the number of expected roles</li>
-     *     <li>Required fields (email, username, password, userProjectId) are not null or blank</li>
+     *     <li>The request object is not null</li>
+     *     <li>The roles list is not null or empty</li>
+     *     <li>Required fields (email, username, password, toolUserId) are not null or blank</li>
      *     <li>The toolId is not null</li>
      * </ul>
      *
-     * @param request the signup request object containing user input data
-     * @param roles the set of expected roles to be assigned to the user
-     * @throws IllegalArgumentException if any validation check fails
+     * @param request the {@code SignupRequestDto} to validate
+     * @throws IllegalArgumentException if any field is invalid or missing
      */
-    protected void validateRequest(SignupRequestDto request, Set<Role> roles, Optional<ApplicationTool> tool)
+    protected void validateRequest(SignupRequestDto request)
     {
         if (request == null)
         {
             throw new IllegalArgumentException("Request cannot be null");
         }
 
-        if (roles.size() != request.getRoles().size())
+        if (request.getRoles() == null || request.getRoles().isEmpty())
         {
             throw new IllegalArgumentException("One or more roles are invalid");
         }
@@ -129,11 +131,6 @@ public class AuthenticationService {
         if (request.getToolId() == null)
         {
             throw new IllegalArgumentException("ToolId cannot be null");
-        }
-
-        if (tool.isEmpty())
-        {
-            throw new IllegalArgumentException("Tool not found");
         }
     }
 
@@ -149,6 +146,24 @@ public class AuthenticationService {
         if (field == null || field.isBlank())
         {
             throw new IllegalArgumentException(fieldName + " cannot be null or blank");
+        }
+    }
+
+    /**
+     * Validates the presence of a valid tool and a non-empty set of roles.
+     *
+     * @param roles the set of roles to validate
+     * @param tool the optional tool to validate
+     * @throws IllegalArgumentException if the tool is not present or the roles set is null or empty
+     */
+    protected void validateFindRoleAndTool(Set<Role> roles, Optional<ApplicationTool> tool)
+    {
+        if(tool.isEmpty()){
+            throw new IllegalArgumentException("Not a valid tool");
+        }
+
+        if(roles.isEmpty()){
+            throw new IllegalArgumentException("Not a valid role");
         }
     }
 }
