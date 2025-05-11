@@ -1,5 +1,6 @@
 package com.manolito.dashflow.service.application;
 
+import com.manolito.dashflow.dto.application.auth.ResponseUserCreatedDto;
 import com.manolito.dashflow.dto.application.auth.SignupRequestDto;
 
 import com.manolito.dashflow.entity.application.*;
@@ -52,12 +53,13 @@ class AuthenticationServiceTest {
     void signup_shouldReturnNewUser_whenSignupIsValid() {
         SignupRequestDto signupRequestDto = getValidRequest();
         ApplicationTool applicationTool = new ApplicationTool(1,"taiga");
+        Role role = new Role(1,"ROLE_OPERATOR", Set.of());
         var user = ApplicationUser
                 .builder()
                 .email(signupRequestDto.getEmail())
                 .username(signupRequestDto.getUsername())
                 .password(signupRequestDto.getPassword())
-                .roles(Set.of(new Role()))
+                .roles(Set.of(role))
                 .build();
         var account = Account.builder()
                 .id(new AccountId(user.getId(), applicationTool.getId()))
@@ -70,7 +72,7 @@ class AuthenticationServiceTest {
                 .thenReturn(signupRequestDto.getPassword());
 
         when(roleRepository.findByRoleNameIn(signupRequestDto.getRoles()))
-                .thenReturn(Set.of(new Role()));
+                .thenReturn(Set.of(role));
 
         when(applicationToolRepository.findById(signupRequestDto.getToolId()))
                 .thenReturn(Optional.of(applicationTool));
@@ -81,7 +83,13 @@ class AuthenticationServiceTest {
         when(accountRepository.save(any(Account.class)))
                 .thenReturn(account);
 
-        assertEquals(authenticationService.signup(signupRequestDto), user);
+
+        ResponseUserCreatedDto response = authenticationService.signup(signupRequestDto);
+
+        assertNotNull(response);
+        assertEquals(signupRequestDto.getUsername(), response.getUsername());
+        assertEquals(signupRequestDto.getEmail(), response.getEmail());
+        assertEquals(role.getRoleName(), response.getRole());
     }
 
     @Test
