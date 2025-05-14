@@ -4,6 +4,7 @@ import com.manolito.dashflow.dto.application.AuditLogDto;
 import com.manolito.dashflow.dto.application.AuditLogFilterRequestDto;
 import com.manolito.dashflow.service.application.AuditLogService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -37,11 +38,22 @@ public class AuditLogController {
     })
     @GetMapping
     public ResponseEntity<Page<AuditLogDto>> getAuditLogs(
+            @Parameter(description = "Parâmetro opcional para filtro pelo ID do usuário da aplicação")
             @RequestParam(required = false) Integer userId,
+
+            @Parameter(description = "Parâmetro opcional para filtro pela resposta da requisição")
             @RequestParam(required = false) Integer responseStatus,
+
+            @Parameter(description = "Parâmetro opcional para filtro a partir de uma data")
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
+
+            @Parameter(description = "Parâmetro opcional para filtro até uma data")
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
+
+            @Parameter(description = "Parâmetro para busca da página da resposta, default = 0")
             @RequestParam(defaultValue = "0") int page,
+
+            @Parameter(description = "Parâmetro para definir a quantidade de itens de uma página da resposta, default = 20, max = 100")
             @RequestParam(defaultValue = "20") @Min(20) @Max(100) int size) {
 
         AuditLogFilterRequestDto filterRequest = AuditLogFilterRequestDto.builder()
