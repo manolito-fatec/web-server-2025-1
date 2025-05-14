@@ -35,7 +35,7 @@ public class JiraService {
         String jsonResponse = utils.fetchDataFromEndpointTrello(JIRA.getBaseUrl() + endpoint);
         Dataset<org.apache.spark.sql.Row> data = utils.fetchDataAsDataFrame(jsonResponse);
 
-        data = data.withColumn("tool_id", functions.lit(2));
+        data = data.withColumn("tool_id", functions.lit(3));
 
         String mappedNameColumn = mapNameField(tableName);
         if (Arrays.asList(data.columns()).contains("name")) {
