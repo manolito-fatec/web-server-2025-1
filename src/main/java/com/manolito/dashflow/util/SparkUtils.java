@@ -1,5 +1,6 @@
 package com.manolito.dashflow.util;
 
+import com.manolito.dashflow.dto.dw.JiraAuthDto;
 import lombok.RequiredArgsConstructor;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -49,6 +50,31 @@ public class SparkUtils {
         } catch (Exception e) {
             throw new RuntimeException("Error fetching data from endpoint: " + url, e);
         }
+    }
+
+    public String fetchDataFromJira(String url, JiraAuthDto authDto) {
+        try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
+            HttpGet request = new HttpGet(url);
+
+            request.addHeader("Authorization", getAuthHeader(authDto));
+            request.addHeader("Accept", "application/json");
+
+            HttpResponse response = httpClient.execute(request);
+
+            if (response.getStatusLine().getStatusCode() != 200) {
+                throw new RuntimeException("Failed : HTTP error code : " + response.getStatusLine().getStatusCode());
+            }
+
+            return EntityUtils.toString(response.getEntity());
+        } catch (Exception e) {
+            throw new RuntimeException("Error fetching data from Jira endpoint: " + url, e);
+        }
+    }
+
+    private String getAuthHeader(JiraAuthDto authDto) {
+        String credentials = authDto.getEmail() + ":" + authDto.getApiToken();
+        String encodedCredentials = java.util.Base64.getEncoder().encodeToString(credentials.getBytes());
+        return "Basic " + encodedCredentials;
     }
 
     public String fetchDataFromEndpointTrello(String url) {
