@@ -1,5 +1,6 @@
 package com.manolito.dashflow.service.dw;
 
+import com.manolito.dashflow.dto.dw.JiraAuthDto;
 import com.manolito.dashflow.loader.TasksDataWarehouseLoader;
 import com.manolito.dashflow.util.SparkUtils;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,7 @@ public class JiraService {
     private final SparkSession spark;
     private final SparkUtils utils;
     private final TasksDataWarehouseLoader dataWarehouseLoader;
+    private JiraAuthDto jiraAuthDto;
 
     private String mapNameField(String tableName) {
         return switch (tableName) {
@@ -32,7 +34,7 @@ public class JiraService {
     }
 
     private Dataset<Row> fetchAndConvertToDataFrame(String endpoint, String tableName) {
-        String jsonResponse = utils.fetchDataFromEndpointTrello(JIRA.getBaseUrl() + endpoint);
+        String jsonResponse = utils.fetchDataFromJira(JIRA.getBaseUrl() + endpoint, jiraAuthDto);
         Dataset<org.apache.spark.sql.Row> data = utils.fetchDataAsDataFrame(jsonResponse);
 
         data = data.withColumn("tool_id", functions.lit(3));
