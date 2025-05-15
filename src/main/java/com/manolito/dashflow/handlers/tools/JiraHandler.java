@@ -25,7 +25,7 @@ public class JiraHandler implements ToolHandler {
                 jiraService.handleUsers();
                 break;
             default:
-                throw new RuntimeException("Unsupported Jir Object");
+                throw new RuntimeException("Unsupported Jira Object");
         }
     }
 }

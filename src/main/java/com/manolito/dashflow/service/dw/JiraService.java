@@ -4,14 +4,14 @@ import com.manolito.dashflow.dto.dw.JiraAuthDto;
 import com.manolito.dashflow.loader.TasksDataWarehouseLoader;
 import com.manolito.dashflow.util.SparkUtils;
 import lombok.RequiredArgsConstructor;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
-import org.apache.spark.sql.SparkSession;
-import org.apache.spark.sql.functions;
+import org.apache.spark.sql.*;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
+import static com.manolito.dashflow.enums.JiraEndpoints.*;
 import static com.manolito.dashflow.enums.ProjectManagementTool.JIRA;
 
 @Service
@@ -33,7 +33,15 @@ public class JiraService {
         };
     }
 
-    private Dataset<Row> fetchAndConvertToDataFrame(String endpoint, String tableName) {
+    public List<Dataset<Row>> handleUsers() {
+        List<Dataset<Row>> usersData = new ArrayList<>();
+        String endpoint = USERS.getPath();
+        Dataset<Row> userDF = fetchAndConvertToDataFrame(endpoint, "users", jiraAuthDto);
+        usersData.add(userDF);
+        return usersData;
+    }
+
+    private Dataset<Row> fetchAndConvertToDataFrame(String endpoint, String tableName, JiraAuthDto jiraAuthDto) {
         String jsonResponse = utils.fetchDataFromJira(JIRA.getBaseUrl() + endpoint, jiraAuthDto);
         Dataset<org.apache.spark.sql.Row> data = utils.fetchDataAsDataFrame(jsonResponse);
 
