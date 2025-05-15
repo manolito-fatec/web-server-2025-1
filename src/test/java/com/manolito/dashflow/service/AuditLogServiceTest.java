@@ -124,7 +124,6 @@ class AuditLogServiceTest {
     @Test
     @DisplayName("getFilteredAuditLogs - should cap page size at maximum allowed value")
     void getFilteredAuditLogs_whenPageSizeExceedsMax_shouldCapAtMaximum() {
-        // Arrange
         AuditLogFilterRequestDto filterRequest = AuditLogFilterRequestDto.builder()
                 .size(150)
                 .build();
