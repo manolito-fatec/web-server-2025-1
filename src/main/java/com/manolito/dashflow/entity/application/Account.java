@@ -34,13 +34,13 @@ public class Account {
     @Column(name = "project")
     private String projectIdTool;
 
-    public Account(ApplicationUser applicationUser, ApplicationTool applicationTool, Role roleId, String accountIdToll, String projeIdTool )
+    public Account(ApplicationUser applicationUser, ApplicationTool applicationTool, Role roleId, String accountIdToll, String projectIdTool )
     {
         this.applicationUser = applicationUser;
         this.tool = applicationTool;
         this.roleId = roleId;
         this.accountIdTool = accountIdToll;
-        this.projectIdTool = projeIdTool;
+        this.projectIdTool = projectIdTool;
     }
 }
 
