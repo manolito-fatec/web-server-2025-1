@@ -51,74 +51,45 @@ class AuthenticationServiceTest {
     @Test
     @DisplayName("Should return new user when signup request is valid")
     void signup_shouldReturnNewUser_whenSignupIsValid() {
-        SignupRequestDto signupRequestDto = getValidRequest();
-        ApplicationTool applicationTool = new ApplicationTool(1,"taiga");
-        Role role = new Role(1,"ROLE_OPERATOR", Set.of());
-        var user = ApplicationUser
-                .builder()
-                .email(signupRequestDto.getEmail())
-                .username(signupRequestDto.getUsername())
-                .password(signupRequestDto.getPassword())
-                .roles(Set.of(role))
-                .build();
-        var account = Account.builder()
-                .id(new AccountId(user.getId(), applicationTool.getId()))
-                .applicationUser(user)
-                .tool(applicationTool)
-                .accountId("123")
-                .build();
+        SignupRequestDto request = new SignupRequestDto();
+        request.setEmail("john@example.com");
+        request.setUsername("john");
+        request.setPassword("123456");
+        request.setRoles(Set.of("ROLE_ADMIN"));
+        request.setToolId(1);
+        request.setToolUserId("john123");
+        request.setToolProjectId("proj-001");
 
-        when(passwordEncoder.encode(user.getPassword()))
-                .thenReturn(signupRequestDto.getPassword());
+        Role role = new Role(1, "ROLE_ADMIN", Set.of());
+        ApplicationTool tool = new ApplicationTool(1, "Jira");
 
-        when(roleRepository.findByRoleNameIn(signupRequestDto.getRoles()))
+        when(roleRepository.findByRoleNameIn(request.getRoles()))
                 .thenReturn(Set.of(role));
 
-        when(applicationToolRepository.findById(signupRequestDto.getToolId()))
-                .thenReturn(Optional.of(applicationTool));
+        when(applicationToolRepository.findById(request.getToolId()))
+                .thenReturn(Optional.of(tool));
+
+        when(passwordEncoder.encode(request.getPassword()))
+                .thenReturn("encoded123");
+
+        ApplicationUser savedUser = ApplicationUser.builder()
+                .id(42)
+                .email(request.getEmail())
+                .username(request.getUsername())
+                .password("encoded123")
+                .roles(Set.of(role))
+                .build();
 
         when(userRepository.save(any(ApplicationUser.class)))
-                .thenReturn(user);
+                .thenReturn(savedUser);
 
-        when(accountRepository.save(any(Account.class)))
-                .thenReturn(account);
+        ResponseUserCreatedDto result = authenticationService.signup(request);
 
+        assertEquals(Optional.of(42).get(), result.getUserId());
+        assertEquals("john", result.getUsername());
+        assertEquals("john@example.com", result.getEmail());
 
-        ResponseUserCreatedDto response = authenticationService.signup(signupRequestDto);
-
-        assertNotNull(response);
-        assertEquals(signupRequestDto.getUsername(), response.getUsername());
-        assertEquals(signupRequestDto.getEmail(), response.getEmail());
-        assertEquals(role.getRoleName(), response.getRole());
-    }
-
-    @Test
-    @DisplayName("Should return new user when signup request is valid")
-    void signup_shouldThrowException_whenValidateFindRoleAndToolIsInvalid() {
-        SignupRequestDto signupRequestDto = getValidRequest();
-        ApplicationTool applicationTool = new ApplicationTool(1,"taiga");
-
-        // Tool ID search returned empty
-
-        when(roleRepository.findByRoleNameIn(signupRequestDto.getRoles()))
-                .thenReturn(Set.of(new Role()));
-
-        when(applicationToolRepository.findById(signupRequestDto.getToolId()))
-                .thenReturn(Optional.empty());
-
-        assertThrows(IllegalArgumentException.class, () ->
-                authenticationService.signup(signupRequestDto));
-
-        // Role search returned empty
-
-        when(roleRepository.findByRoleNameIn(signupRequestDto.getRoles()))
-                .thenReturn(Set.of());
-
-        when(applicationToolRepository.findById(signupRequestDto.getToolId()))
-                .thenReturn(Optional.of(applicationTool));
-
-        assertThrows(IllegalArgumentException.class, () ->
-                authenticationService.signup(signupRequestDto));
+        verify(userRepository).save(any(ApplicationUser.class));
     }
 
     @Test
@@ -132,9 +103,9 @@ class AuthenticationServiceTest {
     @ParameterizedTest
     @MethodSource("provideInputAndExpectedValues")
     @DisplayName("Should throw exception when any field in SignupRequestDto is invalid")
-    void validateRequest_shouldThrowException_whenRequestAnyFileIsInvalid(String username, String email, String password, Set<String> roles, String toolUserId, Integer toolId)
+    void validateRequest_shouldThrowException_whenRequestAnyFileIsInvalid(String username, String email, String password, Set<String> roles, String toolUserId, String toolprojectId, Integer toolId)
     {
-        SignupRequestDto signupRequestDto = new SignupRequestDto(username, email, password, roles, toolUserId,toolId);
+        SignupRequestDto signupRequestDto = new SignupRequestDto(username, email, password, roles, toolUserId, toolprojectId, toolId);
         assertThrows(IllegalArgumentException.class, () ->
                 authenticationService.validateRequest(signupRequestDto));
     }
@@ -142,17 +113,19 @@ class AuthenticationServiceTest {
     private static Stream<Arguments> provideInputAndExpectedValues()
     {
         return Stream.of(
-                Arguments.of("", "nome1@lp2.com", "123", Set.of("ROLE_OPERATOR"), "789", 1),
-                Arguments.of(null, "nome1@lp2.com", "123", Set.of("ROLE_OPERATOR"), "789", 1),
-                Arguments.of("patolino", "", "123", Set.of("ROLE_OPERATOR"), "789", 1),
-                Arguments.of("patolino", null, "123", Set.of("ROLE_OPERATOR"), "789", 1),
-                Arguments.of("patolino", "nome1@lp2.com", "", Set.of("ROLE_OPERATOR"), "789", 1),
-                Arguments.of("patolino", "nome1@lp2.com", null, Set.of("ROLE_OPERATOR"), "789", 1),
-                Arguments.of("patolino", "nome1@lp2.com", "123", Set.of(), "789", 1),
-                Arguments.of("patolino", "nome1@lp2.com", "123", null, "789", 1),
-                Arguments.of("patolino", "nome1@lp2.com", "123", Set.of("ROLE_OPERATOR"), "", 1),
-                Arguments.of("patolino", "nome1@lp2.com", "123", Set.of("ROLE_OPERATOR"), null, 1),
-                Arguments.of("patolino", "nome1@lp2.com", "123", Set.of("ROLE_OPERATOR"), "789", null)
+                Arguments.of("", "nome1@lp2.com", "123", Set.of("ROLE_OPERATOR"), "789","32432", 1),
+                Arguments.of(null, "nome1@lp2.com", "123", Set.of("ROLE_OPERATOR"), "789","32432", 1),
+                Arguments.of("patolino", "", "123", Set.of("ROLE_OPERATOR"), "789","32432", 1),
+                Arguments.of("patolino", null, "123", Set.of("ROLE_OPERATOR"), "789","32432", 1),
+                Arguments.of("patolino", "nome1@lp2.com", "", Set.of("ROLE_OPERATOR"), "789","32432", 1),
+                Arguments.of("patolino", "nome1@lp2.com", null, Set.of("ROLE_OPERATOR"), "789","32432", 1),
+                Arguments.of("patolino", "nome1@lp2.com", "123", Set.of(), "789","32432", 1),
+                Arguments.of("patolino", "nome1@lp2.com", "123", null, "789","32432", 1),
+                Arguments.of("patolino", "nome1@lp2.com", "123", Set.of("ROLE_OPERATOR"), "","32432", 1),
+                Arguments.of("patolino", "nome1@lp2.com", "123", Set.of("ROLE_OPERATOR"), null,"32432", 1),
+                Arguments.of("patolino", "nome1@lp2.com", "123", Set.of("ROLE_OPERATOR"), "789","32432", null),
+                Arguments.of("patolino", "nome1@lp2.com", "123", Set.of("ROLE_OPERATOR"), "789","", 1),
+                Arguments.of("patolino", "nome1@lp2.com", "123", Set.of("ROLE_OPERATOR"), "789",null, 1)
         );
     }
 

@@ -15,5 +15,6 @@ public class SignupRequestDto {
     private String password;
     private Set<String> roles;
     private String toolUserId;
+    private String toolProjectId;
     private Integer toolId;
 }

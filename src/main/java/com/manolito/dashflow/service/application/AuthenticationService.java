@@ -5,6 +5,7 @@ import com.manolito.dashflow.dto.application.auth.LoginRequestDto;
 import com.manolito.dashflow.dto.application.auth.ResponseUserCreatedDto;
 import com.manolito.dashflow.dto.application.auth.SignupRequestDto;
 import com.manolito.dashflow.entity.application.*;
+
 import com.manolito.dashflow.repository.application.AccountRepository;
 import com.manolito.dashflow.repository.application.ApplicationToolRepository;
 import com.manolito.dashflow.repository.application.ApplicationUserRepository;
@@ -61,7 +62,9 @@ public class AuthenticationService {
                 .build();
 
         ApplicationUser registeredUser =  userRepository.save(user);
-        createAccount(registeredUser, request.getToolUserId(), tool.get());
+        Role role =  roles.iterator().next();
+
+        createAccount(registeredUser, request.getToolUserId(), tool.get(),role, request.getToolProjectId());
 
         return new ResponseUserCreatedDto(
                   registeredUser.getId(),
@@ -124,13 +127,14 @@ public class AuthenticationService {
      * @param userIdTool the identifier of the user within the tool (external or tool-specific ID)
      * @param tool the {@link ApplicationTool} to associate with the user
      */
-   private void createAccount(ApplicationUser applicationUser, String userIdTool, ApplicationTool tool)
+   private void createAccount(ApplicationUser applicationUser, String userIdTool, ApplicationTool tool, Role role, String projectIdTool)
    {
         Account account = Account.builder()
-                .id(new AccountId(applicationUser.getId(), tool.getId()))
                 .applicationUser(applicationUser)
                 .tool(tool)
-                .accountId(userIdTool)
+                .accountIdTool(userIdTool)
+                .roleId(role)
+                .projectIdTool(projectIdTool)
                 .build();
         accountRepository.save(account);
     }
@@ -165,6 +169,7 @@ public class AuthenticationService {
         validateField(request.getUsername(), "Username");
         validateField(request.getPassword(), "Password");
         validateField(request.getToolUserId(), "UserProjectId");
+        validateField(request.getToolProjectId(), "toolProjectId");
         if (request.getToolId() == null)
         {
             throw new IllegalArgumentException("ToolId cannot be null");
