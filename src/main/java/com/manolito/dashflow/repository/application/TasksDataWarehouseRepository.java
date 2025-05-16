@@ -448,7 +448,7 @@ public class TasksDataWarehouseRepository {
                     ON too.tool_id = prj.tool_id
                 WHERE us.is_current = TRUE
                 AND too.is_current = TRUE
-                AND prj.is_currnet = TRUE
+                AND prj.is_current = TRUE
                 AND prj.original_id = :projectId
                 """;
 
@@ -502,15 +502,15 @@ public class TasksDataWarehouseRepository {
                 sql,
                 params,
                 (rs, rowNum) -> UserTableDto.builder()
-                        .originalId(String.valueOf(rs.getInt("originalId")))
-                        .userName(rs.getString("userName"))
-                        .userRole(rs.getString("userRole"))
-                        .toolName(rs.getString("toolName"))
-                        .toolId(rs.getObject("toolId", Integer.class))
-                        .projectId(rs.getString("projectId"))
-                        .projectName(rs.getString("projectName"))
-                        .createdAt(rs.getTimestamp("createdAt") != null ?
-                                rs.getTimestamp("createdAt").toLocalDateTime().toLocalDate() :
+                        .userId(String.valueOf(rs.getInt("user_id")))
+                        .userName(rs.getString("user_name"))
+                        .userRole(rs.getString("user_role"))
+                        .toolName(rs.getString("tool_name"))
+                        .toolId(rs.getObject("tool_id", Integer.class))
+                        .projectId(rs.getString("project_id"))
+                        .projectName(rs.getString("project_name"))
+                        .createdAt(rs.getTimestamp("created_at") != null ?
+                                rs.getTimestamp("created_at").toLocalDateTime().toLocalDate() :
                                 null)
                         .build()
         );

@@ -153,7 +153,7 @@ public class UserServiceTest {
 
     private UserTableDto createMockUserTableDto(String id, String name) {
         return UserTableDto.builder()
-                .originalId(id)
+                .userId(id)
                 .userName(name)
                 .userRole("USER")
                 .toolName("Tool")

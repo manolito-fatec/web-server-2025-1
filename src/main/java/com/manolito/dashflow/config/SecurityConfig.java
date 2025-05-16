@@ -1,6 +1,7 @@
 package com.manolito.dashflow.config;
 
 import com.manolito.dashflow.filter.JwtAuthenticationFilter;
+import com.manolito.dashflow.filter.RequestLoggingFilter;
 import com.manolito.dashflow.service.application.ApplicationUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -28,6 +29,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @RequiredArgsConstructor
 public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final RequestLoggingFilter requestLoggingFilter;
     private final ApplicationUserService userService;
     private final PasswordEncoder passwordEncoder;
 
@@ -75,7 +77,8 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(requestLoggingFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(jwtAuthenticationFilter, RequestLoggingFilter.class);
 
         return http.build();
     }
