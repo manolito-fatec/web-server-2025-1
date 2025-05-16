@@ -62,10 +62,11 @@ class AuthenticationServiceTest {
                 .roles(Set.of(role))
                 .build();
         var account = Account.builder()
-                .id(new AccountId(user.getId(), applicationTool.getId()))
                 .applicationUser(user)
                 .tool(applicationTool)
-                .accountId("123")
+                .accountIdTool("123")
+                .roleId(role)
+                .projectIdTool("324234")
                 .build();
 
         when(passwordEncoder.encode(user.getPassword()))
@@ -132,9 +133,9 @@ class AuthenticationServiceTest {
     @ParameterizedTest
     @MethodSource("provideInputAndExpectedValues")
     @DisplayName("Should throw exception when any field in SignupRequestDto is invalid")
-    void validateRequest_shouldThrowException_whenRequestAnyFileIsInvalid(String username, String email, String password, Set<String> roles, String toolUserId, Integer toolId)
+    void validateRequest_shouldThrowException_whenRequestAnyFileIsInvalid(String username, String email, String password, Set<String> roles, String toolUserId, String toolprojectId, Integer toolId)
     {
-        SignupRequestDto signupRequestDto = new SignupRequestDto(username, email, password, roles, toolUserId,toolId);
+        SignupRequestDto signupRequestDto = new SignupRequestDto(username, email, password, roles, toolUserId, toolprojectId, toolId);
         assertThrows(IllegalArgumentException.class, () ->
                 authenticationService.validateRequest(signupRequestDto));
     }
@@ -142,17 +143,19 @@ class AuthenticationServiceTest {
     private static Stream<Arguments> provideInputAndExpectedValues()
     {
         return Stream.of(
-                Arguments.of("", "nome1@lp2.com", "123", Set.of("ROLE_OPERATOR"), "789", 1),
-                Arguments.of(null, "nome1@lp2.com", "123", Set.of("ROLE_OPERATOR"), "789", 1),
-                Arguments.of("patolino", "", "123", Set.of("ROLE_OPERATOR"), "789", 1),
-                Arguments.of("patolino", null, "123", Set.of("ROLE_OPERATOR"), "789", 1),
-                Arguments.of("patolino", "nome1@lp2.com", "", Set.of("ROLE_OPERATOR"), "789", 1),
-                Arguments.of("patolino", "nome1@lp2.com", null, Set.of("ROLE_OPERATOR"), "789", 1),
-                Arguments.of("patolino", "nome1@lp2.com", "123", Set.of(), "789", 1),
-                Arguments.of("patolino", "nome1@lp2.com", "123", null, "789", 1),
-                Arguments.of("patolino", "nome1@lp2.com", "123", Set.of("ROLE_OPERATOR"), "", 1),
-                Arguments.of("patolino", "nome1@lp2.com", "123", Set.of("ROLE_OPERATOR"), null, 1),
-                Arguments.of("patolino", "nome1@lp2.com", "123", Set.of("ROLE_OPERATOR"), "789", null)
+                Arguments.of("", "nome1@lp2.com", "123", Set.of("ROLE_OPERATOR"), "789","32432", 1),
+                Arguments.of(null, "nome1@lp2.com", "123", Set.of("ROLE_OPERATOR"), "789","32432", 1),
+                Arguments.of("patolino", "", "123", Set.of("ROLE_OPERATOR"), "789","32432", 1),
+                Arguments.of("patolino", null, "123", Set.of("ROLE_OPERATOR"), "789","32432", 1),
+                Arguments.of("patolino", "nome1@lp2.com", "", Set.of("ROLE_OPERATOR"), "789","32432", 1),
+                Arguments.of("patolino", "nome1@lp2.com", null, Set.of("ROLE_OPERATOR"), "789","32432", 1),
+                Arguments.of("patolino", "nome1@lp2.com", "123", Set.of(), "789","32432", 1),
+                Arguments.of("patolino", "nome1@lp2.com", "123", null, "789","32432", 1),
+                Arguments.of("patolino", "nome1@lp2.com", "123", Set.of("ROLE_OPERATOR"), "","32432", 1),
+                Arguments.of("patolino", "nome1@lp2.com", "123", Set.of("ROLE_OPERATOR"), null,"32432", 1),
+                Arguments.of("patolino", "nome1@lp2.com", "123", Set.of("ROLE_OPERATOR"), "789","32432", null),
+                Arguments.of("patolino", "nome1@lp2.com", "123", Set.of("ROLE_OPERATOR"), "789","", 1),
+                Arguments.of("patolino", "nome1@lp2.com", "123", Set.of("ROLE_OPERATOR"), "789",null, 1)
         );
     }
 
