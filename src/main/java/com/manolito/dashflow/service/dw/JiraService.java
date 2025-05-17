@@ -51,6 +51,43 @@ public class JiraService {
         return usersData;
     }
 
+    public void getProjectsWhereUserIsMember() {
+        String jsonResponse = utils.fetchDataFromJira(JIRA.getBaseUrl() + PROJECT.getPath(), buildAuthDto());
+        Dataset<Row> df = utils.fetchDataAsDataFrame(jsonResponse);
+
+        projectKeys = df.select("key")
+                .as(Encoders.STRING())
+                .collectAsList();
+    }
+
+    public List<Dataset<Row>> handleProjects() {
+        List<Dataset<Row>> projectsData = new ArrayList<>();
+        String endpoint = PROJECT.getPath();
+        Dataset<Row> projectsDF = fetchAndConvertToDataFrame(endpoint, "projects", buildAuthDto());
+        projectsData.add(projectsDF);
+        return projectsData;
+    }
+
+    public List<Dataset<Row>> handleStatus() {
+        List<Dataset<Row>> statusData = new ArrayList<>();
+        String endpoint = STATUS.getPath();
+        Dataset<Row> statusDF = fetchAndConvertToDataFrame(endpoint, "status", buildAuthDto());
+        statusData.add(statusDF);
+        return statusData;
+    }
+
+    public List<Dataset<Row>> handleTasks() {
+        List<Dataset<Row>> tasksData = new ArrayList<>();
+
+        for (String projectKey : projectKeys) {
+            String endpoint = TASKS.getPath().replace("{projectKey}", projectKey);
+            Dataset<Row> taskDF = fetchAndConvertToDataFrame(endpoint, "tasks", buildAuthDto());
+            tasksData.add(taskDF);
+        }
+
+        return tasksData;
+    }
+
     private Dataset<Row> fetchAndConvertToDataFrame(String endpoint, String tableName, JiraAuthDto jiraAuthDto) {
         String jsonResponse = utils.fetchDataFromJira(JIRA.getBaseUrl() + endpoint, jiraAuthDto);
         Dataset<org.apache.spark.sql.Row> data = utils.fetchDataAsDataFrame(jsonResponse);
