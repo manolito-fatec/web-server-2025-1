@@ -1,5 +1,6 @@
 package com.manolito.dashflow.service.dw;
 
+import com.manolito.dashflow.config.JiraConfig;
 import com.manolito.dashflow.dto.dw.JiraAuthDto;
 import com.manolito.dashflow.loader.TasksDataWarehouseLoader;
 import com.manolito.dashflow.util.SparkUtils;
@@ -21,7 +22,15 @@ public class JiraService {
     private final SparkSession spark;
     private final SparkUtils utils;
     private final TasksDataWarehouseLoader dataWarehouseLoader;
-    private JiraAuthDto jiraAuthDto;
+    private final JiraConfig jiraConfig;
+    private List<String> projectKeys;
+    private JiraAuthDto buildAuthDto() {
+        return JiraAuthDto.builder()
+                .email(jiraConfig.getEmail())
+                .apiToken(jiraConfig.getToken())
+                .build();
+    }
+
 
     private String mapNameField(String tableName) {
         return switch (tableName) {
@@ -29,6 +38,7 @@ public class JiraService {
             case "status" -> "status_name";
             case "users" -> "user_name";
             case "tags" -> "tag_name";
+            case "tasks" -> "fact_task";
             default -> throw new IllegalArgumentException("Unsupported table for name field mapping: " + tableName);
         };
     }
@@ -36,7 +46,7 @@ public class JiraService {
     public List<Dataset<Row>> handleUsers() {
         List<Dataset<Row>> usersData = new ArrayList<>();
         String endpoint = USERS.getPath();
-        Dataset<Row> userDF = fetchAndConvertToDataFrame(endpoint, "users", jiraAuthDto);
+        Dataset<Row> userDF = fetchAndConvertToDataFrame(endpoint, "users", buildAuthDto());
         usersData.add(userDF);
         return usersData;
     }
