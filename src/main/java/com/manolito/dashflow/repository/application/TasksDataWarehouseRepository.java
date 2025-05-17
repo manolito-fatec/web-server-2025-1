@@ -488,7 +488,7 @@ public class TasksDataWarehouseRepository {
                  LEFT JOIN dw_dashflow.stories dws ON dwft.story_id = dws.story_id AND dws.is_current = TRUE
                  LEFT JOIN dw_dashflow.epics dwe ON dws.epic_id = dwe.epic_id AND dwe.is_current = TRUE
                  LEFT JOIN dw_dashflow.projects dwp ON dwe.project_id = dwp.project_id AND dwp.is_current = TRUE
-                 WHERE appr.role_id <> 3 -- SKIP LISTING ADMINS
+                 WHERE appu.username <> 'admin' -- SKIP ADMIN USER
                  GROUP BY
                     appu.user_id, appu.username, appr.role_name, appt.tool_name,
                     appt.tool_id, dwp.original_id, dwp.project_name, appu.created_at
