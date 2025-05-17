@@ -472,6 +472,7 @@ public class TasksDataWarehouseRepository {
                      appu.username AS user_name,
                      appr.role_name AS user_role,
                      appu.email as user_email,
+                     appu."password" as user_password,
                      appt.tool_name,
                      appt.tool_id,
                      dwp.original_id AS project_id,
@@ -507,6 +508,7 @@ public class TasksDataWarehouseRepository {
                         .userName(rs.getString("user_name"))
                         .userRole(rs.getString("user_role"))
                         .userEmail(rs.getString("user_email"))
+                        .userPassword(rs.getString("user_password"))
                         .toolName(rs.getString("tool_name"))
                         .toolId(rs.getObject("tool_id", Integer.class))
                         .projectId(rs.getString("project_id"))
