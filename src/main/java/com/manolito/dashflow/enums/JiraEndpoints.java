@@ -7,8 +7,10 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum JiraEndpoints {
 
-    USERS("/user/search?query=&include"),
-    PROJECT("/project/DAS");
+    USERS("/users"),
+    PROJECT("/project"),
+    STATUS("/status"),
+    TASKS("/search?jql=project={projectKey}");
 
    private final String path;
 
