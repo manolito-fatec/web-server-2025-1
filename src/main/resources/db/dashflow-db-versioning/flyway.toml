@@ -1,16 +1,16 @@
 databaseType = "PostgreSql"
-id = "849c2349-d78d-4bfd-a87f-2467af7c977d"
+id = "3240e193-1479-4fdb-ad47-f381d4e89c28"
 name = "dashflow-db-versioning"
 
 [flyway]
-locations = [ "filesystem:migrations" ]
+locations = [ "filesystem:migration" ]
 mixed = true
 outOfOrder = true
 schemaModelLocation = "schema-model"
 validateMigrationNaming = true
 
-[flyway.check]
-majorTolerance = 0
+  [flyway.check]
+  majorTolerance = 0
 
 [flywayDesktop]
 developmentEnvironment = "development"
@@ -24,3 +24,7 @@ detectRenames = "identical-only"
 
 [redgateCompare.postgresql.options.ignores]
 ignoreNewlinesInTextObjects = "off"
+
+[environments.target1]
+url = "jdbc:postgresql://localhost:5432/postgres"
+schemas = [ "dw_dashflow", "dashflow_appl", "\"$user\"", "public" ]
