@@ -88,6 +88,16 @@ public class JiraService {
         return tasksData;
     }
 
+    public List<Dataset<Row>> handleTags() {
+        List<Dataset<Row>> tagsData = new ArrayList<>();
+        for (String projectKey : projectKeys) {
+            String endpoint = TASKS.getPath().replace("{projectKey}", projectKey);
+            Dataset<Row> tagsDF = fetchAndConvertToDataFrame(endpoint, "tags", buildAuthDto());
+            tagsData.add(tagsDF);
+        }
+        return tagsData;
+    }
+
     private Dataset<Row> fetchAndConvertToDataFrame(String endpoint, String tableName, JiraAuthDto jiraAuthDto) {
         String jsonResponse = utils.fetchDataFromJira(JIRA.getBaseUrl() + endpoint, jiraAuthDto);
         Dataset<org.apache.spark.sql.Row> data = utils.fetchDataAsDataFrame(jsonResponse);
