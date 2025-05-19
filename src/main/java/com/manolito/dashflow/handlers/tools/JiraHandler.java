@@ -24,6 +24,14 @@ public class JiraHandler implements ToolHandler {
             case USERS:
                 jiraService.handleUsers();
                 break;
+            case PROJECT:
+                jiraService.handleProjects();
+                break;
+            case TASKS:
+                jiraService.handleTasks();
+                break;
+            case STATUS:
+                jiraService.handleStatus();
             default:
                 throw new RuntimeException("Unsupported Jira Object");
         }
