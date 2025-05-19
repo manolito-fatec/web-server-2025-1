@@ -31,7 +31,12 @@ public class JiraService {
                 .build();
     }
 
-
+    /**
+     * Maps the "name" field to the appropriate column name based on the target table.
+     *
+     * @param tableName The name of the target table.
+     * @return The mapped column name for the "name" field.
+     */
     private String mapNameField(String tableName) {
         return switch (tableName) {
             case "projects" -> "project_name";
@@ -43,6 +48,12 @@ public class JiraService {
         };
     }
 
+    /**
+     * Fetches user data from the API endpoint and converts it into a DataFrame.
+     * The user data is obtained from a single endpoint without project filtering.
+     *
+     * @return List containing a single Dataset with user data
+     */
     public List<Dataset<Row>> handleUsers() {
         List<Dataset<Row>> usersData = new ArrayList<>();
         String endpoint = USERS.getPath();
@@ -51,6 +62,10 @@ public class JiraService {
         return usersData;
     }
 
+    /**
+     * Retrieves project keys where the authenticated user is a member.
+     * The project keys are stored in the class field projectKeys for later use.
+     */
     public void getProjectsWhereUserIsMember() {
         String jsonResponse = utils.fetchDataFromJira(JIRA.getBaseUrl() + PROJECT.getPath(), buildAuthDto());
         Dataset<Row> df = utils.fetchDataAsDataFrame(jsonResponse);
@@ -60,6 +75,12 @@ public class JiraService {
                 .collectAsList();
     }
 
+    /**
+     * Fetches project data from the API endpoint and converts it into a DataFrame.
+     * The project data is obtained from a single endpoint without additional filtering.
+     *
+     * @return List containing a single Dataset with project data
+     */
     public List<Dataset<Row>> handleProjects() {
         List<Dataset<Row>> projectsData = new ArrayList<>();
         String endpoint = PROJECT.getPath();
@@ -68,6 +89,12 @@ public class JiraService {
         return projectsData;
     }
 
+    /**
+     * Fetches status data from the API endpoint and converts it into a DataFrame.
+     * The status data represents workflow states available in Jira.
+     *
+     * @return List containing a single Dataset with status data
+     */
     public List<Dataset<Row>> handleStatus() {
         List<Dataset<Row>> statusData = new ArrayList<>();
         String endpoint = STATUS.getPath();
@@ -76,6 +103,12 @@ public class JiraService {
         return statusData;
     }
 
+    /**
+     * Fetches task data from the API endpoint for each project key and converts it into DataFrames.
+     * Tasks are filtered by project key in the API endpoint URL.
+     *
+     * @return List of Datasets containing task data, one Dataset per project key
+     */
     public List<Dataset<Row>> handleTasks() {
         List<Dataset<Row>> tasksData = new ArrayList<>();
 
@@ -88,6 +121,12 @@ public class JiraService {
         return tasksData;
     }
 
+    /**
+     * Fetches tag data (labels) from the API endpoint for each project key and converts it into DataFrames.
+     * Tags are obtained from the tasks endpoint as Jira doesn't have a dedicated tags endpoint.
+     *
+     * @return List of Datasets containing tag data, one Dataset per project key
+     */
     public List<Dataset<Row>> handleTags() {
         List<Dataset<Row>> tagsData = new ArrayList<>();
         for (String projectKey : projectKeys) {
@@ -98,6 +137,15 @@ public class JiraService {
         return tagsData;
     }
 
+    /**
+     * Fetches data from the specified Jira API endpoint and converts it into a formatted DataFrame.
+     * Adds tool-specific columns and renames standard fields according to the table mapping.
+     *
+     * @param endpoint The API endpoint path
+     * @param tableName The target table name for field mapping
+     * @param jiraAuthDto Authentication DTO for Jira API
+     * @return Formatted DataFrame with the fetched data
+     */
     private Dataset<Row> fetchAndConvertToDataFrame(String endpoint, String tableName, JiraAuthDto jiraAuthDto) {
         String jsonResponse = utils.fetchDataFromJira(JIRA.getBaseUrl() + endpoint, jiraAuthDto);
         Dataset<org.apache.spark.sql.Row> data = utils.fetchDataAsDataFrame(jsonResponse);
