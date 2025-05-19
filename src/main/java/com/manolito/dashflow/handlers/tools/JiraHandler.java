@@ -17,7 +17,7 @@ public class JiraHandler implements ToolHandler {
         JiraEndpoints object = JiraEndpoints.identifyObject(endpointPath);
 
         if (object == null) {
-            throw new RuntimeException("Error on Identifying the Taiga Object");
+            throw new RuntimeException("Error on Identifying the Jira Object");
         }
 
         switch (object) {
