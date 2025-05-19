@@ -157,6 +157,7 @@ public class UserServiceTest {
                 .userName(name)
                 .userRole("USER")
                 .toolName("Tool")
+                .userEmail("email")
                 .toolId(1)
                 .projectId("PRJ333")
                 .projectName("TokyoDrift")

@@ -79,7 +79,7 @@ public class ApplicationUserController {
             @ApiResponse(responseCode = "500", description = "Erro interno do servidor ao tentar buscar o local.")
     })
     @DeleteMapping()
-    public ResponseEntity<ApplicationUserDto> deleteUser(@RequestBody Integer id) {
+    public ResponseEntity<ApplicationUserDto> deleteUser(@RequestParam Integer id) {
         return ResponseEntity.ok(userService.deleteUser(id));
     }
 }
