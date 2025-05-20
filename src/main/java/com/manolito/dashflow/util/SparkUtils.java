@@ -25,6 +25,8 @@ import static com.manolito.dashflow.enums.Schema.DATAWAREHOUSE;
 public class SparkUtils {
 
     private final SparkSession spark;
+    private static final String ACCEPT_HEADER = "Accept";
+    private static final String APPLICATION_JSON = "application/json";
 
     /**
      * Fetches data from an external API endpoint.
@@ -38,7 +40,7 @@ public class SparkUtils {
             HttpGet request = new HttpGet(url);
 
             request.addHeader("Authorization", "Bearer " + authToken);
-            request.addHeader("Accept", "application/json");
+            request.addHeader(ACCEPT_HEADER, APPLICATION_JSON);
 
             HttpResponse response = httpClient.execute(request);
 
@@ -57,7 +59,7 @@ public class SparkUtils {
             HttpGet request = new HttpGet(url);
 
             request.addHeader("Authorization", getAuthHeader(authDto));
-            request.addHeader("Accept", "application/json");
+            request.addHeader(ACCEPT_HEADER, APPLICATION_JSON);
 
             HttpResponse response = httpClient.execute(request);
 
@@ -81,7 +83,7 @@ public class SparkUtils {
         try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
             HttpGet request = new HttpGet(url);
 
-            request.addHeader("Accept", "application/json");
+            request.addHeader(ACCEPT_HEADER, APPLICATION_JSON);
 
             HttpResponse response = httpClient.execute(request);
 
