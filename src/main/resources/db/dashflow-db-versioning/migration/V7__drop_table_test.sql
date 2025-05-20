@@ -1,0 +1,1 @@
+DROP TABLE dw_dashflow.test;
