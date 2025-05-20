@@ -285,7 +285,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER trg_project_create_epicless
+CREATE OR REPLACE TRIGGER trg_project_create_epicless
     AFTER INSERT ON dw_dashflow.projects
     FOR EACH ROW
     EXECUTE FUNCTION create_epicless_epic();
@@ -358,7 +358,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER trg_epic_create_storyless
+CREATE OR REPLACE TRIGGER trg_epic_create_storyless
     AFTER INSERT ON dw_dashflow.epics
     FOR EACH ROW
     EXECUTE FUNCTION create_storyless_story();
