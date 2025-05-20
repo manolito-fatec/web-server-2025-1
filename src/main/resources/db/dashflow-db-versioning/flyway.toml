@@ -9,8 +9,8 @@ outOfOrder = true
 schemaModelLocation = "schema-model"
 validateMigrationNaming = true
 
-  [flyway.check]
-  majorTolerance = 0
+[flyway.check]
+majorTolerance = 0
 
 [flywayDesktop]
 developmentEnvironment = "development"
@@ -27,4 +27,8 @@ ignoreNewlinesInTextObjects = "off"
 
 [environments.target1]
 url = "jdbc:postgresql://localhost:5432/postgres"
-schemas = [ "dw_dashflow", "dashflow_appl", "\"$user\"", "public" ]
+user = "postgres"
+password = "postgres"
+schemas = [ "public", "dw_dashflow", "dashflow_appl" ]
+
+defaultSchema = "public"
