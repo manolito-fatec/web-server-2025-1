@@ -32,6 +32,7 @@ public class JiraHandler implements ToolHandler {
                 break;
             case STATUS:
                 jiraService.handleStatus();
+                break;
             default:
                 throw new RuntimeException("Unsupported Jira Object");
         }
