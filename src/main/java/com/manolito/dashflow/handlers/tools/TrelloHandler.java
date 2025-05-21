@@ -33,7 +33,7 @@ public class TrelloHandler implements ToolHandler{
             case TAGS:
                 trelloService.handleTags();
             default:
-                throw new RuntimeException("Unsupported Taiga Object");
+                throw new RuntimeException("Unsupported Trello Object");
         }
     }
 }

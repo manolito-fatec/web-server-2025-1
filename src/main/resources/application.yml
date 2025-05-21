@@ -16,6 +16,11 @@ spring:
     enabled: true
     baseline-on-migrate: true
     locations: classpath:db/dashflow-db-versioning
+
+jira:
+  email: ${JIRA_EMAIL}
+  token: ${JIRA_TOKEN}
+
 server:
   error:
     include-message: always
