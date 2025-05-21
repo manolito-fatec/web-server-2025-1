@@ -9,7 +9,6 @@ public enum ProjectManagementTool {
 
     TAIGA("https://api.taiga.io"),
     TRELLO("https://api.trello.com/1"),
-    CLICKUP("https://api.clickup.com/api"),
     JIRA("https://dashflow.atlassian.net/rest/api/3");
 
     private final String baseUrl;
