@@ -5,6 +5,11 @@ import com.manolito.dashflow.dto.dw.JiraAuthDto;
 import com.manolito.dashflow.loader.TasksDataWarehouseLoader;
 import com.manolito.dashflow.util.SparkUtils;
 import lombok.RequiredArgsConstructor;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
 import org.apache.spark.sql.*;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +24,8 @@ import static com.manolito.dashflow.enums.ProjectManagementTool.JIRA;
 @RequiredArgsConstructor
 public class JiraService {
 
+    private static final String ACCEPT_HEADER = "Accept";
+    private static final String APPLICATION_JSON = "application/json";
     private final SparkSession spark;
     private final SparkUtils utils;
     private final TasksDataWarehouseLoader dataWarehouseLoader;
@@ -49,6 +56,46 @@ public class JiraService {
     }
 
     /**
+     * Fetches data from a Jira API endpoint using Basic Authentication.
+     *
+     * @param url The URL of the Jira API endpoint to fetch data from
+     * @param authDto The authentication DTO containing email and API token
+     * @return The response body as a JSON string
+     * @throws RuntimeException if the HTTP request fails or returns non-200 status code
+     *                         or if any other error occurs during the request
+     */
+    public String fetchDataFromJira(String url, JiraAuthDto authDto) {
+        try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
+            HttpGet request = new HttpGet(url);
+
+            request.addHeader("Authorization", getAuthHeader(authDto));
+            request.addHeader(ACCEPT_HEADER, APPLICATION_JSON);
+
+            HttpResponse response = httpClient.execute(request);
+
+            if (response.getStatusLine().getStatusCode() != 200) {
+                throw new RuntimeException("Failed : HTTP error code : " + response.getStatusLine().getStatusCode());
+            }
+
+            return EntityUtils.toString(response.getEntity());
+        } catch (Exception e) {
+            throw new RuntimeException("Error fetching data from Jira endpoint: " + url, e);
+        }
+    }
+
+    /**
+     * Generates the Basic Authentication header value for Jira API requests.
+     *
+     * @param authDto The authentication DTO containing email and API token
+     * @return The Base64 encoded Basic Authentication header value in the format "Basic [encoded_credentials]"
+     */
+    private String getAuthHeader(JiraAuthDto authDto) {
+        String credentials = authDto.getEmail() + ":" + authDto.getApiToken();
+        String encodedCredentials = java.util.Base64.getEncoder().encodeToString(credentials.getBytes());
+        return "Basic " + encodedCredentials;
+    }
+
+    /**
      * Fetches user data from the API endpoint and converts it into a DataFrame.
      * The user data is obtained from a single endpoint without project filtering.
      *
@@ -67,7 +114,7 @@ public class JiraService {
      * The project keys are stored in the class field projectKeys for later use.
      */
     public void getProjectsWhereUserIsMember() {
-        String jsonResponse = utils.fetchDataFromJira(JIRA.getBaseUrl() + PROJECT.getPath(), buildAuthDto());
+        String jsonResponse = fetchDataFromJira(JIRA.getBaseUrl() + PROJECT.getPath(), buildAuthDto());
         Dataset<Row> df = utils.fetchDataAsDataFrame(jsonResponse);
 
         projectKeys = df.select("key")
@@ -147,7 +194,7 @@ public class JiraService {
      * @return Formatted DataFrame with the fetched data
      */
     private Dataset<Row> fetchAndConvertToDataFrame(String endpoint, String tableName, JiraAuthDto jiraAuthDto) {
-        String jsonResponse = utils.fetchDataFromJira(JIRA.getBaseUrl() + endpoint, jiraAuthDto);
+        String jsonResponse = fetchDataFromJira(JIRA.getBaseUrl() + endpoint, jiraAuthDto);
         Dataset<org.apache.spark.sql.Row> data = utils.fetchDataAsDataFrame(jsonResponse);
 
         data = data.withColumn("tool_id", functions.lit(3));
