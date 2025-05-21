@@ -526,4 +526,61 @@ public class TasksDataWarehouseRepository {
         Integer count = jdbcTemplate.getJdbcOperations().queryForObject(sql, Integer.class);
         return count != null ? count : 0;
     }
+
+    public List<ProjectTableDto> getProjectsPaginated(int page, int pageSize) {
+        String sql = """
+                SELECT
+                    prj.original_id AS project_id,
+                    prj.project_name,
+                    appu.username AS manager_username,
+                    COUNT(DISTINCT regular_users.user_id) AS user_count,
+                    appt.tool_id
+                FROM dashflow_appl.users appu
+                JOIN dashflow_appl.user_roles approle ON appu.user_id = approle.user_id
+                JOIN dashflow_appl.accounts appa ON appu.user_id = appa.user_id
+                JOIN dashflow_appl.tools appt ON appa.tool_id = appt.tool_id
+                JOIN dw_dashflow.projects prj ON appa.project = prj.original_id AND appt.tool_id = prj.tool_id
+                LEFT JOIN (
+                    SELECT approle2.user_id, appa2.project, appa2.tool_id
+                    FROM dashflow_appl.user_roles approle2
+                    JOIN dashflow_appl.accounts appa2 ON approle2.user_id = appa2.user_id
+                    WHERE approle2.role_id = 1
+                ) regular_users ON regular_users.project = prj.original_id AND regular_users.tool_id = prj.tool_id
+                WHERE appu.username <> 'admin'
+                AND approle.role_id = 2
+                GROUP BY
+                    prj.original_id,
+                    prj.project_name,
+                    appu.username,
+                    appt.tool_id
+                ORDER BY prj.project_name ASC
+                 LIMIT :limit OFFSET :offset
+                """;
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("limit", pageSize);
+        params.put("offset", (page - 1) * pageSize);
+
+        return jdbcTemplate.query(
+                sql,
+                params,
+                (rs, rowNum) -> ProjectTableDto.builder()
+                        .projectName(String.valueOf(rs.getInt("project_name")))
+                        .projectId(rs.getString("project_id"))
+                        .managerName(rs.getString("manager_username"))
+                        .operatorCount(rs.getInt("user_count"))
+                        .toolId(rs.getInt("tool_id"))
+                        .build()
+        );
+    }
+
+    public int countAllProjects() {
+        String sql = """
+            SELECT COUNT(DISTINCT prj.original_id)
+            FROM dw_dashflow.projects prj
+            """;
+
+        Integer count = jdbcTemplate.getJdbcOperations().queryForObject(sql, Integer.class);
+        return count != null ? count : 0;
+    }
 }
