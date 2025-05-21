@@ -1,10 +1,14 @@
 package com.manolito.dashflow.service.application;
 
 import com.manolito.dashflow.dto.dw.ProjectDto;
+import com.manolito.dashflow.dto.dw.ProjectTableDto;
 import com.manolito.dashflow.dto.dw.TaskProjectDto;
+import com.manolito.dashflow.dto.dw.UserTableDto;
 import com.manolito.dashflow.repository.application.TasksDataWarehouseRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -78,5 +82,41 @@ public class ProjectsService {
             throw new IllegalArgumentException("Tool ID cannot be null");
         }
         return tasksDataWarehouseRepository.getProjectsByTool(toolId);
+    }
+
+    /**
+     * Retrieves paginated list of projects with their basic information.
+     * <p>
+     * This method provides pagination support for projects with their IDs, names, manager information,
+     * operator counts, and associated tools. The pagination is 1-based.
+     * </p>
+     *
+     * @param page     the page number (defaults to 1)
+     * @param pageSize the number of items per page
+     * @return Page of {@link ProjectTableDto} containing project information
+     * @throws IllegalArgumentException if page or pageSize are less than 1
+     *
+     * @example
+     * <pre>{@code
+     * // Get first page with 20 projects per page
+     * Page<ProjectTableDto> projects = projectService.getProjectsPaginated(1, 20);
+     * }</pre>
+     */
+    public Page<ProjectTableDto> getProjectsPaginated(int page, int pageSize) {
+        if (page < 1) {
+            throw new IllegalArgumentException("Page must be greater than 0");
+        }
+        if (pageSize < 1) {
+            throw new IllegalArgumentException("Page size must be greater than 0");
+        }
+
+        List<ProjectTableDto> projects = tasksDataWarehouseRepository.getProjectsPaginated(page, pageSize);
+        int totalProjects = tasksDataWarehouseRepository.countAllProjects();
+
+        return new PageImpl<>(
+                projects,
+                PageRequest.of(page - 1, pageSize),
+                totalProjects
+        );
     }
 }
