@@ -3,7 +3,6 @@ package com.manolito.dashflow.service.application;
 import com.manolito.dashflow.dto.dw.ProjectDto;
 import com.manolito.dashflow.dto.dw.ProjectTableDto;
 import com.manolito.dashflow.dto.dw.TaskProjectDto;
-import com.manolito.dashflow.dto.dw.UserTableDto;
 import com.manolito.dashflow.repository.application.TasksDataWarehouseRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
