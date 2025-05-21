@@ -10,9 +10,11 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @Builder
 public class UserTableDto {
-    private String originalId;
+    private String userId;
     private String userName;
     private String userRole;
+    private String userEmail;
+    private String userPassword;
     private String toolName;
     private Integer toolId;
     private String projectId;

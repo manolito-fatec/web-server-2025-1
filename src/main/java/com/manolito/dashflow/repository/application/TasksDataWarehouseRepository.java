@@ -448,7 +448,7 @@ public class TasksDataWarehouseRepository {
                     ON too.tool_id = prj.tool_id
                 WHERE us.is_current = TRUE
                 AND too.is_current = TRUE
-                AND prj.is_currnet = TRUE
+                AND prj.is_current = TRUE
                 AND prj.original_id = :projectId
                 """;
 
@@ -471,6 +471,8 @@ public class TasksDataWarehouseRepository {
                      appu.user_id AS user_id,
                      appu.username AS user_name,
                      appr.role_name AS user_role,
+                     appu.email as user_email,
+                     appu."password" as user_password,
                      appt.tool_name,
                      appt.tool_id,
                      dwp.original_id AS project_id,
@@ -486,7 +488,7 @@ public class TasksDataWarehouseRepository {
                  LEFT JOIN dw_dashflow.stories dws ON dwft.story_id = dws.story_id AND dws.is_current = TRUE
                  LEFT JOIN dw_dashflow.epics dwe ON dws.epic_id = dwe.epic_id AND dwe.is_current = TRUE
                  LEFT JOIN dw_dashflow.projects dwp ON dwe.project_id = dwp.project_id AND dwp.is_current = TRUE
-                 WHERE appr.role_id <> 3 -- SKIP LISTING ADMINS
+                 WHERE appu.username <> 'admin' -- SKIP ADMIN USER
                  GROUP BY
                     appu.user_id, appu.username, appr.role_name, appt.tool_name,
                     appt.tool_id, dwp.original_id, dwp.project_name, appu.created_at
@@ -502,15 +504,17 @@ public class TasksDataWarehouseRepository {
                 sql,
                 params,
                 (rs, rowNum) -> UserTableDto.builder()
-                        .originalId(String.valueOf(rs.getInt("originalId")))
-                        .userName(rs.getString("userName"))
-                        .userRole(rs.getString("userRole"))
-                        .toolName(rs.getString("toolName"))
-                        .toolId(rs.getObject("toolId", Integer.class))
-                        .projectId(rs.getString("projectId"))
-                        .projectName(rs.getString("projectName"))
-                        .createdAt(rs.getTimestamp("createdAt") != null ?
-                                rs.getTimestamp("createdAt").toLocalDateTime().toLocalDate() :
+                        .userId(String.valueOf(rs.getInt("user_id")))
+                        .userName(rs.getString("user_name"))
+                        .userRole(rs.getString("user_role"))
+                        .userEmail(rs.getString("user_email"))
+                        .userPassword(rs.getString("user_password"))
+                        .toolName(rs.getString("tool_name"))
+                        .toolId(rs.getObject("tool_id", Integer.class))
+                        .projectId(rs.getString("project_id"))
+                        .projectName(rs.getString("project_name"))
+                        .createdAt(rs.getTimestamp("created_at") != null ?
+                                rs.getTimestamp("created_at").toLocalDateTime().toLocalDate() :
                                 null)
                         .build()
         );
