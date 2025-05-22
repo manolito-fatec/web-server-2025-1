@@ -31,6 +31,8 @@ public class SeedDataConfig implements CommandLineRunner {
     private final ApplicationToolRepository toolRepository;
     private final AccountRepository accountRepository;
 
+    private static final String PROJECT_ID = "1637322";
+
     @Override
     @Transactional
     public void run(String... args) {
@@ -45,10 +47,10 @@ public class SeedDataConfig implements CommandLineRunner {
             ApplicationUser caue = createUser("Caue", "caue.caue@caue.com", "caue", "ROLE_OPERATOR");
             ApplicationUser otavio = createUser("Otavio", "otavio@otavio.com", "otavio", "ROLE_MANAGER");
 
-            createAccount(andre, taiga, "755290", roleRepository.getReferenceById(1),"1637322");
-            createAccount(bia, taiga, "758256", roleRepository.getReferenceById(1),"1637322");
-            createAccount(caue, taiga, "754575", roleRepository.getReferenceById(1),"1637322");
-            createAccount(otavio, taiga, "753509", roleRepository.getReferenceById(2),"1637322");
+            createAccount(andre, taiga, "755290", roleRepository.getReferenceById(1),PROJECT_ID);
+            createAccount(bia, taiga, "758256", roleRepository.getReferenceById(1),PROJECT_ID);
+            createAccount(caue, taiga, "754575", roleRepository.getReferenceById(1),PROJECT_ID);
+            createAccount(otavio, taiga, "753509", roleRepository.getReferenceById(2),PROJECT_ID);
 
             log.info("Database seeding completed successfully");
         }
