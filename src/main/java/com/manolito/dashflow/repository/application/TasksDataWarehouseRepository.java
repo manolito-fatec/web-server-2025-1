@@ -526,7 +526,6 @@ public class TasksDataWarehouseRepository {
         Integer count = jdbcTemplate.getJdbcOperations().queryForObject(sql, Integer.class);
         return count != null ? count : 0;
     }
-
     public List<ProjectTableDto> getProjectsPaginated(int page, int pageSize) {
         String sql = """
                 SELECT
@@ -582,5 +581,44 @@ public class TasksDataWarehouseRepository {
 
         Integer count = jdbcTemplate.getJdbcOperations().queryForObject(sql, Integer.class);
         return count != null ? count : 0;
+    }
+  
+      public List<UserProjectDto> getProjectUsersByManagerId(String managerId) {
+        String sql = """
+                SELECT
+                    appu.username,
+                    appu.user_id,
+                    appa.project,
+                    prj.project_name
+                FROM dashflow_appl.users appu
+                JOIN dashflow_appl.user_roles approle ON appu.user_id = approle.user_id
+                JOIN dashflow_appl.accounts appa ON appu.user_id = appa.user_id
+                JOIN dashflow_appl.tools appt ON appa.tool_id = appt.tool_id
+                JOIN dw_dashflow.projects prj ON appa.project = prj.original_id AND appt.tool_id = prj.tool_id
+                WHERE appa.project IN (
+                    SELECT appa_inner.project
+                    FROM dashflow_appl.accounts appa_inner
+                    JOIN dashflow_appl.tools appt_inner ON appa_inner.tool_id = appt_inner.tool_id
+                    JOIN dw_dashflow.projects prj_inner ON appa_inner.project = prj_inner.original_id AND appt_inner.tool_id = prj_inner.tool_id
+                    WHERE appa_inner.user_id = :managerId
+                    AND prj_inner.is_current = TRUE
+                )
+                AND appu.user_id != :managerId  -- Exclude the manager
+                AND prj.is_current = TRUE
+                """;
+
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("managerId", managerId);
+
+        return jdbcTemplate.query(
+                sql,
+                params,
+                (rs, rowNum) -> UserProjectDto.builder()
+                        .projectId(rs.getString("project"))
+                        .projectName(rs.getString("project_name"))
+                        .userId(rs.getString("user_id"))
+                        .userName(rs.getString("username")).build()
+        );
     }
 }

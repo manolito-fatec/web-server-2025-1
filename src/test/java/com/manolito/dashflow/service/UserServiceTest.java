@@ -1,6 +1,7 @@
 package com.manolito.dashflow.service;
 
 import com.manolito.dashflow.dto.dw.UserDto;
+import com.manolito.dashflow.dto.dw.UserProjectDto;
 import com.manolito.dashflow.dto.dw.UserTableDto;
 import com.manolito.dashflow.repository.application.TasksDataWarehouseRepository;
 import com.manolito.dashflow.service.application.UserService;
@@ -163,5 +164,86 @@ public class UserServiceTest {
                 .projectName("TokyoDrift")
                 .createdAt(null)
                 .build();
+    }
+
+    @Test
+    @DisplayName("getProjectUsersByManagerId - should return users when manager exists")
+    void getProjectUsersByManagerId_whenManagerExists_shouldReturnUsers() {
+        String managerId = "777";
+        List<UserProjectDto> expectedUsers = List.of(
+                UserProjectDto.builder()
+                        .userId("123")
+                        .userName("Papaleguas")
+                        .projectId("P100")
+                        .projectName("Alpha")
+                        .build(),
+                UserProjectDto.builder()
+                        .userId("456")
+                        .userName("Sharkboy")
+                        .projectId("P200")
+                        .projectName("Beta")
+                        .build()
+        );
+
+        when(dataWarehouseRepository.getProjectUsersByManagerId(managerId))
+                .thenReturn(expectedUsers);
+
+        List<UserProjectDto> result = userService.getProjectUsersByManagerId(managerId);
+
+        assertEquals(2, result.size());
+        assertEquals("123", result.get(0).getUserId());
+        assertEquals("Papaleguas", result.get(0).getUserName());
+        assertEquals("P100", result.get(0).getProjectId());
+        assertEquals("Alpha", result.get(0).getProjectName());
+        verify(dataWarehouseRepository).getProjectUsersByManagerId(managerId);
+    }
+
+    @Test
+    @DisplayName("getProjectUsersByManagerId - should return empty list when no users found")
+    void getProjectUsersByManagerId_whenNoUsers_shouldReturnEmptyList() {
+        String managerId = "888";
+        when(dataWarehouseRepository.getProjectUsersByManagerId(managerId))
+                .thenReturn(Collections.emptyList());
+
+        List<UserProjectDto> result = userService.getProjectUsersByManagerId(managerId);
+
+        assertTrue(result.isEmpty());
+        verify(dataWarehouseRepository).getProjectUsersByManagerId(managerId);
+    }
+
+    @Test
+    @DisplayName("getProjectUsersByManagerId - should throw when managerId is null")
+    void getProjectUsersByManagerId_whenManagerIdIsNull_shouldThrow() {
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> userService.getProjectUsersByManagerId(null)
+        );
+
+        assertEquals("managerId cannot be null", exception.getMessage());
+        verify(dataWarehouseRepository, never()).getProjectUsersByManagerId(any());
+    }
+
+    @Test
+    @DisplayName("getProjectUsersByManagerId - should return users with project information")
+    void getProjectUsersByManagerId_shouldReturnProjectInformation() {
+        String managerId = "999";
+        List<UserProjectDto> expectedUsers = List.of(
+                UserProjectDto.builder()
+                        .userId("111")
+                        .userName("Membro Gamer")
+                        .projectId("GAM123")
+                        .projectName("Projeto Gamer")
+                        .build()
+        );
+
+        when(dataWarehouseRepository.getProjectUsersByManagerId(managerId))
+                .thenReturn(expectedUsers);
+
+        List<UserProjectDto> result = userService.getProjectUsersByManagerId(managerId);
+
+        assertEquals(1, result.size());
+        assertEquals("GAM123", result.get(0).getProjectId());
+        assertEquals("Projeto Gamer", result.get(0).getProjectName());
+        verify(dataWarehouseRepository).getProjectUsersByManagerId(managerId);
     }
 }

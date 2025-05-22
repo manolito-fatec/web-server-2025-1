@@ -1,6 +1,7 @@
 package com.manolito.dashflow.service.application;
 
 import com.manolito.dashflow.dto.dw.UserDto;
+import com.manolito.dashflow.dto.dw.UserProjectDto;
 import com.manolito.dashflow.dto.dw.UserTableDto;
 import com.manolito.dashflow.repository.application.TasksDataWarehouseRepository;
 import lombok.RequiredArgsConstructor;
@@ -100,5 +101,29 @@ public class UserService {
                 PageRequest.of(page - 1, pageSize),
                 totalUsers
         );
+    }
+
+    /**
+     * Retrieves users with their task counts filtered by project ID.
+     * <p>
+     * This method queries the data warehouse for current users associated with the specified project.
+     * </p>
+     *
+     * @param managerId the ID of the project to filter users by (must not be null)
+     * @return list of {@link UserProjectDto} containing user information
+     * @throws IllegalArgumentException if projectId is null
+     *
+     * @example
+     * <pre>{@code
+     * // Get all users that belong to a project that manager with user_id "777" also belongs
+     * List<UserProjectDto> users = userService.getProjectUsersByManagerId("777");
+     * }</pre>
+     */
+    public List<UserProjectDto> getProjectUsersByManagerId(String managerId) {
+        if (managerId == null) {
+            throw new IllegalArgumentException("managerId cannot be null");
+        }
+
+        return dataWarehouseRepository.getProjectUsersByManagerId(managerId);
     }
 }
