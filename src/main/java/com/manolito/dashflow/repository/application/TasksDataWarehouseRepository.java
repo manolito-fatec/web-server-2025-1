@@ -564,7 +564,7 @@ public class TasksDataWarehouseRepository {
                 sql,
                 params,
                 (rs, rowNum) -> ProjectTableDto.builder()
-                        .projectName(String.valueOf(rs.getInt("project_name")))
+                        .projectName(rs.getString("project_name"))
                         .projectId(rs.getString("project_id"))
                         .managerName(rs.getString("manager_username"))
                         .operatorCount(rs.getInt("user_count"))
