@@ -3,6 +3,7 @@ package com.manolito.dashflow.service.dw;
 import com.manolito.dashflow.config.JiraConfig;
 import com.manolito.dashflow.dto.dw.JiraAuthDto;
 import com.manolito.dashflow.loader.TasksDataWarehouseLoader;
+import com.manolito.dashflow.transformer.JiraTransformer;
 import com.manolito.dashflow.util.SparkUtils;
 import lombok.RequiredArgsConstructor;
 import org.apache.http.HttpResponse;
@@ -205,5 +206,33 @@ public class JiraService {
         }
 
         return data;
+    }
+
+    private void processUsersData(JiraTransformer transformer) {
+        List<Dataset<Row>> usersList = handleUsers();
+        for (Dataset<Row> userDF : usersList) {
+            Dataset<Row> transformedUsers = transformer.transformerUsers(userDF);
+        }
+    }
+
+    private void processProjectsData(JiraTransformer transformer) {
+        List<Dataset<Row>> projectsList = handleProjects();
+        for (Dataset<Row> projectDF : projectsList) {
+            Dataset<Row> transformedProjects = transformer.transformedProjects(projectDF);
+        }
+    }
+
+    private void processStatusData(JiraTransformer transformer) {
+        List<Dataset<Row>> statusList = handleStatus();
+        for (Dataset<Row> statusDF : statusList) {
+            Dataset<Row> transformedStatus = transformer.transformedStatus(statusDF);
+        }
+    }
+
+    private void processTagsData(JiraTransformer transformer) {
+        List<Dataset<Row>> tagsList = handleTags();
+        for (Dataset<Row> tagsDF : tagsList) {
+            Dataset<Row> transformedTags = transformer.transformedTags(tagsDF);
+        }
     }
 }

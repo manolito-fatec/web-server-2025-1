@@ -9,14 +9,53 @@ import static org.apache.spark.sql.functions.*;
 @RequiredArgsConstructor
 public class JiraTransformer {
 
+    private static final int TOOL_ID = 3;
     private final Dataset<Row> datesDimension;
 
     public Dataset<Row> transformerUsers(Dataset<Row> rawData) {
         return rawData
                 .filter(col("accountType").equalTo("atlassian"))
                 .select(
-                        col("accountId").alias("original_id"),
-                        col("displayName").alias("user_name")
+                        col("accountId").as("original_id"),
+                        lit(TOOL_ID).as("tool_id"),
+                        col("user_name")
+                );
+    }
+
+    public Dataset<Row> transformedProjects(Dataset<Row> rawData) {
+        return rawData
+                .select(
+                        col("id").as("original_id"),
+                        lit(TOOL_ID).as("tool_id"),
+                        col("project_name")
+                );
+    }
+
+    public Dataset<Row> transformedStatus(Dataset<Row> rawData) {
+        return rawData
+                .select(
+                        col("statusCategory.id").as("original_id"),
+                        lit(TOOL_ID).as("tool_id"),
+                        col("statusCategory.name"),
+                        col("scope.project.id").as("project_id")
+                )
+                .distinct();
+    }
+
+    public Dataset<Row> transformedTags(Dataset<Row> rawData) {
+        return rawData
+                .select(
+                        explode(col("issues")).as("issue")
+                )
+                .select(
+                        explode(col("issue.fields.labels")).as("label"),
+                        col("issue.fields.project.id").as("project_id")
+
+                )
+                .select(
+                        col("label").as("original_id"),
+                        col("label").as("tag_name"),
+                        col("project_id")
                 );
     }
 }
