@@ -1,6 +1,7 @@
 package com.manolito.dashflow.transformer;
 
 import lombok.RequiredArgsConstructor;
+import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 
@@ -35,7 +36,6 @@ public class JiraTransformer {
         return rawData
                 .select(
                         col("statusCategory.id").as("original_id"),
-                        lit(TOOL_ID).as("tool_id"),
                         col("statusCategory.name"),
                         col("scope.project.id").as("project_id")
                 )
@@ -58,4 +58,18 @@ public class JiraTransformer {
                         col("project_id")
                 );
     }
+
+        public Dataset<Row> transformedTasks(Dataset<Row> rawData) {
+            return rawData
+                    .select(
+                            explode(col("issues")).as("issue")
+                    )
+                    .select(
+                            col("issue.id").as("original_id"),
+                            col("issue.fields.summary").as("task_name"),
+                            col("issue.fields.status.statusCategory.id").as("status_id"),
+                            col("issue.fields.assignee.accountId").as("assignee_id"),
+                            lit(TOOL_ID).as("tool_id")
+                    );
+        }
 }
