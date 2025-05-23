@@ -171,7 +171,6 @@ CREATE TABLE IF NOT EXISTS users(
     original_id TEXT NOT NULL,
     tool_id INT NOT NULL,
     user_name VARCHAR(255) NOT NULL,
-    project_id INT NOT NULL,
     email VARCHAR(255),
     description TEXT,
     start_date DATE NOT NULL DEFAULT CURRENT_DATE,
@@ -179,7 +178,6 @@ CREATE TABLE IF NOT EXISTS users(
     is_current BOOLEAN NOT NULL DEFAULT TRUE,
 
     CONSTRAINT fk_users_tools FOREIGN KEY (tool_id) REFERENCES tools(tool_id),
-    CONSTRAINT fk_users_project FOREIGN KEY (project_id) REFERENCES projects(project_id),
     CONSTRAINT unique_user_seq UNIQUE (original_id, seq, tool_id)
 );
 
