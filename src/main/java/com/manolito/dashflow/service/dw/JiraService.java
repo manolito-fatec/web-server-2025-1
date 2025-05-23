@@ -3,6 +3,7 @@ package com.manolito.dashflow.service.dw;
 import com.manolito.dashflow.config.JiraConfig;
 import com.manolito.dashflow.dto.dw.JiraAuthDto;
 import com.manolito.dashflow.loader.TasksDataWarehouseLoader;
+import com.manolito.dashflow.transformer.JiraTransformer;
 import com.manolito.dashflow.util.SparkUtils;
 import lombok.RequiredArgsConstructor;
 import org.apache.http.HttpResponse;
@@ -96,20 +97,6 @@ public class JiraService {
     }
 
     /**
-     * Fetches user data from the API endpoint and converts it into a DataFrame.
-     * The user data is obtained from a single endpoint without project filtering.
-     *
-     * @return List containing a single Dataset with user data
-     */
-    public List<Dataset<Row>> handleUsers() {
-        List<Dataset<Row>> usersData = new ArrayList<>();
-        String endpoint = USERS.getPath();
-        Dataset<Row> userDF = fetchAndConvertToDataFrame(endpoint, "users", buildAuthDto());
-        usersData.add(userDF);
-        return usersData;
-    }
-
-    /**
      * Retrieves project keys where the authenticated user is a member.
      * The project keys are stored in the class field projectKeys for later use.
      */
@@ -123,6 +110,23 @@ public class JiraService {
     }
 
     /**
+     * Fetches user data from the API endpoint and converts it into a DataFrame.
+     * The user data is obtained from a single endpoint without project filtering.
+     *
+     * @return List containing a single Dataset with user data
+     */
+    public List<Dataset<Row>> handleUsers() {
+        List<Dataset<Row>> usersData = new ArrayList<>();
+        String endpoint = USERS.getPath();
+        Dataset<Row> userDF = fetchAndConvertToDataFrame(endpoint, "users", buildAuthDto());
+
+        if (userDF != null && !userDF.isEmpty()) {
+            usersData.add(userDF);
+        }
+        return usersData;
+    }
+
+    /**
      * Fetches project data from the API endpoint and converts it into a DataFrame.
      * The project data is obtained from a single endpoint without additional filtering.
      *
@@ -132,7 +136,10 @@ public class JiraService {
         List<Dataset<Row>> projectsData = new ArrayList<>();
         String endpoint = PROJECT.getPath();
         Dataset<Row> projectsDF = fetchAndConvertToDataFrame(endpoint, "projects", buildAuthDto());
-        projectsData.add(projectsDF);
+
+        if (projectsDF != null && !projectsDF.isEmpty()) {
+            projectsData.add(projectsDF);
+        }
         return projectsData;
     }
 
@@ -146,7 +153,10 @@ public class JiraService {
         List<Dataset<Row>> statusData = new ArrayList<>();
         String endpoint = STATUS.getPath();
         Dataset<Row> statusDF = fetchAndConvertToDataFrame(endpoint, "status", buildAuthDto());
-        statusData.add(statusDF);
+
+        if (statusDF != null && !statusDF.isEmpty()) {
+            statusData.add(statusDF);
+        }
         return statusData;
     }
 
@@ -162,7 +172,10 @@ public class JiraService {
         for (String projectKey : projectKeys) {
             String endpoint = TASKS.getPath().replace("{projectKey}", projectKey);
             Dataset<Row> taskDF = fetchAndConvertToDataFrame(endpoint, "tasks", buildAuthDto());
-            tasksData.add(taskDF);
+
+            if (taskDF != null && !taskDF.isEmpty()) {
+                tasksData.add(taskDF);
+            }
         }
 
         return tasksData;
@@ -179,7 +192,10 @@ public class JiraService {
         for (String projectKey : projectKeys) {
             String endpoint = TASKS.getPath().replace("{projectKey}", projectKey);
             Dataset<Row> tagsDF = fetchAndConvertToDataFrame(endpoint, "tags", buildAuthDto());
-            tagsData.add(tagsDF);
+
+            if (tagsDF != null && !tagsDF.isEmpty()) {
+                tagsData.add(tagsDF);
+            }
         }
         return tagsData;
     }
@@ -205,5 +221,70 @@ public class JiraService {
         }
 
         return data;
+    }
+
+    /**
+     * Processes user-related data from Jira.
+     * Transforms the raw user data and saves it to the data warehouse.
+     *
+     * @param transformer The JiraTransformer instance to use for data transformation
+     */
+    private void processUsersData(JiraTransformer transformer) {
+        List<Dataset<Row>> usersList = handleUsers();
+        for (Dataset<Row> userDF : usersList) {
+            Dataset<Row> transformedUsers = transformer.transformerUsers(userDF);
+        }
+    }
+
+    /**
+     * Processes project-related data from Jira.
+     * Transforms the raw project data and saves it to the data warehouse.
+     *
+     * @param transformer The JiraTransformer instance to use for data transformation
+     */
+    private void processProjectsData(JiraTransformer transformer) {
+        List<Dataset<Row>> projectsList = handleProjects();
+        for (Dataset<Row> projectDF : projectsList) {
+            Dataset<Row> transformedProjects = transformer.transformedProjects(projectDF);
+        }
+    }
+
+    /**
+     * Processes status-related data from Jira.
+     * Transforms the raw status data and saves it to the data warehouse.
+     *
+     * @param transformer The JiraTransformer instance to use for data transformation
+     */
+    private void processStatusData(JiraTransformer transformer) {
+        List<Dataset<Row>> statusList = handleStatus();
+        for (Dataset<Row> statusDF : statusList) {
+            Dataset<Row> transformedStatus = transformer.transformedStatus(statusDF);
+        }
+    }
+
+    /**
+     * Processes tag-related data from Jira tasks.
+     * Transforms the raw tag data and saves it to the data warehouse.
+     *
+     * @param transformer The JiraTransformer instance to use for data transformation
+     */
+    private void processTagsData(JiraTransformer transformer) {
+        List<Dataset<Row>> tagsList = handleTags();
+        for (Dataset<Row> tagsDF : tagsList) {
+            Dataset<Row> transformedTags = transformer.transformedTags(tagsDF);
+        }
+    }
+
+    /**
+     * Processes task-related data from Jira including debugging output.
+     * Transforms the raw task data and displays it for verification.
+     *
+     * @param transformer The JiraTransformer instance to use for data transformation
+     */
+    private void processTaskData(JiraTransformer transformer) {
+        List<Dataset<Row>> tasksList = handleTasks();
+        for (Dataset<Row> taskDF : tasksList) {
+            Dataset<Row> transformedTasks = transformer.transformedTasks(taskDF);
+        }
     }
 }
