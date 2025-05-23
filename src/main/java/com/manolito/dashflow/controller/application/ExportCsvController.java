@@ -2,22 +2,21 @@ package com.manolito.dashflow.controller.application;
 
 import com.manolito.dashflow.service.application.ExportCsvService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.NoSuchElementException;
 
-@RequiredArgsConstructor
+@Tag(name = "Export CSV Controller", description = "Endpoints para a busca de dados de projetos dentro do Data Warehouse")
 @RestController
+@CrossOrigin(origins = "http://localhost:5173")
 @RequestMapping("/export-csv")
+@RequiredArgsConstructor
 public class ExportCsvController {
     private final ExportCsvService service;
 
