@@ -25,15 +25,15 @@ public class ExportCsvRepository {
                    p.project_name,
                    COUNT(ft.task_id) AS total_tasks
                  FROM 
-                   api5.dashflow_appl.accounts a
+                   dashflow_appl.accounts a
                  JOIN 
-                   api5.dw_dashflow.projects p ON a.project = p.original_id
+                   dw_dashflow.projects p ON a.project = p.original_id
                  JOIN 
-                   api5.dw_dashflow.users u ON a.account = u.original_id
+                   dw_dashflow.users u ON a.account = u.original_id
                  JOIN 
-                   api5.dashflow_appl.roles r ON a.role_id = r.role_id
+                   dashflow_appl.roles r ON a.role_id = r.role_id
                  LEFT JOIN 
-                   api5.dw_dashflow.fact_tasks ft ON ft.assignee_id = u.user_id
+                   dw_dashflow.fact_tasks ft ON ft.assignee_id = u.user_id
                  WHERE 
                    u.is_current = 'TRUE'
                    AND p.is_current = 'TRUE'
@@ -60,15 +60,15 @@ public class ExportCsvRepository {
                          COUNT(DISTINCT u.user_name) AS total_operators,
                          COUNT(ft.task_id) AS total_tasks
                     FROM 
-                         api5.dashflow_appl.accounts a
+                         dashflow_appl.accounts a
                     JOIN 
-                    api5.dw_dashflow.projects p ON a.project = p.original_id
+                    dw_dashflow.projects p ON a.project = p.original_id
                     JOIN 
-                         api5.dw_dashflow.users u ON a.account = u.original_id
+                         dw_dashflow.users u ON a.account = u.original_id
                     JOIN 
-                         api5.dashflow_appl.roles r ON a.role_id = r.role_id AND r.role_name = 'ROLE_MANAGER'
+                         dashflow_appl.roles r ON a.role_id = r.role_id AND r.role_name = 'ROLE_MANAGER'
                     LEFT JOIN 
-                         api5.dw_dashflow.fact_tasks ft ON ft.assignee_id = u.user_id
+                         dw_dashflow.fact_tasks ft ON ft.assignee_id = u.user_id
                     WHERE 
                          u.is_current = 'TRUE'
                     AND p.is_current = 'TRUE'
