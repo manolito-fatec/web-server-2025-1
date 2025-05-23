@@ -64,7 +64,10 @@ public class AuthenticationService {
         ApplicationUser registeredUser =  userRepository.save(user);
         Role role =  roles.iterator().next();
 
-        createAccount(registeredUser, request.getToolUserId(), tool.get(),role, request.getToolProjectId());
+        for (String projectId : request.getToolProjectIdList()) {
+            createAccount(registeredUser, request.getToolUserId(), tool.get(),role, projectId);
+
+        }
 
         return new ResponseUserCreatedDto(
                   registeredUser.getId(),
@@ -127,7 +130,11 @@ public class AuthenticationService {
      * @param userIdTool the identifier of the user within the tool (external or tool-specific ID)
      * @param tool the {@link ApplicationTool} to associate with the user
      */
-   private void createAccount(ApplicationUser applicationUser, String userIdTool, ApplicationTool tool, Role role, String projectIdTool)
+   private void createAccount(ApplicationUser applicationUser,
+                              String userIdTool,
+                              ApplicationTool tool,
+                              Role role,
+                              String projectIdTool)
    {
         Account account = Account.builder()
                 .applicationUser(applicationUser)
@@ -169,7 +176,14 @@ public class AuthenticationService {
         validateField(request.getUsername(), "Username");
         validateField(request.getPassword(), "Password");
         validateField(request.getToolUserId(), "UserProjectId");
-        validateField(request.getToolProjectId(), "toolProjectId");
+
+        if (request.getToolProjectIdList() == null || request.getToolProjectIdList().isEmpty()) {
+            throw new IllegalArgumentException("Project IDs cannot be null or empty");
+        }
+
+        for (String projectId : request.getToolProjectIdList()) {
+            validateField(projectId, "toolProjectId");
+        }
         if (request.getToolId() == null)
         {
             throw new IllegalArgumentException("ToolId cannot be null");
