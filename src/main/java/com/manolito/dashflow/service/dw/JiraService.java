@@ -223,6 +223,12 @@ public class JiraService {
         return data;
     }
 
+    /**
+     * Processes user-related data from Jira.
+     * Transforms the raw user data and saves it to the data warehouse.
+     *
+     * @param transformer The JiraTransformer instance to use for data transformation
+     */
     private void processUsersData(JiraTransformer transformer) {
         List<Dataset<Row>> usersList = handleUsers();
         for (Dataset<Row> userDF : usersList) {
@@ -230,6 +236,12 @@ public class JiraService {
         }
     }
 
+    /**
+     * Processes project-related data from Jira.
+     * Transforms the raw project data and saves it to the data warehouse.
+     *
+     * @param transformer The JiraTransformer instance to use for data transformation
+     */
     private void processProjectsData(JiraTransformer transformer) {
         List<Dataset<Row>> projectsList = handleProjects();
         for (Dataset<Row> projectDF : projectsList) {
@@ -237,6 +249,12 @@ public class JiraService {
         }
     }
 
+    /**
+     * Processes status-related data from Jira.
+     * Transforms the raw status data and saves it to the data warehouse.
+     *
+     * @param transformer The JiraTransformer instance to use for data transformation
+     */
     private void processStatusData(JiraTransformer transformer) {
         List<Dataset<Row>> statusList = handleStatus();
         for (Dataset<Row> statusDF : statusList) {
@@ -244,10 +262,29 @@ public class JiraService {
         }
     }
 
+    /**
+     * Processes tag-related data from Jira tasks.
+     * Transforms the raw tag data and saves it to the data warehouse.
+     *
+     * @param transformer The JiraTransformer instance to use for data transformation
+     */
     private void processTagsData(JiraTransformer transformer) {
         List<Dataset<Row>> tagsList = handleTags();
         for (Dataset<Row> tagsDF : tagsList) {
             Dataset<Row> transformedTags = transformer.transformedTags(tagsDF);
+        }
+    }
+
+    /**
+     * Processes task-related data from Jira including debugging output.
+     * Transforms the raw task data and displays it for verification.
+     *
+     * @param transformer The JiraTransformer instance to use for data transformation
+     */
+    private void processTaskData(JiraTransformer transformer) {
+        List<Dataset<Row>> tasksList = handleTasks();
+        for (Dataset<Row> taskDF : tasksList) {
+            Dataset<Row> transformedTasks = transformer.transformedTasks(taskDF);
         }
     }
 }
