@@ -141,39 +141,6 @@ EXECUTE FUNCTION manage_scd2('original_id');
 
 --------------------------------
 
-CREATE TABLE IF NOT EXISTS users(
-    user_id SERIAL PRIMARY KEY,
-    seq INT NOT NULL,
-    original_id TEXT NOT NULL,
-    tool_id INT NOT NULL,
-    user_name VARCHAR(255) NOT NULL,
-    email VARCHAR(255),
-    description TEXT,
-    start_date DATE NOT NULL DEFAULT CURRENT_DATE,
-    end_date DATE DEFAULT NULL,
-    is_current BOOLEAN NOT NULL DEFAULT TRUE,
-
-    CONSTRAINT fk_users_tools FOREIGN KEY (tool_id) REFERENCES tools(tool_id),
-    CONSTRAINT unique_user_seq UNIQUE (original_id, seq, tool_id)
-);
-
-CREATE OR REPLACE TRIGGER users_scd2_trigger
-    BEFORE INSERT ON users
-    FOR EACH ROW
-EXECUTE FUNCTION manage_scd2('original_id');
-
-----------------------------------
-
-CREATE TABLE IF NOT EXISTS user_role(
-    role_id INT NOT NULL,
-    user_id INT NOT NULL,
-
-    CONSTRAINT pk_user_role PRIMARY KEY (role_id, user_id),
-    CONSTRAINT fk_user_role_users FOREIGN KEY (user_id) REFERENCES users(user_id),
-    CONSTRAINT fk_user_role_roles FOREIGN KEY (role_id) REFERENCES roles(role_id)
-);
-
--------------------------------------
 
 CREATE TABLE IF NOT EXISTS projects(
     project_id SERIAL PRIMARY KEY,
@@ -195,6 +162,42 @@ CREATE OR REPLACE TRIGGER projects_scd2_trigger
     BEFORE INSERT ON projects
     FOR EACH ROW
 EXECUTE FUNCTION manage_scd2('original_id');
+
+--------------------------------
+
+CREATE TABLE IF NOT EXISTS users(
+    user_id SERIAL PRIMARY KEY,
+    seq INT NOT NULL,
+    original_id TEXT NOT NULL,
+    tool_id INT NOT NULL,
+    user_name VARCHAR(255) NOT NULL,
+    project_id INT NOT NULL,
+    email VARCHAR(255),
+    description TEXT,
+    start_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    end_date DATE DEFAULT NULL,
+    is_current BOOLEAN NOT NULL DEFAULT TRUE,
+
+    CONSTRAINT fk_users_tools FOREIGN KEY (tool_id) REFERENCES tools(tool_id),
+    CONSTRAINT fk_users_project FOREIGN KEY (project_id) REFERENCES projects(project_id),
+    CONSTRAINT unique_user_seq UNIQUE (original_id, seq, tool_id)
+);
+
+CREATE OR REPLACE TRIGGER users_scd2_trigger
+    BEFORE INSERT ON users
+    FOR EACH ROW
+EXECUTE FUNCTION manage_scd2('original_id');
+
+----------------------------------
+
+CREATE TABLE IF NOT EXISTS user_role(
+    role_id INT NOT NULL,
+    user_id INT NOT NULL,
+
+    CONSTRAINT pk_user_role PRIMARY KEY (role_id, user_id),
+    CONSTRAINT fk_user_role_users FOREIGN KEY (user_id) REFERENCES users(user_id),
+    CONSTRAINT fk_user_role_roles FOREIGN KEY (role_id) REFERENCES roles(role_id)
+);
 
 -------------------------------------
 
