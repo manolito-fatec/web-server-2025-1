@@ -609,7 +609,7 @@ public class TasksDataWarehouseRepository {
 
 
         Map<String, Object> params = new HashMap<>();
-        params.put("managerId", managerId);
+        params.put("managerId", Integer.valueOf(managerId));
 
         return jdbcTemplate.query(
                 sql,
