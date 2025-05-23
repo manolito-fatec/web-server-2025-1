@@ -1,3 +1,6 @@
+
+SET search_path TO dw_dashflow;
+
 ALTER TABLE users ADD COLUMN project_id INT NOT NULL;
 
 ALTER TABLE users
