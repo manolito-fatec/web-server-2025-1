@@ -82,7 +82,6 @@ public class IssuesDataWarehouseRepository {
                     .collect(Collectors.toList()));
         }
 
-
         // Finally adds the GROUP BY clause with or without the severities and priorities filters
         sql.append(" GROUP BY typ.type_name");
 
