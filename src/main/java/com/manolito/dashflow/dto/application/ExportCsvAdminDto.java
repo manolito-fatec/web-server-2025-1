@@ -8,12 +8,12 @@ import lombok.Setter;
 
 @Getter
 @Setter
-@Builder
 @AllArgsConstructor
+@Builder
 @NoArgsConstructor
-public class ExportCsvAdminDto {
-     private String Project;
-     private String Manager;
+public class ExportCsvAdminDto{
+     private String project;
+     private String manager;
      private Integer quantityOfOperators;
      private Integer quantityOfCards;
 
