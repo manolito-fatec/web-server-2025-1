@@ -13,6 +13,6 @@ import java.util.List;
 @Builder
 public class IssueFilterRequestDto {
     private String projectId;
-    private IssueSeverity severities;
-    private IssuePriority priorities;
+    private List<IssueSeverity> severities;
+    private List<IssuePriority> priorities;
 }

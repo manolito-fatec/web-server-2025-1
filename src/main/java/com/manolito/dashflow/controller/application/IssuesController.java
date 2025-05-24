@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 public class IssuesController {
     private final IssuesService issuesService;
 
-    @GetMapping("/gestor/filtered/{projectId}/{severities}/{priorities}")
+    @GetMapping("/gestor/filtered/{projectId}")
     @Operation(summary = "Busca a quantidade de issues por projeto com filtros opcionais",
             description = "Retorna a contagem de issues agrupadas por tipo (bug, enhancement, question)")
     @ApiResponses(value = {
@@ -42,17 +42,17 @@ public class IssuesController {
             @PathVariable String projectId,
 
             @Parameter(description = "Graus de severidade da issue (opcional)")
-            @PathVariable(required = false) String severities,
+            @RequestParam(required = false) List<IssueSeverity> severities,
 
             @Parameter(description = "Prioridades da issue (opcional)")
-            @PathVariable(required = false) String priorities) {
+            @RequestParam(required = false) List<IssuePriority> priorities) {
 
         try {
 
             IssueFilterRequestDto filter = IssueFilterRequestDto.builder()
                     .projectId(projectId)
-                    .severities(Arrays.stream(IssueSeverity.values()).filter(severity -> severity.getValue().equalsIgnoreCase(severities)).toList().get(0))
-                    .priorities(Arrays.stream(IssuePriority.values()).filter(priority -> priority.getValue().equalsIgnoreCase(priorities)).toList().get(0))
+                    .severities(severities)
+                    .priorities(priorities)
                     .build();
 
             return ResponseEntity.ok().body(issuesService.getIssueCountsByFilter(filter));
