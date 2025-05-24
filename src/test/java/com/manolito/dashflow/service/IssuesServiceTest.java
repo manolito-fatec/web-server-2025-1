@@ -36,8 +36,8 @@ public class IssuesServiceTest {
     void getIssueCountsByFilter_whenIssuesExistWithFilters_shouldReturnCounts() {
         IssueFilterRequestDto filter = IssueFilterRequestDto.builder()
                 .projectId(TEST_PROJECT_ID)
-                .severities(List.of(TEST_SEVERITY))
-                .priorities(List.of(TEST_PRIORITY))
+                .severities(TEST_SEVERITY)
+                .priorities(TEST_PRIORITY)
                 .build();
 
         List<IssueCountDto> expected = List.of(
