@@ -15,15 +15,13 @@ public class JiraTransformer {
 
     public Dataset<Row> transformedUsers(Dataset<Row> rawData) {
         return rawData
-                .select(explode(col("issues")).as("issue"))
+                .filter(col("accountType").equalTo("atlassian"))
                 .select(
-                        col("issue.fields.reporter.accountId").as("original_id"),
+                        col("accountId").as("original_id"),
                         lit(TOOL_ID).as("tool_id"),
-                        col("issue.fields.reporter.displayName").as("user_name"),
-                        col("issue.fields.project.id").as("project_id")  // Adding project ID
-                )
-                .filter(col("issue.fields.reporter.accountType").equalTo("atlassian"))
-                .dropDuplicates("original_id", "project_id");
+                        col("displayName").as("user_name"),
+                        col("project_id")
+                );
     }
 
     public Dataset<Row> transformedProjects(Dataset<Row> rawData) {
