@@ -1,6 +1,5 @@
 package com.manolito.dashflow.util;
 
-import lombok.RequiredArgsConstructor;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.springframework.stereotype.Component;
