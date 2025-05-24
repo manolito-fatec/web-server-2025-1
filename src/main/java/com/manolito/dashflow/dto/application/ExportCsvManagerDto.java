@@ -11,8 +11,9 @@ import lombok.Setter;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class ExportCsvManagerDto {
-     private String Operator;
-     private String project;
-     private Integer quantityOfCards;
+public class ExportCsvManagerDto
+{
+    private String Operator;
+    private String project;
+    private Integer quantityOfCards;
 }

@@ -1,5 +1,6 @@
 package com.manolito.dashflow.controller.application;
 
+import java.util.List;
 import java.util.NoSuchElementException;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.manolito.dashflow.component.ExportCsvComponent;
+import com.manolito.dashflow.dto.application.TableAdminDto;
 
 @Tag(name = "Export Controller", description = "Export de arquivo CSV")
 @RestController
@@ -27,6 +29,8 @@ public class ReportExportController {
 
     @Autowired
     private ExportCsvComponent exportCsvComponent;
+
+    private static final String INTERNAL_SERVER_ERROR  = "Internal Server Error ";
 
     @GetMapping("/admin/csv")
     @Operation(summary = "Exportação de dados do dashboard do Admin", description = "Realiza a exportação de um arquivo CSV contendo informações relacionadas ao dashBoard do admin.")
@@ -48,7 +52,7 @@ public class ReportExportController {
         } catch (IllegalArgumentException illegalArgumentException) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         } catch (RuntimeException runtimeException) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal Server Error " + runtimeException.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(INTERNAL_SERVER_ERROR + runtimeException.getMessage());
         }
     }
 
@@ -72,7 +76,8 @@ public class ReportExportController {
         } catch (IllegalArgumentException illegalArgumentException) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         } catch (RuntimeException runtimeException) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal Server Error " + runtimeException.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(INTERNAL_SERVER_ERROR + runtimeException.getMessage());
         }
     }
+
 }
