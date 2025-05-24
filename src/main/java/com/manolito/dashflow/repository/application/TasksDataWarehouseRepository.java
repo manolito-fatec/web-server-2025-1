@@ -14,6 +14,8 @@ import java.util.*;
 @RequiredArgsConstructor
 public class TasksDataWarehouseRepository {
     private final NamedParameterJdbcTemplate jdbcTemplate;
+    private final String PROJECT_NAME = "project_name";
+    private final String ORIGINAL_ID = "original_id";
 
     public Optional<Integer> getTotalTasksByOperator(int userId) {
         String sql = "SELECT COUNT(ft.task_id) AS total_task_count " +
@@ -404,8 +406,8 @@ public class TasksDataWarehouseRepository {
         return jdbcTemplate.query(
                 sql,
                 (rs, rowNum) -> new TaskProjectDto(
-                        rs.getString("project_name"),
-                        rs.getString("original_id"),
+                        rs.getString(PROJECT_NAME),
+                        rs.getString(ORIGINAL_ID),
                         rs.getInt("total_cards")
                 )
         );
@@ -430,8 +432,8 @@ public class TasksDataWarehouseRepository {
                 sql,
                 params,
                 (rs, rowNum) -> new ProjectDto(
-                        rs.getString("user_name"),
-                        rs.getString("user_id")
+                        rs.getString(ORIGINAL_ID),
+                        rs.getString(PROJECT_NAME)
                 )
         );
     }
@@ -459,7 +461,7 @@ public class TasksDataWarehouseRepository {
                 sql,
                 params,
                 (rs, rowNum) -> new UserDto(
-                        rs.getString("original_id"),
+                        rs.getString(ORIGINAL_ID),
                         rs.getString("user_name")
                 )
         );
@@ -512,7 +514,7 @@ public class TasksDataWarehouseRepository {
                         .toolName(rs.getString("tool_name"))
                         .toolId(rs.getObject("tool_id", Integer.class))
                         .projectId(rs.getString("project_id"))
-                        .projectName(rs.getString("project_name"))
+                        .projectName(rs.getString(PROJECT_NAME))
                         .createdAt(rs.getTimestamp("created_at") != null ?
                                 rs.getTimestamp("created_at").toLocalDateTime().toLocalDate() :
                                 null)
@@ -564,7 +566,7 @@ public class TasksDataWarehouseRepository {
                 sql,
                 params,
                 (rs, rowNum) -> ProjectTableDto.builder()
-                        .projectName(rs.getString("project_name"))
+                        .projectName(rs.getString(PROJECT_NAME))
                         .projectId(rs.getString("project_id"))
                         .managerName(rs.getString("manager_username"))
                         .operatorCount(rs.getInt("user_count"))
@@ -616,7 +618,7 @@ public class TasksDataWarehouseRepository {
                 params,
                 (rs, rowNum) -> UserProjectDto.builder()
                         .projectId(rs.getString("project"))
-                        .projectName(rs.getString("project_name"))
+                        .projectName(rs.getString(PROJECT_NAME))
                         .userId(rs.getString("user_id"))
                         .userName(rs.getString("username")).build()
         );
