@@ -480,6 +480,25 @@ public class TaigaService {
     }
 
     /**
+     * Joins the user dataset with projects dataset to map original project IDs to their corresponding database IDs.
+     *
+     * @param userDF The dataset containing user information with original project IDs
+     * @param projectsDF The dataset containing project information with original and new IDs
+     * @return A new dataset with updated project IDs, containing original_id, user_name, tool_id,
+     *         and the mapped project_id columns
+     */
+    public static Dataset<Row> joinUserProject(Dataset<Row> userDF, Dataset<Row> projectsDF) {
+        Dataset<Row> joined = userDF
+                .join(projectsDF, userDF.col("project_id").equalTo(projectsDF.col("original_id")));
+        return joined.select(
+                userDF.col("original_id"),
+                userDF.col("user_name"),
+                userDF.col("tool_id"),
+                projectsDF.col("project_id")
+        );
+    }
+
+    /**
      * Joins epics dataset with projects dataset to associate epics with their corresponding project IDs.
      *
      * @param epicsDF Dataset containing epic information with original project IDs
@@ -716,7 +735,7 @@ public class TaigaService {
             Dataset<Row> transformedProject = transformer.transformProjects(projectDF);
             Dataset<Row> transformedRoles = transformer.transformRoles(projectDF);
             Dataset<Row> transformedUsers = transformer.transformedUserProjects(projectDF);
-
+            transformedUsers = joinUserProject(transformedUsers, dataWarehouseLoader.loadDimensionWithoutTool("projects"));
             dataWarehouseLoader.save(transformedProject, "projects");
             dataWarehouseLoader.save(transformedRoles, "roles");
             dataWarehouseLoader.save(transformedUsers, "users");

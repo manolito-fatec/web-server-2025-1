@@ -89,7 +89,8 @@ public class TaigaTransformer {
                 .select(
                         col("member.id").as("original_id"),
                         lit(TOOL_ID).as("tool_id"),
-                        col("member.full_name").as("user_name")
+                        col("member.full_name").as("user_name"),
+                        col("id").as("project_id")
                 );
     }
 
