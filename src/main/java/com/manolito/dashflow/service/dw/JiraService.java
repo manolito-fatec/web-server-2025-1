@@ -302,6 +302,12 @@ public class JiraService {
         List<Dataset<Row>> tasksList = handleTasks();
         for (Dataset<Row> taskDF : tasksList) {
             Dataset<Row> transformedTasks = transformer.transformedTasks(taskDF);
+            transformedTasks = joinUtils.joinFactTask(transformedTasks,
+                    dataWarehouseLoader.loadDimension("status"),
+                    dataWarehouseLoader.loadDimension("users"),
+                    dataWarehouseLoader.loadDimension("stories"),
+                    dataWarehouseLoader.loadDimensionWithoutIsCurrent("dates", "jira"));
+            dataWarehouseLoader.save(transformedTasks, "fact_tasks");
         }
     }
 
@@ -319,6 +325,8 @@ public class JiraService {
             processStatusData(transformer);
 
             processTagsData(transformer);
+
+            processTaskData(transformer);
 
         } catch (Exception e) {
             throw new RuntimeException("Jira ETL process failed", e);
