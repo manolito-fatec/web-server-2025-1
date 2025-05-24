@@ -80,24 +80,4 @@ public class ReportExportController {
         }
     }
 
-    @GetMapping("/admin/table")
-    @Operation(summary = "tabela de dados do dashboard do Admin", description = "Busca a lista de dados da tabela na tela de admin ")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Envio de dados para tabela administrador concluída com sucesso"),
-            @ApiResponse(responseCode = "400", description = "Requisição mal formulada."),
-            @ApiResponse(responseCode = "408", description = "Tempo de resposta excedido."),
-            @ApiResponse(responseCode = "500", description = "Erro interno do servidor")
-    })
-    public ResponseEntity<?> generateDataTable() {
-        try {
-            List<TableAdminDto> listDataTable = exportCsvComponent.generateDataTable();
-            return ResponseEntity.status(HttpStatus.OK).body(listDataTable);
-        } catch (NoSuchElementException noSuchElementException) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        } catch (IllegalArgumentException illegalArgumentException) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        } catch (RuntimeException runtimeException) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(INTERNAL_SERVER_ERROR + runtimeException.getMessage());
-        }
-    }
 }
