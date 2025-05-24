@@ -187,8 +187,8 @@ CREATE TABLE IF NOT EXISTS projects(
     is_finished BOOLEAN,
     is_current BOOLEAN NOT NULL DEFAULT TRUE,
 
-   CONSTRAINT fk_projects_tools FOREIGN KEY (tool_id) REFERENCES tools(tool_id),
-   CONSTRAINT unique_project_seq UNIQUE (original_id, seq, tool_id)
+    CONSTRAINT fk_projects_tools FOREIGN KEY (tool_id) REFERENCES tools(tool_id),
+    CONSTRAINT unique_project_seq UNIQUE (original_id, seq, tool_id)
 );
 
 CREATE OR REPLACE TRIGGER projects_scd2_trigger
