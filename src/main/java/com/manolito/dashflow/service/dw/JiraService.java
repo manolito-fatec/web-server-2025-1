@@ -269,6 +269,9 @@ public class JiraService {
         List<Dataset<Row>> statusList = handleStatus();
         for (Dataset<Row> statusDF : statusList) {
             Dataset<Row> transformedStatus = transformer.transformedStatus(statusDF);
+            transformedStatus = joinUtils.joinStatusProject(transformedStatus,
+                    dataWarehouseLoader.loadDimensionWithoutTool("projects"));
+            dataWarehouseLoader.save(transformedStatus, "status");
         }
     }
 
@@ -307,6 +310,10 @@ public class JiraService {
 
             processProjectsData(transformer);
             
+
+            processUsersData(transformer);
+
+            processStatusData(transformer);
         } catch (Exception e) {
             throw new RuntimeException("Jira ETL process failed", e);
         }
