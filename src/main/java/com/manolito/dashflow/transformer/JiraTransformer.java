@@ -13,14 +13,17 @@ public class JiraTransformer {
     private static final int TOOL_ID = 3;
     private final Dataset<Row> datesDimension;
 
-    public Dataset<Row> transformerUsers(Dataset<Row> rawData) {
+    public Dataset<Row> transformedUsers(Dataset<Row> rawData) {
         return rawData
-                .filter(col("accountType").equalTo("atlassian"))
+                .select(explode(col("issues")).as("issue"))
                 .select(
-                        col("accountId").as("original_id"),
+                        col("issue.fields.reporter.accountId").as("original_id"),
                         lit(TOOL_ID).as("tool_id"),
-                        col("user_name")
-                );
+                        col("issue.fields.reporter.displayName").as("user_name"),
+                        col("issue.fields.project.id").as("project_id")  // Adding project ID
+                )
+                .filter(col("issue.fields.reporter.accountType").equalTo("atlassian"))
+                .dropDuplicates("original_id", "project_id");
     }
 
     public Dataset<Row> transformedProjects(Dataset<Row> rawData) {
@@ -36,7 +39,7 @@ public class JiraTransformer {
         return rawData
                 .select(
                         col("statusCategory.id").as("original_id"),
-                        col("statusCategory.name"),
+                        col("statusCategory.name").as("status_name"),
                         col("scope.project.id").as("project_id")
                 )
                 .distinct();

@@ -467,7 +467,7 @@ public class TaigaService {
      * @throws IllegalStateException if authentication fails or no projects are found
      */
     //Remove post construct annotation after login is done
-//    @PostConstruct
+    @PostConstruct
     public void taigaEtl() {
         try {
             authenticateTaiga("Man_Olito", "Manolito");

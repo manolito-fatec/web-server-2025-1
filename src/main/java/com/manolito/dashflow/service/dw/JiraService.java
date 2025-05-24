@@ -120,11 +120,14 @@ public class JiraService {
      */
     public List<Dataset<Row>> handleUsers() {
         List<Dataset<Row>> usersData = new ArrayList<>();
-        String endpoint = USERS.getPath();
-        Dataset<Row> userDF = fetchAndConvertToDataFrame(endpoint, "users", buildAuthDto());
 
-        if (userDF != null && !userDF.isEmpty()) {
-            usersData.add(userDF);
+        for (String projectKey : projectKeys) {
+            String endpoint = TASKS.getPath().replace("{projectKey}", projectKey);
+            Dataset<Row> userDF = fetchAndConvertToDataFrame(endpoint, "users", buildAuthDto());
+
+            if (userDF != null && !userDF.isEmpty()) {
+                usersData.add(userDF);
+            }
         }
         return usersData;
     }
@@ -235,7 +238,10 @@ public class JiraService {
     private void processUsersData(JiraTransformer transformer) {
         List<Dataset<Row>> usersList = handleUsers();
         for (Dataset<Row> userDF : usersList) {
-            Dataset<Row> transformedUsers = transformer.transformerUsers(userDF);
+            Dataset<Row> transformedUsers = transformer.transformedUsers(userDF);
+            transformedUsers = joinUtils.joinUserProject(transformedUsers,
+                    dataWarehouseLoader.loadDimensionWithoutTool("projects"));
+            dataWarehouseLoader.save(transformedUsers, "users");
         }
     }
 
