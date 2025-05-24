@@ -4,6 +4,7 @@ import com.manolito.dashflow.config.JiraConfig;
 import com.manolito.dashflow.dto.dw.JiraAuthDto;
 import com.manolito.dashflow.loader.TasksDataWarehouseLoader;
 import com.manolito.dashflow.transformer.JiraTransformer;
+import com.manolito.dashflow.util.JoinUtils;
 import com.manolito.dashflow.util.SparkUtils;
 import lombok.RequiredArgsConstructor;
 import org.apache.http.HttpResponse;
@@ -14,6 +15,7 @@ import org.apache.http.util.EntityUtils;
 import org.apache.spark.sql.*;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -29,6 +31,7 @@ public class JiraService {
     private static final String APPLICATION_JSON = "application/json";
     private final SparkSession spark;
     private final SparkUtils utils;
+    private final JoinUtils joinUtils;
     private final TasksDataWarehouseLoader dataWarehouseLoader;
     private final JiraConfig jiraConfig;
     private List<String> projectKeys;
@@ -246,6 +249,7 @@ public class JiraService {
         List<Dataset<Row>> projectsList = handleProjects();
         for (Dataset<Row> projectDF : projectsList) {
             Dataset<Row> transformedProjects = transformer.transformedProjects(projectDF);
+            dataWarehouseLoader.save(transformedProjects, "projects");
         }
     }
 
@@ -285,6 +289,20 @@ public class JiraService {
         List<Dataset<Row>> tasksList = handleTasks();
         for (Dataset<Row> taskDF : tasksList) {
             Dataset<Row> transformedTasks = transformer.transformedTasks(taskDF);
+        }
+    }
+
+    @PostConstruct
+    private void jiraEtl() {
+        try {
+            JiraTransformer transformer = new JiraTransformer(spark.emptyDataFrame());
+
+            getProjectsWhereUserIsMember();
+
+            processProjectsData(transformer);
+            
+        } catch (Exception e) {
+            throw new RuntimeException("Jira ETL process failed", e);
         }
     }
 }
