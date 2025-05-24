@@ -430,8 +430,8 @@ public class TasksDataWarehouseRepository {
                 sql,
                 params,
                 (rs, rowNum) -> new ProjectDto(
-                        rs.getString("user_name"),
-                        rs.getString("user_id")
+                        rs.getString("original_id"),
+                        rs.getString("project_name")
                 )
         );
     }
@@ -546,7 +546,7 @@ public class TasksDataWarehouseRepository {
                     WHERE approle2.role_id = 1
                 ) regular_users ON regular_users.project = prj.original_id AND regular_users.tool_id = prj.tool_id
                 WHERE appu.username <> 'admin'
-                AND approle.role_id = 2
+                AND approle.role_id = 1
                 GROUP BY
                     prj.original_id,
                     prj.project_name,
