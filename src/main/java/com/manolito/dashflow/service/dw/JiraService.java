@@ -285,6 +285,9 @@ public class JiraService {
         List<Dataset<Row>> tagsList = handleTags();
         for (Dataset<Row> tagsDF : tagsList) {
             Dataset<Row> transformedTags = transformer.transformedTags(tagsDF);
+            transformedTags = joinUtils.joinTagProject(transformedTags,
+                    dataWarehouseLoader.loadDimensionWithoutTool("projects"));
+            dataWarehouseLoader.save(transformedTags, "tags");
         }
     }
 
@@ -314,6 +317,9 @@ public class JiraService {
             processUsersData(transformer);
 
             processStatusData(transformer);
+
+            processTagsData(transformer);
+
         } catch (Exception e) {
             throw new RuntimeException("Jira ETL process failed", e);
         }
