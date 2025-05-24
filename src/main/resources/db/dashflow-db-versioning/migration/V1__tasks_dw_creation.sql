@@ -176,16 +176,16 @@ CREATE TABLE IF NOT EXISTS user_role(
 -------------------------------------
 
 CREATE TABLE IF NOT EXISTS projects(
-   project_id SERIAL PRIMARY KEY,
-   seq INT NOT NULL,
-   original_id TEXT NOT NULL,
-   tool_id INT NOT NULL,
-   project_name VARCHAR(255) NOT NULL,
-   description TEXT,
-   start_date DATE NOT NULL DEFAULT CURRENT_DATE,
-   end_date DATE DEFAULT NULL,
-   is_finished BOOLEAN,
-   is_current BOOLEAN NOT NULL DEFAULT TRUE,
+    project_id SERIAL PRIMARY KEY,
+    seq INT NOT NULL,
+    original_id TEXT NOT NULL,
+    tool_id INT NOT NULL,
+    project_name VARCHAR(255) NOT NULL,
+    description TEXT,
+    start_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    end_date DATE DEFAULT NULL,
+    is_finished BOOLEAN,
+    is_current BOOLEAN NOT NULL DEFAULT TRUE,
 
    CONSTRAINT fk_projects_tools FOREIGN KEY (tool_id) REFERENCES tools(tool_id),
    CONSTRAINT unique_project_seq UNIQUE (original_id, seq, tool_id)
