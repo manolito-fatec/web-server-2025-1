@@ -312,7 +312,6 @@ public class JiraService {
             getProjectsWhereUserIsMember();
 
             processProjectsData(transformer);
-            
 
             processUsersData(transformer);
 
