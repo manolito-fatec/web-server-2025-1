@@ -30,6 +30,8 @@ public class ReportExportController {
     @Autowired
     private ExportCsvComponent exportCsvComponent;
 
+    private static final String INTERNAL_SERVER_ERROR  = "Internal Server Error ";
+
     @GetMapping("/admin/csv")
     @Operation(summary = "Exportação de dados do dashboard do Admin", description = "Realiza a exportação de um arquivo CSV contendo informações relacionadas ao dashBoard do admin.")
     @ApiResponses(value = {
@@ -50,7 +52,7 @@ public class ReportExportController {
         } catch (IllegalArgumentException illegalArgumentException) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         } catch (RuntimeException runtimeException) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal Server Error " + runtimeException.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(INTERNAL_SERVER_ERROR + runtimeException.getMessage());
         }
     }
 
@@ -74,7 +76,7 @@ public class ReportExportController {
         } catch (IllegalArgumentException illegalArgumentException) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         } catch (RuntimeException runtimeException) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal Server Error " + runtimeException.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(INTERNAL_SERVER_ERROR + runtimeException.getMessage());
         }
     }
 
@@ -95,7 +97,7 @@ public class ReportExportController {
         } catch (IllegalArgumentException illegalArgumentException) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         } catch (RuntimeException runtimeException) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal Server Error " + runtimeException.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(INTERNAL_SERVER_ERROR + runtimeException.getMessage());
         }
     }
 }
