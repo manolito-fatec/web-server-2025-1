@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.manolito.dashflow.dto.dw.TaigaAuthDto;
 import com.manolito.dashflow.loader.TasksDataWarehouseLoader;
 import com.manolito.dashflow.transformer.TaigaTransformer;
+import com.manolito.dashflow.util.JoinUtils;
 import com.manolito.dashflow.util.SparkUtils;
 import lombok.RequiredArgsConstructor;
 import org.apache.http.HttpResponse;
@@ -22,8 +23,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 import static com.manolito.dashflow.enums.ProjectManagementTool.TAIGA;
 import static com.manolito.dashflow.enums.TaigaEndpoints.*;
@@ -35,6 +34,7 @@ public class TaigaService {
 
     private final SparkSession spark;
     private final SparkUtils utils;
+    private final JoinUtils joinUtils;
     private final TasksDataWarehouseLoader dataWarehouseLoader;
     private static final String API_URL = "https://api.taiga.io/api/v1/auth";
     private static final String USER_ME_URL = "https://api.taiga.io/api/v1/users/me";
@@ -351,15 +351,6 @@ public class TaigaService {
         }
     }
 
-    private Map<Long, Long> mapFromLongList(List<Long[]> list) {
-        return list.stream()
-                .collect(Collectors.toMap(
-                        pair -> pair[1],
-                        pair -> pair[0]
-                ));
-
-    }
-
     /**
      * Processes and saves user-role relationships to the database for all projects.
      * Extracts user-role-project associations, joins with dimension tables, and prepares the data for storage.
@@ -463,221 +454,6 @@ public class TaigaService {
     }
 
     /**
-     * Joins the status dataset with projects dataset to map original project IDs to their corresponding database IDs.
-     *
-     * @param statusDF The dataset containing status information with original project IDs
-     * @param projectsDF The dataset containing project information with original and new IDs
-     * @return A new dataset with updated project IDs, containing original_id, status_name, and project_id columns
-     */
-    public static Dataset<Row> joinStatusProject(Dataset<Row> statusDF, Dataset<Row> projectsDF) {
-        Dataset<Row> joined = statusDF
-                .join(projectsDF, statusDF.col("project_id").equalTo(projectsDF.col("original_id")));
-        return joined.select(
-                statusDF.col("original_id"),
-                statusDF.col("status_name"),
-                projectsDF.col("project_id").alias("project_id")
-        );
-    }
-
-    /**
-     * Joins the user dataset with projects dataset to map original project IDs to their corresponding database IDs.
-     *
-     * @param userDF The dataset containing user information with original project IDs
-     * @param projectsDF The dataset containing project information with original and new IDs
-     * @return A new dataset with updated project IDs, containing original_id, user_name, tool_id,
-     *         and the mapped project_id columns
-     */
-    public static Dataset<Row> joinUserProject(Dataset<Row> userDF, Dataset<Row> projectsDF) {
-        Dataset<Row> joined = userDF
-                .join(projectsDF, userDF.col("project_id").equalTo(projectsDF.col("original_id")));
-        return joined.select(
-                userDF.col("original_id"),
-                userDF.col("user_name"),
-                userDF.col("tool_id"),
-                projectsDF.col("project_id")
-        );
-    }
-
-    /**
-     * Joins epics dataset with projects dataset to associate epics with their corresponding project IDs.
-     *
-     * @param epicsDF Dataset containing epic information with original project IDs
-     * @param projectsDF Dataset containing project information with original and mapped IDs
-     * @return Dataset containing epic original_id, mapped project_id, and epic_name
-     */
-    public static Dataset<Row> joinEpicProject(Dataset<Row> epicsDF,
-                                               Dataset<Row> projectsDF) {
-
-        Dataset<Row> joinedDF = epicsDF
-                .join(projectsDF, epicsDF.col("project_id").equalTo(projectsDF.col("original_id")));
-        return joinedDF.select(
-                epicsDF.col("original_id"),
-                projectsDF.col("project_id"),
-                epicsDF.col("epic_name")
-        );
-    }
-
-    public static Dataset<Row> joinIssueProject(Dataset<Row> issuesDF,
-                                                Dataset<Row> projectsDF,
-                                                String name) {
-        Dataset<Row> joinedDF = issuesDF
-                .join(projectsDF, issuesDF.col("project_id").equalTo(projectsDF.col("original_id")));
-        return joinedDF.select(
-                issuesDF.col("original_id"),
-                projectsDF.col("project_id"),
-                issuesDF.col(name)
-        );
-    }
-
-    /**
-     * Joins tags dataset with projects dataset to associate tags with their corresponding project IDs.
-     *
-     * @param tagsDF Dataset containing tag information with original project IDs
-     * @param projectsDF Dataset containing project information with original and mapped IDs
-     * @return Dataset containing tag original_id, mapped project_id, and tag_name
-     */
-    public static Dataset<Row> joinTagProject(Dataset<Row> tagsDF,
-                                              Dataset<Row> projectsDF) {
-
-        Dataset<Row> joinedDF = tagsDF
-                .join(projectsDF, tagsDF.col("project_id").equalTo(projectsDF.col("original_id")));
-        return joinedDF.select(
-                tagsDF.col("original_id"),
-                projectsDF.col("project_id"),
-                tagsDF.col("tag_name")
-        );
-    }
-
-    /**
-     * Joins stories dataset with projects and epics datasets to associate stories with their corresponding project and epic IDs.
-     *
-     * @param storiesDF Dataset containing story information with original project and epic IDs
-     * @param projectsDF Dataset containing project information with original and mapped IDs
-     * @param epicsDF Dataset containing epic information with original IDs
-     * @return Dataset containing story original_id, mapped project_id, epic_id, story_name, and is_finished
-     */
-    public static Dataset<Row> joinStoryProjectAndEpic(Dataset<Row> storiesDF,
-                                                       Dataset<Row> projectsDF,
-                                                       Dataset<Row> epicsDF) {
-        Dataset<Row> joinedDF = storiesDF
-                .join(projectsDF, storiesDF.col("project_id").equalTo(projectsDF.col("original_id")))
-                .join(epicsDF, storiesDF.col("epic_id").equalTo(epicsDF.col("original_id")), "left");
-
-        return joinedDF.select(
-                storiesDF.col("original_id"),
-                projectsDF.col("project_id"),
-                storiesDF.col("epic_id").alias("epic_id"),
-                storiesDF.col("story_name"),
-                storiesDF.col("is_finished")
-        );
-    }
-
-    /**
-     * Joins task dataset with status, user, story and date datasets to create a consolidated fact table for tasks.
-     *
-     * @param tasksDF Dataset containing task information with original IDs
-     * @param statusDF Dataset containing status information with original and mapped IDs
-     * @param userDF Dataset containing user information with original and mapped IDs
-     * @param storiesDF Dataset containing story information with original and mapped IDs
-     * @param datesDF Dataset containing date dimension information
-     * @return Dataset containing task original_id, status_id, assignee_id, tool_id, story_id, created_at,
-     *         completed_at, due_date, task_name, is_blocked, and is_storyless
-     */
-    public static Dataset<Row> joinFactTask(Dataset<Row> tasksDF,
-                                            Dataset<Row> statusDF,
-                                            Dataset<Row> userDF,
-                                            Dataset<Row> storiesDF,
-                                            Dataset<Row> datesDF) {
-
-        Dataset<Row> joinedDF = tasksDF
-                .join(statusDF, tasksDF.col("status_id").equalTo(statusDF.col("original_id")))
-                .join(userDF, tasksDF.col("user_id").equalTo(userDF.col("original_id")))
-                .join(storiesDF, tasksDF.col("story_id").equalTo(storiesDF.col("original_id")));
-
-        joinedDF = mapDateColumn(joinedDF, datesDF, "created_at", "created_date_id");
-        joinedDF = mapDateColumn(joinedDF, datesDF, "completed_at", "completed_date_id");
-        joinedDF = mapDateColumn(joinedDF, datesDF, "due_date", "due_date_id");
-
-        return joinedDF.select(
-                tasksDF.col("original_id"),
-                statusDF.col("status_id"),
-                userDF.col("user_id").as("assignee_id"),
-                tasksDF.col("tool_id"),
-                storiesDF.col("story_id"),
-                col("created_date_id").as("created_at"),
-                col("completed_date_id").as("completed_at"),
-                col("due_date_id").as("due_date"),
-                tasksDF.col("task_name"),
-                tasksDF.col("is_blocked"),
-                tasksDF.col("is_storyless")
-        );
-    }
-
-    /**
-     * Joins issue dataset with status, user, project and date datasets to create a consolidated fact table for issues.
-     *
-     * @param issuesDF Dataset containing issue information with original IDs
-     * @param statusDF Dataset containing status information with original and mapped IDs
-     * @param userDF Dataset containing user information with original and mapped IDs
-     * @param projectDF Dataset containing project information with original and mapped IDs
-     * @param datesDF Dataset containing date dimension information
-     * @return Dataset containing issue original_id, status_id, assignee_id, project_id, created_at,
-     *         completed_at, and issue_name
-     */
-    public static Dataset<Row> joinFactIssue(Dataset<Row> issuesDF,
-                                             Dataset<Row> statusDF,
-                                             Dataset<Row> userDF,
-                                             Dataset<Row> projectDF,
-                                             Dataset<Row> issueTypeDF,
-                                             Dataset<Row> issueSeverityDF,
-                                             Dataset<Row> issuePriorityDF,
-                                             Dataset<Row> datesDF) {
-
-        Dataset<Row> joinedDF = issuesDF
-                .join(statusDF, issuesDF.col("status_id").equalTo(statusDF.col("original_id")))
-                .join(userDF, issuesDF.col("user_id").equalTo(userDF.col("original_id")))
-                .join(projectDF, issuesDF.col("project_id").equalTo(projectDF.col("original_id")))
-                .join(issueTypeDF, issuesDF.col("type_id").equalTo(issueTypeDF.col("original_id")))
-                .join(issuePriorityDF, issuesDF.col("priority_id").equalTo(issuePriorityDF.col("original_id")))
-                .join(issueSeverityDF, issuesDF.col("severity_id").equalTo(issueSeverityDF.col("original_id")));
-
-        joinedDF = mapDateColumn(joinedDF, datesDF, "created_at", "created_date_id");
-        joinedDF = mapDateColumn(joinedDF, datesDF, "completed_at", "completed_date_id");
-
-        return joinedDF.select(
-                issuesDF.col("original_id"),
-                statusDF.col("status_id"),
-                userDF.col("user_id").as("assignee_id"),
-                projectDF.col("project_id"),
-                issueTypeDF.col("type_id"),
-                issueSeverityDF.col("severity_id"),
-                issuePriorityDF.col("priority_id"),
-                col("created_date_id").as("created_at"),
-                col("completed_date_id").as("completed_at"),
-                issuesDF.col("issue_name")
-        );
-    }
-
-    /**
-     * Helper method that maps a date column to its corresponding date dimension key.
-     * Performs a left join with the date dimension table and renames the resulting date_id column.
-     *
-     * @param df Input DataFrame containing the date column to be mapped
-     * @param datesDF Date dimension DataFrame (must include: date_date, date_id)
-     * @param dateColumn Name of the date column in the input DataFrame to be mapped
-     * @param outputColumn Name to be given to the resulting date dimension key column
-     * @return DataFrame with the date column mapped to its dimension key
-     */
-    private static Dataset<Row> mapDateColumn(Dataset<Row> df, Dataset<Row> datesDF, String dateColumn, String outputColumn) {
-        return df.join(datesDF,
-                        df.col(dateColumn).cast("date").equalTo(datesDF.col("date_date")),
-                        "left")
-                .withColumnRenamed("date_id", outputColumn)
-                .drop("date_date", "month", "year", "quarter", "day_of_week",
-                        "day_of_month", "day_of_year", "is_weekend");
-    }
-
-    /**
      * Executes the complete Taiga ETL (Extract, Transform, Load) process.
      * The process includes:
      * Authentication with Taiga API
@@ -691,7 +467,7 @@ public class TaigaService {
      * @throws IllegalStateException if authentication fails or no projects are found
      */
     //Remove post construct annotation after login is done
-    @PostConstruct
+//    @PostConstruct
     public void taigaEtl() {
         try {
             authenticateTaiga("Man_Olito", "Manolito");
@@ -735,7 +511,7 @@ public class TaigaService {
             Dataset<Row> transformedProject = transformer.transformProjects(projectDF);
             Dataset<Row> transformedRoles = transformer.transformRoles(projectDF);
             Dataset<Row> transformedUsers = transformer.transformedUserProjects(projectDF);
-            transformedUsers = joinUserProject(transformedUsers, dataWarehouseLoader.loadDimensionWithoutTool("projects"));
+            transformedUsers = joinUtils.joinUserProject(transformedUsers, dataWarehouseLoader.loadDimensionWithoutTool("projects"));
             dataWarehouseLoader.save(transformedProject, "projects");
             dataWarehouseLoader.save(transformedRoles, "roles");
             dataWarehouseLoader.save(transformedUsers, "users");
@@ -752,9 +528,9 @@ public class TaigaService {
         List<Dataset<Row>> tasksList = handleTasks();
         for (Dataset<Row> taskDF : tasksList) {
             Dataset<Row> transformedStatus = transformer.transformStatus(taskDF);
-            transformedStatus = joinStatusProject(transformedStatus, dataWarehouseLoader.loadDimensionWithoutTool("projects"));
+            transformedStatus = joinUtils.joinStatusProject(transformedStatus, dataWarehouseLoader.loadDimensionWithoutTool("projects"));
             Dataset<Row> transformedTags = transformer.transformTags(taskDF);
-            transformedTags = joinTagProject(transformedTags, dataWarehouseLoader.loadDimensionWithoutTool("projects"));
+            transformedTags = joinUtils.joinTagProject(transformedTags, dataWarehouseLoader.loadDimensionWithoutTool("projects"));
 
             dataWarehouseLoader.save(transformedStatus, "status");
             dataWarehouseLoader.save(transformedTags, "tags");
@@ -771,7 +547,7 @@ public class TaigaService {
         List<Dataset<Row>> epicsList = handleEpics();
         for (Dataset<Row> epicDF : epicsList) {
             Dataset<Row> transformedEpic = transformer.transformEpics(epicDF);
-            transformedEpic = joinEpicProject(transformedEpic, dataWarehouseLoader.loadDimensionWithoutTool("projects"));
+            transformedEpic = joinUtils.joinEpicProject(transformedEpic, dataWarehouseLoader.loadDimensionWithoutTool("projects"));
             dataWarehouseLoader.save(transformedEpic, "epics");
         }
     }
@@ -786,7 +562,7 @@ public class TaigaService {
         List<Dataset<Row>> storiesList = handleUserStories();
         for (Dataset<Row> storiesDF : storiesList) {
             Dataset<Row> transformedStories = transformer.transformUserStories(storiesDF);
-            transformedStories = joinStoryProjectAndEpic(transformedStories,
+            transformedStories = joinUtils.joinStoryProjectAndEpic(transformedStories,
                     dataWarehouseLoader.loadDimensionWithoutTool("projects"),
                     dataWarehouseLoader.loadDimensionWithoutTool("epics")
             );
@@ -804,7 +580,7 @@ public class TaigaService {
         List<Dataset<Row>> tasksList = handleTasks();
         for (Dataset<Row> factTaskDF : tasksList) {
             Dataset<Row> transformedFactTask = transformer.transformTasks(factTaskDF);
-            transformedFactTask = joinFactTask(transformedFactTask,
+            transformedFactTask = joinUtils.joinFactTask(transformedFactTask,
                 dataWarehouseLoader.loadDimension("status"),
                 dataWarehouseLoader.loadDimension("users"),
                 dataWarehouseLoader.loadDimension("stories"),
@@ -823,7 +599,7 @@ public class TaigaService {
         List<Dataset<Row>> issuesList = handleIssueType();
         for (Dataset<Row> issueDF : issuesList) {
             Dataset<Row> transformedIssueType = transformer.transformIssueTypes(issueDF);
-            transformedIssueType = joinIssueProject(transformedIssueType,
+            transformedIssueType = joinUtils.joinIssueProject(transformedIssueType,
                     dataWarehouseLoader.loadDimensionWithoutTool("projects"), "type_name");
             dataWarehouseLoader.save(transformedIssueType, "issue_type");
         }
@@ -839,7 +615,7 @@ public class TaigaService {
         List<Dataset<Row>> issuePriorityList = handleIssuePriority();
         for (Dataset<Row> issuePriorityDF : issuePriorityList) {
             Dataset<Row> transformedIssuePriority = transformer.transformIssuePriority(issuePriorityDF);
-            transformedIssuePriority = joinIssueProject(transformedIssuePriority,
+            transformedIssuePriority = joinUtils.joinIssueProject(transformedIssuePriority,
                     dataWarehouseLoader.loadDimensionWithoutTool("projects"), "priority_name");
             dataWarehouseLoader.save(transformedIssuePriority, "issue_priority");
         }
@@ -855,7 +631,7 @@ public class TaigaService {
         List<Dataset<Row>> issueSeverityList = handleIssueSeverity();
         for (Dataset<Row> issueSeverityDF : issueSeverityList) {
             Dataset<Row> transformedIssueSeverity = transformer.transformIssueSeverity(issueSeverityDF);
-            transformedIssueSeverity = joinIssueProject(transformedIssueSeverity,
+            transformedIssueSeverity = joinUtils.joinIssueProject(transformedIssueSeverity,
                     dataWarehouseLoader.loadDimensionWithoutTool("projects"), "severity_name");
             dataWarehouseLoader.save(transformedIssueSeverity, "issue_severity");
         }
@@ -871,11 +647,11 @@ public class TaigaService {
         List<Dataset<Row>> issuesList = handleIssues();
         for (Dataset<Row> factIssueDF : issuesList) {
             Dataset<Row> transformedStatusIssues = transformer.transformStatus(factIssueDF);
-            transformedStatusIssues = joinStatusProject(transformedStatusIssues, dataWarehouseLoader.loadDimensionWithoutTool("projects"));
+            transformedStatusIssues = joinUtils.joinStatusProject(transformedStatusIssues, dataWarehouseLoader.loadDimensionWithoutTool("projects"));
             dataWarehouseLoader.save(transformedStatusIssues, "issue_status");
 
             Dataset<Row> transformedFactIssue = transformer.transformIssues(factIssueDF);
-            transformedFactIssue = joinFactIssue(transformedFactIssue,
+            transformedFactIssue = joinUtils.joinFactIssue(transformedFactIssue,
                     dataWarehouseLoader.loadDimension("issue_status"),
                     dataWarehouseLoader.loadDimension("users"),
                     dataWarehouseLoader.loadDimensionWithoutTool("projects"),
