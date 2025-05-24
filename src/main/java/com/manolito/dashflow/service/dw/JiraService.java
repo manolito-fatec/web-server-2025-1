@@ -34,7 +34,7 @@ public class JiraService {
     private final JoinUtils joinUtils;
     private final TasksDataWarehouseLoader dataWarehouseLoader;
     private final JiraConfig jiraConfig;
-    private List<String> projectKeys;
+    private List<String> projectIds;
     private JiraAuthDto buildAuthDto() {
         return JiraAuthDto.builder()
                 .email(jiraConfig.getEmail())
@@ -107,7 +107,7 @@ public class JiraService {
         String jsonResponse = fetchDataFromJira(JIRA.getBaseUrl() + PROJECT.getPath(), buildAuthDto());
         Dataset<Row> df = utils.fetchDataAsDataFrame(jsonResponse);
 
-        projectKeys = df.select("key")
+        projectIds = df.select("id")
                 .as(Encoders.STRING())
                 .collectAsList();
     }
@@ -121,11 +121,12 @@ public class JiraService {
     public List<Dataset<Row>> handleUsers() {
         List<Dataset<Row>> usersData = new ArrayList<>();
 
-        for (String projectKey : projectKeys) {
-            String endpoint = TASKS.getPath().replace("{projectKey}", projectKey);
+        for (String projectId : projectIds) {
+            String endpoint = USERS.getPath();
             Dataset<Row> userDF = fetchAndConvertToDataFrame(endpoint, "users", buildAuthDto());
 
             if (userDF != null && !userDF.isEmpty()) {
+                userDF = userDF.withColumn("project_id", functions.lit(projectId));
                 usersData.add(userDF);
             }
         }
@@ -175,7 +176,7 @@ public class JiraService {
     public List<Dataset<Row>> handleTasks() {
         List<Dataset<Row>> tasksData = new ArrayList<>();
 
-        for (String projectKey : projectKeys) {
+        for (String projectKey : projectIds) {
             String endpoint = TASKS.getPath().replace("{projectKey}", projectKey);
             Dataset<Row> taskDF = fetchAndConvertToDataFrame(endpoint, "tasks", buildAuthDto());
 
@@ -195,7 +196,7 @@ public class JiraService {
      */
     public List<Dataset<Row>> handleTags() {
         List<Dataset<Row>> tagsData = new ArrayList<>();
-        for (String projectKey : projectKeys) {
+        for (String projectKey : projectIds) {
             String endpoint = TASKS.getPath().replace("{projectKey}", projectKey);
             Dataset<Row> tagsDF = fetchAndConvertToDataFrame(endpoint, "tags", buildAuthDto());
 
