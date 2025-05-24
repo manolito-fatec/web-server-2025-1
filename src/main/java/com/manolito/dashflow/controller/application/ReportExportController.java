@@ -1,5 +1,6 @@
 package com.manolito.dashflow.controller.application;
 
+import java.util.List;
 import java.util.NoSuchElementException;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.manolito.dashflow.component.ExportCsvComponent;
+import com.manolito.dashflow.dto.application.TableAdminDto;
 
 @Tag(name = "Export Controller", description = "Export de arquivo CSV")
 @RestController
@@ -67,6 +69,27 @@ public class ReportExportController {
         headers.setContentDispositionFormData("attachment", "paulinho.csv");
         byte[] csvBytes = exportCsvComponent.generateCsvManager().getBytes();
         return new ResponseEntity<>(csvBytes, headers, HttpStatus.OK);
+        } catch (NoSuchElementException noSuchElementException) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        } catch (IllegalArgumentException illegalArgumentException) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        } catch (RuntimeException runtimeException) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal Server Error " + runtimeException.getMessage());
+        }
+    }
+
+    @GetMapping("/admin/table")
+    @Operation(summary = "tabela de dados do dashboard do Admin", description = "Busca a lista de dados da tabela na tela de admin ")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Envio de dados para tabela administrador concluída com sucesso"),
+            @ApiResponse(responseCode = "400", description = "Requisição mal formulada."),
+            @ApiResponse(responseCode = "408", description = "Tempo de resposta excedido."),
+            @ApiResponse(responseCode = "500", description = "Erro interno do servidor")
+    })
+    public ResponseEntity<?> generateDataTable() {
+        try {
+            List<TableAdminDto> listDataTable = exportCsvComponent.generateDataTable();
+            return ResponseEntity.status(HttpStatus.OK).body(listDataTable);
         } catch (NoSuchElementException noSuchElementException) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         } catch (IllegalArgumentException illegalArgumentException) {

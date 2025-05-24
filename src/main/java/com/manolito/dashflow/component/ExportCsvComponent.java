@@ -1,11 +1,14 @@
 package com.manolito.dashflow.component;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
 
 import com.manolito.dashflow.dto.application.ExportCsvAdminDto;
 import com.manolito.dashflow.dto.application.ExportCsvManagerDto;
+import com.manolito.dashflow.dto.application.TableAdminDto;
 import com.manolito.dashflow.repository.application.ExportCsvRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -67,5 +70,18 @@ public class ExportCsvComponent {
             }
         }
         return csvManagerContent.toString();
+    }
+
+    /**
+     * Generates a list of administrative data for display in a table.
+     *
+     * @return a list of {@link TableAdminDto} containing the project name, manager,
+     *         and number of operators.
+     */
+    public List<TableAdminDto> generateDataTable ()
+    {
+        return exportRepository.getAllCurrentManagerAndProjectAndQuantityOfOperatorsAndQuantityOfCard().stream()
+                .map(dt -> new TableAdminDto(dt.getProject(), dt.getManager(), dt.getQuantityOfOperators()))
+                .collect(Collectors.toList());
     }
 }
