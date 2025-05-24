@@ -94,7 +94,7 @@ public class TaigaService {
         List<Dataset<Row>> tasksData = new ArrayList<>();
 
         for (Long projectId : projectIds) {
-            String endpoint = TASKS.getPath() + "?project=" + projectId;
+            String endpoint = TASKS.getPath() + "?project=" + projectId + "&page_size=500";
             Dataset<Row> taskDF = fetchAndConvertToDataFrame(endpoint, "fact_tasks");
             tasksData.add(taskDF);
         }
