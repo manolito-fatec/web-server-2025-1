@@ -1,6 +1,7 @@
 package com.manolito.dashflow.service;
 
 import com.manolito.dashflow.dto.dw.IssueCountDto;
+import com.manolito.dashflow.dto.dw.IssueFilterRequestDto;
 import com.manolito.dashflow.enums.IssuePriority;
 import com.manolito.dashflow.enums.IssueSeverity;
 import com.manolito.dashflow.repository.application.IssuesDataWarehouseRepository;
@@ -31,45 +32,72 @@ public class IssuesServiceTest {
     private final IssuePriority TEST_PRIORITY = IssuePriority.HIGH;
 
     @Test
-    @DisplayName("getIssueCountsByProjectSeverityAndPriority - should return counts when issues exist")
-    void getIssueCountsByProjectSeverityAndPriority_whenIssuesExist_shouldReturnCounts() {
-        when(issuesDataWarehouseRepository.getIssueCountByType(TEST_PROJECT_ID, TEST_SEVERITY.getValue(), TEST_PRIORITY.getValue(), "Bug"))
-                .thenReturn(Optional.of(5));
-        when(issuesDataWarehouseRepository.getIssueCountByType(TEST_PROJECT_ID, TEST_SEVERITY.getValue(), TEST_PRIORITY.getValue(), "Enhancement"))
-                .thenReturn(Optional.of(3));
-        when(issuesDataWarehouseRepository.getIssueCountByType(TEST_PROJECT_ID, TEST_SEVERITY.getValue(), TEST_PRIORITY.getValue(), "Question"))
-                .thenReturn(Optional.of(1));
+    @DisplayName("getIssueCountsByFilter - should return counts when issues exist with filters")
+    void getIssueCountsByFilter_whenIssuesExistWithFilters_shouldReturnCounts() {
+        IssueFilterRequestDto filter = IssueFilterRequestDto.builder()
+                .projectId(TEST_PROJECT_ID)
+                .severities(List.of(TEST_SEVERITY))
+                .priorities(List.of(TEST_PRIORITY))
+                .build();
 
-        List<IssueCountDto> result = issuesService.getIssueCountsByProjectSeverityAndPriority(
-                TEST_PROJECT_ID, TEST_SEVERITY, TEST_PRIORITY);
+        List<IssueCountDto> expected = List.of(
+                new IssueCountDto("Bug", 5),
+                new IssueCountDto("Enhancement", 3),
+                new IssueCountDto("Question", 1)
+        );
+
+        when(issuesDataWarehouseRepository.getIssueCountsByFilter(filter))
+                .thenReturn(expected);
+
+        List<IssueCountDto> result = issuesService.getIssueCountsByFilter(filter);
 
         assertEquals(3, result.size());
-        assertTrue(result.stream().anyMatch(ic -> "Bug".equals(ic.getType()) && ic.getCount() == 5));
-        assertTrue(result.stream().anyMatch(ic -> "Enhancement".equals(ic.getType()) && ic.getCount() == 3));
-        assertTrue(result.stream().anyMatch(ic -> "Question".equals(ic.getType()) && ic.getCount() == 1));
-
-        verify(issuesDataWarehouseRepository, times(3)).getIssueCountByType(anyString(), anyString(), anyString(), anyString());
+        assertEquals(expected, result);
+        verify(issuesDataWarehouseRepository).getIssueCountsByFilter(filter);
     }
 
     @Test
-    @DisplayName("getIssueCountsByProjectSeverityAndPriority - should return empty list when no issues found")
-    void getIssueCountsByProjectSeverityAndPriority_whenNoIssues_shouldReturnEmptyList() {
-        when(issuesDataWarehouseRepository.getIssueCountByType(TEST_PROJECT_ID, TEST_SEVERITY.getValue(), TEST_PRIORITY.getValue(), "Bug"))
-                .thenReturn(Optional.of(0));
-        when(issuesDataWarehouseRepository.getIssueCountByType(TEST_PROJECT_ID, TEST_SEVERITY.getValue(), TEST_PRIORITY.getValue(), "Enhancement"))
-                .thenReturn(Optional.of(0));
-        when(issuesDataWarehouseRepository.getIssueCountByType(TEST_PROJECT_ID, TEST_SEVERITY.getValue(), TEST_PRIORITY.getValue(), "Question"))
-                .thenReturn(Optional.of(0));
+    @DisplayName("getIssueCountsByFilter - should return counts when issues exist without filters")
+    void getIssueCountsByFilter_whenIssuesExistWithoutFilters_shouldReturnCounts() {
+        IssueFilterRequestDto filter = IssueFilterRequestDto.builder()
+                .projectId(TEST_PROJECT_ID)
+                .build();
 
-        List<IssueCountDto> result = issuesService.getIssueCountsByProjectSeverityAndPriority(
-                TEST_PROJECT_ID, TEST_SEVERITY, TEST_PRIORITY);
+        List<IssueCountDto> expected = List.of(
+                new IssueCountDto("Bug", 2),
+                new IssueCountDto("Question", 1)
+        );
 
-        assertEquals(3, result.size());
-        assertEquals(0, result.get(0).getCount());
-        assertEquals(0, result.get(1).getCount());
-        assertEquals(0, result.get(2).getCount());
+        when(issuesDataWarehouseRepository.getIssueCountsByFilter(filter))
+                .thenReturn(expected);
 
-        verify(issuesDataWarehouseRepository, times(3)).getIssueCountByType(anyString(), anyString(), anyString(), anyString());
+        List<IssueCountDto> result = issuesService.getIssueCountsByFilter(filter);
+
+        assertEquals(2, result.size());
+        assertEquals(expected, result);
+        verify(issuesDataWarehouseRepository).getIssueCountsByFilter(filter);
+    }
+
+    @Test
+    @DisplayName("getIssueCountsByFilter - should throw when filter is null")
+    void getIssueCountsByFilter_whenFilterIsNull_shouldThrow() {
+        assertThrows(IllegalArgumentException.class,
+                () -> issuesService.getIssueCountsByFilter(null));
+
+        verifyNoInteractions(issuesDataWarehouseRepository);
+    }
+
+    @Test
+    @DisplayName("getIssueCountsByFilter - should throw when projectId is null")
+    void getIssueCountsByFilter_whenProjectIdIsNull_shouldThrow() {
+        IssueFilterRequestDto filter = IssueFilterRequestDto.builder()
+                .projectId(null)
+                .build();
+
+        assertThrows(IllegalArgumentException.class,
+                () -> issuesService.getIssueCountsByFilter(filter));
+
+        verifyNoInteractions(issuesDataWarehouseRepository);
     }
 
     @Test
@@ -86,7 +114,7 @@ public class IssuesServiceTest {
         List<IssueCountDto> result = issuesService.getAllCurrentIssuesGroupedByType(TEST_PROJECT_ID);
 
         assertEquals(expected.size(), result.size());
-        assertTrue(result.containsAll(expected));
+        assertEquals(expected, result);
         verify(issuesDataWarehouseRepository).getAllCurrentIssuesGroupedByType(TEST_PROJECT_ID);
     }
 
