@@ -161,15 +161,19 @@ public class JoinUtils {
     }
 
     /**
-     * Joins issue dataset with status, user, project and date datasets to create a consolidated fact table for issues.
+     * Joins issue dataset with status, user, project, issue type, severity, priority, and date datasets
+     * to create a consolidated fact table for issues.
      *
      * @param issuesDF Dataset containing issue information with original IDs
      * @param statusDF Dataset containing status information with original and mapped IDs
      * @param userDF Dataset containing user information with original and mapped IDs
      * @param projectDF Dataset containing project information with original and mapped IDs
+     * @param issueTypeDF Dataset containing issue type information with original and mapped IDs
+     * @param issueSeverityDF Dataset containing issue severity information with original and mapped IDs
+     * @param issuePriorityDF Dataset containing issue priority information with original and mapped IDs
      * @param datesDF Dataset containing date dimension information
-     * @return Dataset containing issue original_id, status_id, assignee_id, project_id, created_at,
-     *         completed_at, and issue_name
+     * @return Dataset containing issue original_id, status_id, assignee_id, project_id, type_id,
+     *         severity_id, priority_id, created_at, completed_at, and issue_name
      */
     public Dataset<Row> joinFactIssue(Dataset<Row> issuesDF,
                                              Dataset<Row> statusDF,
