@@ -28,10 +28,13 @@ public class TrelloHandler implements ToolHandler{
                 break;
             case USERS:
                 trelloService.handleUsers();
+                break;
             case LISTS:
                 trelloService.handleLists();
+                break;
             case TAGS:
                 trelloService.handleTags();
+                break;
             default:
                 throw new RuntimeException("Unsupported Trello Object");
         }
