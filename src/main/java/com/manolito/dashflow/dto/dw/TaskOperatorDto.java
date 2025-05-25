@@ -8,7 +8,7 @@ import lombok.*;
 @NoArgsConstructor
 @Builder
 public class TaskOperatorDto {
-    private String OperatorName;
-    private Integer OperatorId;
+    private String operatorName;
+    private Integer operatorId;
     private Integer count;
 }

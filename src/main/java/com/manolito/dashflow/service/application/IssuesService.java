@@ -1,6 +1,7 @@
 package com.manolito.dashflow.service.application;
 
 import com.manolito.dashflow.dto.dw.IssueCountDto;
+import com.manolito.dashflow.dto.dw.IssueFilterRequestDto;
 import com.manolito.dashflow.enums.IssuePriority;
 import com.manolito.dashflow.enums.IssueSeverity;
 import com.manolito.dashflow.repository.application.IssuesDataWarehouseRepository;
@@ -17,27 +18,24 @@ public class IssuesService {
     private final IssuesDataWarehouseRepository issuesDataWarehouseRepository;
 
     /**
-     * Retrieves the count of issues for a specific project, severity, and priority, grouped by issue type.
+     * Retrieves the count of issues grouped by type for a specific project with optional severity and priority filters.
      *
-     * @param projectId the ID of the project to query issues for
-     * @param severity the severity level of the issues to filter
-     * @param priority the priority level of the issues to filter
-     * @return a list of IssueCount objects containing issue type and count
+     * @param filter the filter criteria containing:
+     *               <ul>
+     *                 <li><b>projectId</b> - ID of the project to query issues for (required)</li>
+     *                 <li><b>severities</b> - list of severity levels to filter by (optional, returns all if null)</li>
+     *                 <li><b>priorities</b> - list of priority levels to filter by (optional, returns all if null)</li>
+     *               </ul>
+     * @return list of IssueCountDto objects containing issue type and count
      * @throws NoSuchElementException if no issues are found for the given criteria
+     * @throws IllegalArgumentException if the filter or projectId is null
      */
-    public List<IssueCountDto> getIssueCountsByProjectSeverityAndPriority(
-            String projectId, IssueSeverity severity, IssuePriority priority) {
+    public List<IssueCountDto> getIssueCountsByFilter(IssueFilterRequestDto filter) {
+        if (filter == null || filter.getProjectId() == null) {
+            throw new IllegalArgumentException("Filter and project ID must not be null");
+        }
 
-        List<IssueCountDto> result = new ArrayList<>();
-
-        result.add(new IssueCountDto("Bug",
-                issuesDataWarehouseRepository.getIssueCountByType(projectId, severity.getValue(), priority.getValue(), "Bug").orElse(0)));
-        result.add(new IssueCountDto("Enhancement",
-                issuesDataWarehouseRepository.getIssueCountByType(projectId, severity.getValue(), priority.getValue(), "Enhancement").orElse(0)));
-        result.add(new IssueCountDto("Question",
-                issuesDataWarehouseRepository.getIssueCountByType(projectId, severity.getValue(), priority.getValue(), "Question").orElse(0)));
-
-        return result;
+        return issuesDataWarehouseRepository.getIssueCountsByFilter(filter);
     }
     
     /**

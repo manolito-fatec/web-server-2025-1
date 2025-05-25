@@ -2,6 +2,7 @@ package com.manolito.dashflow.controller.application;
 
 import com.manolito.dashflow.dto.application.auth.JwtAuthenticationResponseDto;
 import com.manolito.dashflow.dto.application.auth.LoginRequestDto;
+import com.manolito.dashflow.dto.application.auth.ResponseUserCreatedDto;
 import com.manolito.dashflow.dto.application.auth.SignupRequestDto;
 import com.manolito.dashflow.dto.application.auth.UserExistDto;
 import com.manolito.dashflow.service.application.AuthenticationService;
@@ -27,8 +28,8 @@ public class AuthenticationController {
             @ApiResponse(responseCode = "500", description = "Erro interno do servidor no cadastro de usuário.")
     })
     @PostMapping("/signup")
-    public ResponseEntity<JwtAuthenticationResponseDto> signup(@RequestBody SignupRequestDto request) {
-        JwtAuthenticationResponseDto response = authenticationService.signup(request);
+    public ResponseEntity<ResponseUserCreatedDto> signup(@RequestBody SignupRequestDto request) {
+        ResponseUserCreatedDto response = authenticationService.signup(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 

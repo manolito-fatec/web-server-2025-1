@@ -1,9 +1,6 @@
 package com.manolito.dashflow.repository.application;
 
-import com.manolito.dashflow.dto.dw.CreatedDoneDto;
-import com.manolito.dashflow.dto.dw.StatusCountDto;
-import com.manolito.dashflow.dto.dw.TaskOperatorDto;
-import com.manolito.dashflow.dto.dw.TaskTagDto;
+import com.manolito.dashflow.dto.dw.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -11,15 +8,14 @@ import org.springframework.stereotype.Repository;
 
 import java.sql.Date;
 import java.time.LocalDate;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @Repository
 @RequiredArgsConstructor
 public class TasksDataWarehouseRepository {
     private final NamedParameterJdbcTemplate jdbcTemplate;
+    private final String PROJECT_NAME = "project_name";
+    private final String ORIGINAL_ID = "original_id";
 
     public Optional<Integer> getTotalTasksByOperator(int userId) {
         String sql = "SELECT COUNT(ft.task_id) AS total_task_count " +
@@ -263,8 +259,8 @@ public class TasksDataWarehouseRepository {
 
     public Optional<Integer> getTotalCardsForManager(int userId) {
         String sql = "SELECT COUNT(ft.task_id) AS total_cards " +
-                "FROM dataflow_appl.users u " +
-                "LEFT JOIN dataflow_appl.accounts acc ON u.user_id = acc.user_id " +
+                "FROM dashflow_appl.users u " +
+                "LEFT JOIN dashflow_appl.accounts acc ON u.user_id = acc.user_id " +
                 "LEFT JOIN dw_dashflow.users tu ON acc.account = tu.original_id " +
                 "LEFT JOIN dw_dashflow.fact_tasks ft ON tu.user_id = ft.assignee_id " +
                 "LEFT JOIN dw_dashflow.status st ON ft.status_id = st.status_id " +
@@ -386,5 +382,255 @@ public class TasksDataWarehouseRepository {
         } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
         }
+    }
+
+    public Optional<Integer> getProjectCount() {
+        String sql = """
+                SELECT
+                    COUNT(prj.original_id)
+                FROM dw_dashflow.projects prj
+                WHERE prj.is_current = TRUE
+                """;
+        try {
+            Integer result = jdbcTemplate.queryForObject(sql, new HashMap<>(), Integer.class);
+            return Optional.ofNullable(result);
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
+    }
+
+    public List<TaskProjectDto> getTaskCountGroupByProject() {
+        String sql = """
+                SELECT
+                    COUNT(ft.task_id) AS total_cards,
+                    prj.original_id,
+                    prj.project_name
+                FROM dw_dashflow.fact_tasks ft
+                LEFT JOIN dw_dashflow.status st ON ft.status_id = st.status_id
+                LEFT JOIN dw_dashflow.projects prj ON st.project_id = prj.project_id
+                WHERE prj.is_current = TRUE
+                AND st.is_current = TRUE
+                GROUP BY prj.project_name, prj.original_id
+                """;
+
+        return jdbcTemplate.query(
+                sql,
+                (rs, rowNum) -> new TaskProjectDto(
+                        rs.getString(PROJECT_NAME),
+                        rs.getString(ORIGINAL_ID),
+                        rs.getInt("total_cards")
+                )
+        );
+    }
+
+    public List<ProjectDto> getProjectsByTool(Integer toolId) {
+        String sql = """
+                SELECT
+                    prj.original_id,
+                    prj.project_name
+                FROM dw_dashflow.projects prj
+                LEFT JOIN dw_dashflow.tools too ON prj.tool_id = too.tool_id
+                WHERE prj.is_current = TRUE
+                AND too.is_current = TRUE
+                AND too.tool_id = :toolId
+                """;
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("toolId", toolId);
+
+        return jdbcTemplate.query(
+                sql,
+                params,
+                (rs, rowNum) -> new ProjectDto(
+                        rs.getString(ORIGINAL_ID),
+                        rs.getString(PROJECT_NAME)
+                )
+        );
+    }
+
+    public List<UserDto> getUsersByProjectId(String projectId) {
+        String sql = """
+                SELECT
+                    us.original_id,
+                    us.user_name
+                FROM dw_dashflow.users us
+                LEFT JOIN dw_dashflow.tools too
+                    ON us.tool_id = too.tool_id
+                LEFT JOIN dw_dashflow.projects prj
+                    ON too.tool_id = prj.tool_id
+                WHERE us.is_current = TRUE
+                AND too.is_current = TRUE
+                AND prj.is_current = TRUE
+                AND prj.original_id = :projectId
+                """;
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("projectId", projectId);
+
+        return jdbcTemplate.query(
+                sql,
+                params,
+                (rs, rowNum) -> new UserDto(
+                        rs.getString(ORIGINAL_ID),
+                        rs.getString("user_name")
+                )
+        );
+    }
+
+    public List<UserTableDto> getUsersPaginated(int page, int pageSize) {
+        String sql = """
+                 SELECT
+                     appu.user_id AS user_id,
+                     appu.username AS user_name,
+                     appr.role_name AS user_role,
+                     appu.email as user_email,
+                     appu."password" as user_password,
+                     appt.tool_name,
+                     appt.tool_id,
+                     dwp.original_id AS project_id,
+                     dwp.project_name,
+                     appu.created_at AS created_at
+                 FROM dashflow_appl.users appu
+                 LEFT JOIN dashflow_appl.user_roles approle ON appu.user_id = approle.user_id
+                 LEFT JOIN dashflow_appl.roles appr ON approle.role_id = appr.role_id
+                 LEFT JOIN dashflow_appl.accounts appa ON appu.user_id = appa.user_id
+                 LEFT JOIN dashflow_appl.tools appt ON appa.tool_id = appt.tool_id
+                 LEFT JOIN dw_dashflow.users dwu ON appa.account = dwu.original_id AND dwu.is_current = TRUE
+                 LEFT JOIN dw_dashflow.fact_tasks dwft ON dwu.user_id = dwft.assignee_id
+                 LEFT JOIN dw_dashflow.stories dws ON dwft.story_id = dws.story_id AND dws.is_current = TRUE
+                 LEFT JOIN dw_dashflow.epics dwe ON dws.epic_id = dwe.epic_id AND dwe.is_current = TRUE
+                 LEFT JOIN dw_dashflow.projects dwp ON dwe.project_id = dwp.project_id AND dwp.is_current = TRUE
+                 WHERE appu.username <> 'admin' -- SKIP ADMIN USER
+                 GROUP BY
+                    appu.user_id, appu.username, appr.role_name, appt.tool_name,
+                    appt.tool_id, dwp.original_id, dwp.project_name, appu.created_at
+                 ORDER BY appu.username ASC
+                 LIMIT :limit OFFSET :offset
+                 """;
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("limit", pageSize);
+        params.put("offset", (page - 1) * pageSize);
+
+        return jdbcTemplate.query(
+                sql,
+                params,
+                (rs, rowNum) -> UserTableDto.builder()
+                        .userId(String.valueOf(rs.getInt("user_id")))
+                        .userName(rs.getString("user_name"))
+                        .userRole(rs.getString("user_role"))
+                        .userEmail(rs.getString("user_email"))
+                        .userPassword(rs.getString("user_password"))
+                        .toolName(rs.getString("tool_name"))
+                        .toolId(rs.getObject("tool_id", Integer.class))
+                        .projectId(rs.getString("project_id"))
+                        .projectName(rs.getString(PROJECT_NAME))
+                        .createdAt(rs.getTimestamp("created_at") != null ?
+                                rs.getTimestamp("created_at").toLocalDateTime().toLocalDate() :
+                                null)
+                        .build()
+        );
+    }
+
+    public int countAllApplicationUsers() {
+        String sql = "SELECT COUNT(*) FROM dashflow_appl.users";
+
+        Integer count = jdbcTemplate.getJdbcOperations().queryForObject(sql, Integer.class);
+        return count != null ? count : 0;
+    }
+    public List<ProjectTableDto> getProjectsPaginated(int page, int pageSize) {
+        String sql = """
+                SELECT
+                    prj.original_id AS project_id,
+                    prj.project_name,
+                    appu.username AS manager_username,
+                    COUNT(DISTINCT regular_users.user_id) AS user_count,
+                    appt.tool_id
+                FROM dashflow_appl.users appu
+                JOIN dashflow_appl.user_roles approle ON appu.user_id = approle.user_id
+                JOIN dashflow_appl.accounts appa ON appu.user_id = appa.user_id
+                JOIN dashflow_appl.tools appt ON appa.tool_id = appt.tool_id
+                JOIN dw_dashflow.projects prj ON appa.project = prj.original_id AND appt.tool_id = prj.tool_id
+                LEFT JOIN (
+                    SELECT approle2.user_id, appa2.project, appa2.tool_id
+                    FROM dashflow_appl.user_roles approle2
+                    JOIN dashflow_appl.accounts appa2 ON approle2.user_id = appa2.user_id
+                    WHERE approle2.role_id = 1
+                ) regular_users ON regular_users.project = prj.original_id AND regular_users.tool_id = prj.tool_id
+                WHERE appu.username <> 'admin'
+                AND approle.role_id = 2
+                GROUP BY
+                    prj.original_id,
+                    prj.project_name,
+                    appu.username,
+                    appt.tool_id
+                ORDER BY prj.project_name ASC
+                 LIMIT :limit OFFSET :offset
+                """;
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("limit", pageSize);
+        params.put("offset", (page - 1) * pageSize);
+
+        return jdbcTemplate.query(
+                sql,
+                params,
+                (rs, rowNum) -> ProjectTableDto.builder()
+                        .projectName(rs.getString(PROJECT_NAME))
+                        .projectId(rs.getString("project_id"))
+                        .managerName(rs.getString("manager_username"))
+                        .operatorCount(rs.getInt("user_count"))
+                        .toolId(rs.getInt("tool_id"))
+                        .build()
+        );
+    }
+
+    public int countAllProjects() {
+        String sql = """
+            SELECT COUNT(DISTINCT prj.original_id)
+            FROM dw_dashflow.projects prj
+            """;
+
+        Integer count = jdbcTemplate.getJdbcOperations().queryForObject(sql, Integer.class);
+        return count != null ? count : 0;
+    }
+  
+      public List<UserProjectDto> getProjectUsersByManagerId(String managerId) {
+        String sql = """
+                SELECT
+                    appu.username,
+                    appu.user_id,
+                    appa.project,
+                    prj.project_name
+                FROM dashflow_appl.users appu
+                JOIN dashflow_appl.user_roles approle ON appu.user_id = approle.user_id
+                JOIN dashflow_appl.accounts appa ON appu.user_id = appa.user_id
+                JOIN dashflow_appl.tools appt ON appa.tool_id = appt.tool_id
+                JOIN dw_dashflow.projects prj ON appa.project = prj.original_id AND appt.tool_id = prj.tool_id
+                WHERE appa.project IN (
+                    SELECT appa_inner.project
+                    FROM dashflow_appl.accounts appa_inner
+                    JOIN dashflow_appl.tools appt_inner ON appa_inner.tool_id = appt_inner.tool_id
+                    JOIN dw_dashflow.projects prj_inner ON appa_inner.project = prj_inner.original_id AND appt_inner.tool_id = prj_inner.tool_id
+                    WHERE appa_inner.user_id = :managerId
+                    AND prj_inner.is_current = TRUE
+                )
+                AND appu.user_id != :managerId  -- Exclude the manager
+                AND prj.is_current = TRUE
+                """;
+
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("managerId", Integer.valueOf(managerId));
+
+        return jdbcTemplate.query(
+                sql,
+                params,
+                (rs, rowNum) -> UserProjectDto.builder()
+                        .projectId(rs.getString("project"))
+                        .projectName(rs.getString(PROJECT_NAME))
+                        .userId(rs.getString("user_id"))
+                        .userName(rs.getString("username")).build()
+        );
     }
 }

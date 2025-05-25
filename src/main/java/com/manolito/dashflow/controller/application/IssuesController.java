@@ -1,6 +1,7 @@
 package com.manolito.dashflow.controller.application;
 
 import com.manolito.dashflow.dto.dw.IssueCountDto;
+import com.manolito.dashflow.dto.dw.IssueFilterRequestDto;
 import com.manolito.dashflow.enums.IssuePriority;
 import com.manolito.dashflow.enums.IssueSeverity;
 import com.manolito.dashflow.service.application.IssuesService;
@@ -25,8 +26,8 @@ import java.util.NoSuchElementException;
 public class IssuesController {
     private final IssuesService issuesService;
 
-    @GetMapping("/gestor/issue/{projectId}/{severity}/{priority}")
-    @Operation(summary = "Busca a quantidade de issues por projeto, severidade e prioridade",
+    @GetMapping("/gestor/filtered/{projectId}")
+    @Operation(summary = "Busca a quantidade de issues por projeto com filtros opcionais",
             description = "Retorna a contagem de issues agrupadas por tipo (bug, enhancement, question)")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Contagem de issues extraída com sucesso."),
@@ -34,21 +35,24 @@ public class IssuesController {
             @ApiResponse(responseCode = "404", description = "Nenhuma issue encontrada para os critérios fornecidos."),
             @ApiResponse(responseCode = "500", description = "Erro interno do servidor.")
     })
-    public ResponseEntity<?> getIssueCounts(
+    public ResponseEntity<?> getFilteredIssueCounts(
             @Parameter(description = "ID do projeto", required = true)
             @PathVariable String projectId,
 
-            @Parameter(description = "Grau de severidade da issue", required = true)
-            @PathVariable String severity,
+            @Parameter(description = "Graus de severidade da issue (opcional)")
+            @RequestParam(required = false) List<IssueSeverity> severities,
 
-            @Parameter(description = "Prioridade da issue", required = true)
-            @PathVariable String priority) {
+            @Parameter(description = "Prioridades da issue (opcional)")
+            @RequestParam(required = false) List<IssuePriority> priorities) {
 
         try {
-            return ResponseEntity.ok()
-                    .body(issuesService.getIssueCountsByProjectSeverityAndPriority(projectId, IssueSeverity.valueOf(severity), IssuePriority.valueOf(priority)));
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            IssueFilterRequestDto filter = IssueFilterRequestDto.builder()
+                    .projectId(projectId)
+                    .severities(severities)
+                    .priorities(priorities)
+                    .build();
+
+            return ResponseEntity.ok().body(issuesService.getIssueCountsByFilter(filter));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         } catch (Exception e) {

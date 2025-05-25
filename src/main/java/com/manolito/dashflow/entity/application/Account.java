@@ -11,20 +11,36 @@ import javax.persistence.*;
 @Builder
 public class Account {
 
-    @EmbeddedId
-    private AccountId id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "account_id")
+    private Integer accountId;
 
-    @MapsId("userId")
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private ApplicationUser applicationUser;
 
-    @MapsId("toolId")
     @ManyToOne
     @JoinColumn(name = "tool_id", nullable = false)
     private ApplicationTool tool;
 
+    @ManyToOne
+    @JoinColumn(name = "role_id", nullable = false)
+    private Role roleId;
+
     @Column(name = "account")
-    private String accountId;
+    private String accountIdTool;
+
+    @Column(name = "project")
+    private String projectIdTool;
+
+    public Account(ApplicationUser applicationUser, ApplicationTool applicationTool, Role roleId, String accountIdToll, String projectIdTool )
+    {
+        this.applicationUser = applicationUser;
+        this.tool = applicationTool;
+        this.roleId = roleId;
+        this.accountIdTool = accountIdToll;
+        this.projectIdTool = projectIdTool;
+    }
 }
 

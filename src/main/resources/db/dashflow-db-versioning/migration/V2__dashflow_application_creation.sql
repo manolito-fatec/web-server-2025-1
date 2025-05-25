@@ -20,10 +20,6 @@ CREATE TABLE IF NOT EXISTS tools(
     tool_name VARCHAR(255) NOT NULL
 );
 
-INSERT INTO dw_dashflow.tools(
-    tool_name)
-VALUES ('taiga');
-
 ----- ACCOUNTS TABLE -----
 
 CREATE TABLE IF NOT EXISTS accounts (
@@ -129,12 +125,10 @@ ON CONFLICT (role_id, permission_id) DO NOTHING;
 ----- LOGS TABLE -----
 CREATE TABLE IF NOT EXISTS audit_log (
     log_id SERIAL PRIMARY KEY,
-    user_id INT NOT NULL,
-    action_type VARCHAR(100) NOT NULL,
-    action_details TEXT,
-    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    success BOOLEAN NOT NULL,
+    user_id INT NULL,
+    request_method VARCHAR(10) NOT NULL,
+    request_uri VARCHAR(255) NOT NULL,
+    response_status INT,
     error_message TEXT,
-
-	CONSTRAINT fk_audit_log_users FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
