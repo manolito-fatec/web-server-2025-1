@@ -66,6 +66,22 @@ public class IssuesDataWarehouseRepository {
         Map<String, Object> params = new HashMap<>();
         params.put("projectId", filter.getProjectId());
 
+        // Handle severities List to append to the WHERE filter if not null
+        if (filter.getSeverities() != null && !filter.getSeverities().isEmpty()) {
+            sql.append(" AND sev.severity_name IN (:severities)");
+            params.put("severities", filter.getSeverities().stream()
+                    .map(IssueSeverity::getValue)
+                    .collect(Collectors.toList()));
+        }
+
+        // Handle priorities List to append to the WHERE filter if not null
+        if (filter.getPriorities() != null && !filter.getPriorities().isEmpty()) {
+            sql.append(" AND pri.priority_name IN (:priorities)");
+            params.put("priorities", filter.getPriorities().stream()
+                    .map(IssuePriority::getValue)
+                    .collect(Collectors.toList()));
+        }
+
         // Finally adds the GROUP BY clause with or without the severities and priorities filters
         sql.append(" GROUP BY typ.type_name");
 
