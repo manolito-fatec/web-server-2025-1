@@ -36,7 +36,7 @@ public class ExportCsvComponent {
         csvManagerContent.append(CSV_HEADER_ADMIN);
         List<ExportCsvAdminDto> csvRows = exportRepository.getAllCurrentManagerAndProjectAndQuantityOfOperatorsAndQuantityOfCard();
         if(!csvRows.isEmpty())
-        for (ExportCsvAdminDto rows : csvRows)
+            for (ExportCsvAdminDto rows : csvRows)
         {
             csvManagerContent.append(rows.getProject() == null ? "" : rows.getProject() ).append(",")
                       .append(rows.getManager()== null ? "" : rows.getManager()).append(",")
