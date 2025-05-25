@@ -22,12 +22,11 @@ public class ExportCsvComponent {
     private static final String CSV_HEADER_MANAGER = "Operator, Project, QuantityOfCards\n";
 
     /**
-     * Generates a CSV string from a list of {@link ExportCsvDto} objects.
-     * Each row in the resulting CSV represents one {@code ExportCsvDto}, with columns
+     * Generates a CSV string from a list of {@link ExportCsvAdminDto} objects.
+     * Each row in the resulting CSV represents one {@code ExportCsvAdminDto}, with columns
      * for project, manager, quantity of operators, and quantity of cards. The method
      * also prepends a header row defined by the {@code CSV_HEADER} constant.
      * 
-     * @param csvRows a list of {@code ExportCsvDto} objects representing the data rows
      * @return a {@code String} containing the generated CSV content
      */
     public String generateCsvAdmin()
@@ -36,7 +35,7 @@ public class ExportCsvComponent {
         csvManagerContent.append(CSV_HEADER_ADMIN);
         List<ExportCsvAdminDto> csvRows = exportRepository.getAllCurrentManagerAndProjectAndQuantityOfOperatorsAndQuantityOfCard();
         if(!csvRows.isEmpty())
-        for (ExportCsvAdminDto rows : csvRows)
+            for (ExportCsvAdminDto rows : csvRows)
         {
             csvManagerContent.append(rows.getProject() == null ? "" : rows.getProject() ).append(",")
                       .append(rows.getManager()== null ? "" : rows.getManager()).append(",")
@@ -52,7 +51,6 @@ public class ExportCsvComponent {
      * for operator, project, and quantity of cards. The method also prepends a header row
      * defined by the {@code CSV_HEADER_MANAGER} constant.
      *
-     * @param csvRows a list of {@code ExportCsvManagerDto} objects representing the data rows
      * @return a {@code String} containing the generated CSV content
      */
     public String generateCsvManager()
