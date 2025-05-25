@@ -13,13 +13,14 @@ public class JiraTransformer {
     private static final int TOOL_ID = 3;
     private final Dataset<Row> datesDimension;
 
-    public Dataset<Row> transformerUsers(Dataset<Row> rawData) {
+    public Dataset<Row> transformedUsers(Dataset<Row> rawData) {
         return rawData
                 .filter(col("accountType").equalTo("atlassian"))
                 .select(
                         col("accountId").as("original_id"),
                         lit(TOOL_ID).as("tool_id"),
-                        col("user_name")
+                        col("displayName").as("user_name"),
+                        col("project_id")
                 );
     }
 
@@ -36,7 +37,7 @@ public class JiraTransformer {
         return rawData
                 .select(
                         col("statusCategory.id").as("original_id"),
-                        col("statusCategory.name"),
+                        col("statusCategory.name").as("status_name"),
                         col("scope.project.id").as("project_id")
                 )
                 .distinct();
@@ -65,11 +66,20 @@ public class JiraTransformer {
                         explode(col("issues")).as("issue")
                 )
                 .select(
-                        col("issue.id").as("original_id"),
+                        col("issue.key").as("original_id"),
                         col("issue.fields.summary").as("task_name"),
                         col("issue.fields.status.statusCategory.id").as("status_id"),
-                        col("issue.fields.assignee.accountId").as("assignee_id"),
-                        lit(TOOL_ID).as("tool_id")
+                        col("issue.fields.assignee.accountId").as("user_id"),
+                        lit(TOOL_ID).as("tool_id"),
+                        col("issue.fields.created").cast("date").as("created_at"),
+                        when(col("issue.fields.resolutiondate").isNotNull(),
+                                col("issue.fields.resolutiondate").cast("date")).otherwise(null).as("completed_at"),
+                        when(col("issue.fields.duedate").isNotNull(),
+                                col("issue.fields.duedate").cast("date")).otherwise(null).as("due_date"),
+                        lit("0").as("epic_id"),
+                        lit("0").as("story_id"),
+                        lit(false).as("is_blocked"),
+                        lit(true).as("is_storyless")
                 );
     }
 }

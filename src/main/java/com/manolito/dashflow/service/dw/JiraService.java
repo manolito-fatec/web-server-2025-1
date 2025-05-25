@@ -4,6 +4,7 @@ import com.manolito.dashflow.config.JiraConfig;
 import com.manolito.dashflow.dto.dw.JiraAuthDto;
 import com.manolito.dashflow.loader.TasksDataWarehouseLoader;
 import com.manolito.dashflow.transformer.JiraTransformer;
+import com.manolito.dashflow.util.JoinUtils;
 import com.manolito.dashflow.util.SparkUtils;
 import lombok.RequiredArgsConstructor;
 import org.apache.http.HttpResponse;
@@ -14,6 +15,7 @@ import org.apache.http.util.EntityUtils;
 import org.apache.spark.sql.*;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -29,9 +31,10 @@ public class JiraService {
     private static final String APPLICATION_JSON = "application/json";
     private final SparkSession spark;
     private final SparkUtils utils;
+    private final JoinUtils joinUtils;
     private final TasksDataWarehouseLoader dataWarehouseLoader;
     private final JiraConfig jiraConfig;
-    private List<String> projectKeys;
+    private List<String> projectIds;
     private JiraAuthDto buildAuthDto() {
         return JiraAuthDto.builder()
                 .email(jiraConfig.getEmail())
@@ -104,7 +107,7 @@ public class JiraService {
         String jsonResponse = fetchDataFromJira(JIRA.getBaseUrl() + PROJECT.getPath(), buildAuthDto());
         Dataset<Row> df = utils.fetchDataAsDataFrame(jsonResponse);
 
-        projectKeys = df.select("key")
+        projectIds = df.select("id")
                 .as(Encoders.STRING())
                 .collectAsList();
     }
@@ -117,11 +120,15 @@ public class JiraService {
      */
     public List<Dataset<Row>> handleUsers() {
         List<Dataset<Row>> usersData = new ArrayList<>();
-        String endpoint = USERS.getPath();
-        Dataset<Row> userDF = fetchAndConvertToDataFrame(endpoint, "users", buildAuthDto());
 
-        if (userDF != null && !userDF.isEmpty()) {
-            usersData.add(userDF);
+        for (String projectId : projectIds) {
+            String endpoint = USERS.getPath();
+            Dataset<Row> userDF = fetchAndConvertToDataFrame(endpoint, "users", buildAuthDto());
+
+            if (userDF != null && !userDF.isEmpty()) {
+                userDF = userDF.withColumn("project_id", functions.lit(projectId));
+                usersData.add(userDF);
+            }
         }
         return usersData;
     }
@@ -169,7 +176,7 @@ public class JiraService {
     public List<Dataset<Row>> handleTasks() {
         List<Dataset<Row>> tasksData = new ArrayList<>();
 
-        for (String projectKey : projectKeys) {
+        for (String projectKey : projectIds) {
             String endpoint = TASKS.getPath().replace("{projectKey}", projectKey);
             Dataset<Row> taskDF = fetchAndConvertToDataFrame(endpoint, "tasks", buildAuthDto());
 
@@ -189,7 +196,7 @@ public class JiraService {
      */
     public List<Dataset<Row>> handleTags() {
         List<Dataset<Row>> tagsData = new ArrayList<>();
-        for (String projectKey : projectKeys) {
+        for (String projectKey : projectIds) {
             String endpoint = TASKS.getPath().replace("{projectKey}", projectKey);
             Dataset<Row> tagsDF = fetchAndConvertToDataFrame(endpoint, "tags", buildAuthDto());
 
@@ -232,7 +239,10 @@ public class JiraService {
     private void processUsersData(JiraTransformer transformer) {
         List<Dataset<Row>> usersList = handleUsers();
         for (Dataset<Row> userDF : usersList) {
-            Dataset<Row> transformedUsers = transformer.transformerUsers(userDF);
+            Dataset<Row> transformedUsers = transformer.transformedUsers(userDF);
+            transformedUsers = joinUtils.joinUserProject(transformedUsers,
+                    dataWarehouseLoader.loadDimensionWithoutTool("projects"));
+            dataWarehouseLoader.save(transformedUsers, "users");
         }
     }
 
@@ -246,6 +256,7 @@ public class JiraService {
         List<Dataset<Row>> projectsList = handleProjects();
         for (Dataset<Row> projectDF : projectsList) {
             Dataset<Row> transformedProjects = transformer.transformedProjects(projectDF);
+            dataWarehouseLoader.save(transformedProjects, "projects");
         }
     }
 
@@ -259,6 +270,9 @@ public class JiraService {
         List<Dataset<Row>> statusList = handleStatus();
         for (Dataset<Row> statusDF : statusList) {
             Dataset<Row> transformedStatus = transformer.transformedStatus(statusDF);
+            transformedStatus = joinUtils.joinStatusProject(transformedStatus,
+                    dataWarehouseLoader.loadDimensionWithoutTool("projects"));
+            dataWarehouseLoader.save(transformedStatus, "status");
         }
     }
 
@@ -272,6 +286,9 @@ public class JiraService {
         List<Dataset<Row>> tagsList = handleTags();
         for (Dataset<Row> tagsDF : tagsList) {
             Dataset<Row> transformedTags = transformer.transformedTags(tagsDF);
+            transformedTags = joinUtils.joinTagProject(transformedTags,
+                    dataWarehouseLoader.loadDimensionWithoutTool("projects"));
+            dataWarehouseLoader.save(transformedTags, "tags");
         }
     }
 
@@ -285,6 +302,34 @@ public class JiraService {
         List<Dataset<Row>> tasksList = handleTasks();
         for (Dataset<Row> taskDF : tasksList) {
             Dataset<Row> transformedTasks = transformer.transformedTasks(taskDF);
+            transformedTasks = joinUtils.joinFactTask(transformedTasks,
+                    dataWarehouseLoader.loadDimension("status"),
+                    dataWarehouseLoader.loadDimension("users"),
+                    dataWarehouseLoader.loadDimension("stories"),
+                    dataWarehouseLoader.loadDimensionWithoutIsCurrent("dates", "jira"));
+            dataWarehouseLoader.save(transformedTasks, "fact_tasks");
+        }
+    }
+
+    @PostConstruct
+    private void jiraEtl() {
+        try {
+            JiraTransformer transformer = new JiraTransformer(spark.emptyDataFrame());
+
+            getProjectsWhereUserIsMember();
+
+            processProjectsData(transformer);
+
+            processUsersData(transformer);
+
+            processStatusData(transformer);
+
+            processTagsData(transformer);
+
+            processTaskData(transformer);
+
+        } catch (Exception e) {
+            throw new RuntimeException("Jira ETL process failed", e);
         }
     }
 }
