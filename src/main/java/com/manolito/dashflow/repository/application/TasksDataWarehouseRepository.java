@@ -110,7 +110,10 @@ public class TasksDataWarehouseRepository {
                 "LEFT JOIN dw_dashflow.fact_tasks ft ON st.story_id = ft.story_id " +
                 "LEFT JOIN dw_dashflow.dates created_date ON ft.created_at = created_date.date_id  " +
                 "LEFT JOIN dw_dashflow.dates completed_date ON ft.completed_at = completed_date.date_id " +
-                "WHERE prj.original_id = :projectId";
+                "WHERE prj.original_id = :projectId " +
+                "AND prj.is_current = TRUE " +
+                "AND ep.is_current = TRUE " +
+                "AND st.is_current = TRUE";
 
         Map<String, Object> params = new HashMap<>();
         params.put("projectId", projectId);
@@ -201,6 +204,7 @@ public class TasksDataWarehouseRepository {
                 "LEFT JOIN dw_dashflow.status st " +
                 "ON ft.status_id = st.status_id " +
                 "WHERE prj.original_id = :projectId " +
+                "AND ep.is_current = TRUE " +
                 "AND st.is_current = TRUE " +
                 "GROUP BY st.status_name";
 
@@ -316,6 +320,9 @@ public class TasksDataWarehouseRepository {
                 "ON tt.tag_id = tag.tag_id "+
                 "WHERE prj.original_id = :projectId " +
                 "AND tag.is_current = TRUE " +
+                "AND prj.is_current = TRUE " +
+                "AND ep.is_current = TRUE " +
+                "AND sto.is_current = TRUE " +
                 "GROUP BY tag.tag_name";
 
         Map<String, Object> params = new HashMap<>();
@@ -344,8 +351,9 @@ public class TasksDataWarehouseRepository {
                 LEFT JOIN dw_dashflow.users us ON ft.assignee_id = us.user_id
                 WHERE prj.original_id = :projectId
                 AND prj.is_current = TRUE
-                AND ft.is_current = TRUE
-                GROUP BY ft.task_id
+                AND ep.is_current = TRUE
+                AND sto.is_current = TRUE
+                GROUP BY us.user_name, us.user_id
                 """;
 
         Map<String, Object> params = new HashMap<>();
