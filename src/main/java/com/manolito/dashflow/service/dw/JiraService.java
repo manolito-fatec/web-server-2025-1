@@ -13,6 +13,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.apache.spark.sql.*;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
@@ -22,9 +23,13 @@ import java.util.List;
 
 import static com.manolito.dashflow.enums.JiraEndpoints.*;
 import static com.manolito.dashflow.enums.ProjectManagementTool.JIRA;
+import static org.apache.spark.sql.functions.col;
+import static org.apache.spark.sql.functions.size;
+import static org.apache.spark.sql.functions.explode;
 
 @Service
 @RequiredArgsConstructor
+@DependsOn("taigaService")
 public class JiraService {
 
     private static final String ACCEPT_HEADER = "Accept";
@@ -311,6 +316,64 @@ public class JiraService {
         }
     }
 
+    public Dataset<Row> saveTaskTagToDatabase() {
+        try {
+            List<Dataset<Row>> tagsList = handleTags();
+            List<Dataset<Row>> processedTaskTags = new ArrayList<>();
+
+            for (Dataset<Row> tagsDF : tagsList) {
+                Dataset<Row> explodedIssues = tagsDF
+                        .select(explode(col("issues")).as("issue"))
+                        .select(
+                                col("issue.key").as("task_original_id"),
+                                col("issue.fields.labels").as("labels"),
+                                col("issue.fields.project.id").as("project_id")
+                        );
+
+                Dataset<Row> taskTagPairs = explodedIssues
+                        .filter(size(col("labels")).gt(0))
+                        .select(
+                                col("task_original_id"),
+                                explode(col("labels")).as("tag_name"),
+                                col("project_id")
+                        );
+
+                processedTaskTags.add(taskTagPairs);
+            }
+
+            Dataset<Row> allTaskTags = processedTaskTags.stream()
+                    .reduce(Dataset::union)
+                    .orElse(spark.emptyDataFrame());
+
+            Dataset<Row> tasks = dataWarehouseLoader.loadDimensionWithoutIsCurrent("fact_tasks", "jira")
+                    .select(
+                            col("task_id").as("task_id"),
+                            col("original_id").as("task_original_id")
+                    );
+
+            Dataset<Row> tags = dataWarehouseLoader.loadDimensionWithoutIsCurrent("tags", "jira")
+                    .select(
+                            col("tag_id").as("tag_id"),
+                            col("tag_name").as("tag_name")
+                    );
+
+            return allTaskTags
+                    .join(tasks, "task_original_id", "inner")
+                    .join(tags, "tag_name", "inner")
+                    .select("project_id", "task_id", "tag_id")
+                    .orderBy("project_id", "task_id", "tag_id");
+
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to save task tags", e);
+        }
+    }
+
+    private void saveRelationshipData() {
+        Dataset<Row> taskTag = saveTaskTagToDatabase();
+        dataWarehouseLoader.save(taskTag,"task_tag");
+    }
+
     @PostConstruct
     private void jiraEtl() {
         try {
@@ -327,6 +390,8 @@ public class JiraService {
             processTagsData(transformer);
 
             processTaskData(transformer);
+
+            saveRelationshipData();
 
         } catch (Exception e) {
             throw new RuntimeException("Jira ETL process failed", e);
