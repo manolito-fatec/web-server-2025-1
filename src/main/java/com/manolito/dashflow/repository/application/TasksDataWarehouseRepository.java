@@ -217,6 +217,27 @@ public class TasksDataWarehouseRepository {
         );
     }
 
+    public Optional<Integer> getEpicIdByProjectOriginalId(String originalId) {
+        String sql = """
+                SELECT ep.epic_id 
+                FROM dw_dashflow.epics ep 
+                    join dw_dashflow.projects pt on pt.project_id = ep.project_id
+                WHERE ep.original_id = '0' 
+                  AND ep.is_current = true and pt.is_current = TRUE and pt.original_id = :originalId
+        """;
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("originalId", originalId);
+
+        try {
+            Integer result = jdbcTemplate.queryForObject(sql, params, Integer.class);
+            return Optional.ofNullable(result);
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
+
+    }
+
     public Optional<Double> getAverageTimeCard(Integer userId) {
         String sql = "SELECT ROUND((AVG(completed.date_date - created.date_date)/3),2) AS average_time " +
                 "FROM dw_dashflow.fact_tasks ft " +
@@ -615,7 +636,6 @@ public class TasksDataWarehouseRepository {
                     WHERE appa_inner.user_id = :managerId
                     AND prj_inner.is_current = TRUE
                 )
-                AND appu.user_id != :managerId  -- Exclude the manager
                 AND prj.is_current = TRUE
                 """;
 

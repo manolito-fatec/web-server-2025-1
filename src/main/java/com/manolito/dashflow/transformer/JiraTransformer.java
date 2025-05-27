@@ -37,7 +37,10 @@ public class JiraTransformer {
         return rawData
                 .select(
                         col("statusCategory.id").as("original_id"),
-                        col("statusCategory.name").as("status_name"),
+                        when(col("statusCategory.name").equalTo("Itens Pendentes"), "New")
+                                .when(col("statusCategory.name").equalTo("Em andamento"), "In Progress")
+                                .when(col("statusCategory.name").equalTo("Itens concluídos"), "Closed")
+                                .as("status_name"),
                         col("scope.project.id").as("project_id")
                 )
                 .distinct();

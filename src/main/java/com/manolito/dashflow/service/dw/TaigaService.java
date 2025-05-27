@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.manolito.dashflow.dto.dw.TaigaAuthDto;
 import com.manolito.dashflow.loader.TasksDataWarehouseLoader;
+import com.manolito.dashflow.repository.application.TasksDataWarehouseRepository;
 import com.manolito.dashflow.transformer.TaigaTransformer;
 import com.manolito.dashflow.util.JoinUtils;
 import com.manolito.dashflow.util.SparkUtils;
@@ -39,6 +40,7 @@ public class TaigaService {
     private static final String API_URL = "https://api.taiga.io/api/v1/auth";
     private static final String USER_ME_URL = "https://api.taiga.io/api/v1/users/me";
     private static final ObjectMapper objectMapper = new ObjectMapper();
+    private final TasksDataWarehouseRepository tasksDataWarehouseRepository;
     private String authToken;
     private List<Long> projectIds;
 
@@ -309,7 +311,7 @@ public class TaigaService {
         String jsonResponse = utils.fetchDataFromEndpoint(USER_ME_URL, authToken);
         Dataset<Row> rawUsers = utils.fetchDataAsDataFrame(jsonResponse);
 
-        TaigaTransformer transformer = new TaigaTransformer(spark.emptyDataFrame());
+        TaigaTransformer transformer = new TaigaTransformer(spark.emptyDataFrame(),tasksDataWarehouseRepository);
         Dataset<Row> transformedUsers = transformer.transformUsers(rawUsers);
 
         String originalId = extractOriginalIdFromDataset(transformedUsers);
@@ -472,7 +474,7 @@ public class TaigaService {
         try {
             authenticateTaiga("Man_Olito", "Manolito");
 
-            TaigaTransformer transformer = new TaigaTransformer(spark.emptyDataFrame());
+            TaigaTransformer transformer = new TaigaTransformer(spark.emptyDataFrame(),tasksDataWarehouseRepository);
             getProjectWhereUserIsMember();
 
             processProjectsData(transformer);

@@ -1,8 +1,11 @@
 package com.manolito.dashflow.transformer;
 
+import com.manolito.dashflow.repository.application.TasksDataWarehouseRepository;
 import lombok.RequiredArgsConstructor;
 import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SparkSession;
 
 import static org.apache.spark.sql.functions.*;
 
@@ -12,6 +15,7 @@ public class TaigaTransformer {
     private static final int TOOL_ID = 1; // Change for a GET from tools table later when implemented
     private static final int EPIC_ID = 1;
     private final Dataset<Row> datesDimension;
+    private final TasksDataWarehouseRepository tasksDataWarehouseRepository;
 
     public Dataset<Row> transformProjects(Dataset<Row> rawData) {
         return rawData.select(
@@ -25,10 +29,14 @@ public class TaigaTransformer {
     }
 
     public Dataset<Row> transformUserStories(Dataset<Row> rawUserStories) {
+        Long rowrow = rawUserStories.select(col("project")).first().getLong(0);
+        Integer auauaue = tasksDataWarehouseRepository.getEpicIdByProjectOriginalId(String.valueOf(rowrow)).get();
+
         return rawUserStories.select(
                 col("id").as("original_id"),
                 col("project").as("project_id"),
-                lit(EPIC_ID).as("epic_id"),
+                when(col("epics").isNotNull(),
+                        col("epics")).otherwise(auauaue).as("epic_id").cast("int"),
                 col("subject").as("story_name"),
                 col("is_closed").as("is_finished")
         );
