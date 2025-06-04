@@ -1,4 +1,3 @@
--- Create the schema (user) if not exists - run as privileged user
 CREATE USER dw_dashflow IDENTIFIED BY password
     DEFAULT TABLESPACE users
     TEMPORARY TABLESPACE temp
@@ -6,7 +5,6 @@ CREATE USER dw_dashflow IDENTIFIED BY password
 
 GRANT CONNECT, RESOURCE TO dw_dashflow;
 
--- TOOLS table with SCD2 handling
 CREATE TABLE dw_dashflow.tools (
                                    tool_id NUMBER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
                                    seq NUMBER NOT NULL,
@@ -22,14 +20,12 @@ CREATE OR REPLACE TRIGGER tools_scd2_trigger
 DECLARE
     max_seq NUMBER;
 BEGIN
-    -- Get the maximum sequence number for this tool_name
     SELECT NVL(MAX(seq), 0) INTO max_seq
     FROM dw_dashflow.tools
     WHERE tool_name = :NEW.tool_name;
 
     :NEW.seq := max_seq + 1;
 
-    -- If this is not the first version, update the previous version
     IF max_seq > 0 THEN
         UPDATE dw_dashflow.tools
         SET end_date = TRUNC(SYSDATE), is_current = 0
