@@ -73,4 +73,29 @@ public class UserController {
                     .body("Error retrieving users: " + e.getMessage());
         }
     }
+
+    @GetMapping("/get-by-manager/{managerId}")
+    @Operation(summary = "Busca uma lista de usuários e seus respectivos projetos para um dado Gestor",
+            description = """
+                    Busca uma lista de usuários da aplicação e seus respectivos projetos para todos os usuários que
+                    pertencem a um projeto em que o Gestor do user_id informado está.
+                    O próprio gestor é excluído do resultado.")
+                    """)
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Usuários extraídos com sucesso"),
+            @ApiResponse(responseCode = "400", description = "Requisição mal formulada"),
+            @ApiResponse(responseCode = "500", description = "Erro interno do servidor ao tentar buscar usuários paginados")
+    })
+    public ResponseEntity<?> getProjectUsersByManagerId(
+            @Parameter(description = "Id do gestor", required = true) @PathVariable("managerId") String managerId
+    ) {
+        try {
+            return ResponseEntity.ok(userService.getProjectUsersByManagerId(managerId));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError()
+                    .body("Error retrieving users: " + e.getMessage());
+        }
+    }
 }

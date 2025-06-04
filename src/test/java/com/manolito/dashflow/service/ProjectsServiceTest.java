@@ -1,6 +1,7 @@
 package com.manolito.dashflow.service;
 
 import com.manolito.dashflow.dto.dw.ProjectDto;
+import com.manolito.dashflow.dto.dw.ProjectTableDto;
 import com.manolito.dashflow.repository.application.TasksDataWarehouseRepository;
 import com.manolito.dashflow.service.application.ProjectsService;
 import org.junit.jupiter.api.DisplayName;
@@ -9,6 +10,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
 
 import java.util.Collections;
 import java.util.List;
@@ -135,5 +137,96 @@ public class ProjectsServiceTest {
 
         assertEquals("Tool ID cannot be null", exception.getMessage());
         verify(tasksDataWarehouseRepository, never()).getProjectsByTool(anyInt());
+    }
+
+    @Test
+    @DisplayName("getProjectsPaginated - should return paginated projects when valid parameters")
+    void getProjectsPaginated_whenValidParameters_shouldReturnPaginatedProjects() {
+        int page = 1;
+        int pageSize = 10;
+        List<ProjectTableDto> mockProjects = List.of(
+                ProjectTableDto.builder()
+                        .projectId("1")
+                        .projectName("Project 1")
+                        .managerName("Manager 1")
+                        .operatorCount(5)
+                        .toolId(1)
+                        .build(),
+                ProjectTableDto.builder()
+                        .projectId("2")
+                        .projectName("Project 2")
+                        .managerName("Manager 2")
+                        .operatorCount(3)
+                        .toolId(2)
+                        .build()
+        );
+        int totalProjects = 2;
+        when(tasksDataWarehouseRepository.getProjectsPaginated(page, pageSize))
+                .thenReturn(mockProjects);
+        when(tasksDataWarehouseRepository.countAllProjects())
+                .thenReturn(totalProjects);
+
+        Page<ProjectTableDto> result = projectsService.getProjectsPaginated(page, pageSize);
+
+        assertEquals(mockProjects.size(), result.getContent().size());
+        assertEquals(totalProjects, result.getTotalElements());
+        assertEquals(pageSize, result.getSize());
+        assertEquals(page, result.getNumber() + 1); // PageImpl uses 0-based index
+
+        verify(tasksDataWarehouseRepository).getProjectsPaginated(page, pageSize);
+        verify(tasksDataWarehouseRepository).countAllProjects();
+    }
+
+    @Test
+    @DisplayName("getProjectsPaginated - should throw when page is less than 1")
+    void getProjectsPaginated_whenPageLessThan1_shouldThrow() {
+        int invalidPage = 0;
+        int pageSize = 10;
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> projectsService.getProjectsPaginated(invalidPage, pageSize)
+        );
+
+        assertEquals("Page must be greater than 0", exception.getMessage());
+        verify(tasksDataWarehouseRepository, never()).getProjectsPaginated(anyInt(), anyInt());
+        verify(tasksDataWarehouseRepository, never()).countAllProjects();
+    }
+
+    @Test
+    @DisplayName("getProjectsPaginated - should throw when pageSize is less than 1")
+    void getProjectsPaginated_whenPageSizeLessThan1_shouldThrow() {
+        int page = 1;
+        int invalidPageSize = 0;
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> projectsService.getProjectsPaginated(page, invalidPageSize)
+        );
+
+        assertEquals("Page size must be greater than 0", exception.getMessage());
+        verify(tasksDataWarehouseRepository, never()).getProjectsPaginated(anyInt(), anyInt());
+        verify(tasksDataWarehouseRepository, never()).countAllProjects();
+    }
+
+    @Test
+    @DisplayName("getProjectsPaginated - should return empty page when no projects exist")
+    void getProjectsPaginated_whenNoProjects_shouldReturnEmptyPage() {
+        int page = 1;
+        int pageSize = 10;
+        List<ProjectTableDto> emptyList = Collections.emptyList();
+        int totalProjects = 0;
+
+        when(tasksDataWarehouseRepository.getProjectsPaginated(page, pageSize))
+                .thenReturn(emptyList);
+        when(tasksDataWarehouseRepository.countAllProjects())
+                .thenReturn(totalProjects);
+
+        Page<ProjectTableDto> result = projectsService.getProjectsPaginated(page, pageSize);
+
+        assertTrue(result.getContent().isEmpty());
+        assertEquals(0, result.getTotalElements());
+        verify(tasksDataWarehouseRepository).getProjectsPaginated(page, pageSize);
+        verify(tasksDataWarehouseRepository).countAllProjects();
     }
 }

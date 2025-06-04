@@ -14,6 +14,8 @@ import java.util.*;
 @RequiredArgsConstructor
 public class TasksDataWarehouseRepository {
     private final NamedParameterJdbcTemplate jdbcTemplate;
+    private final String PROJECT_NAME = "project_name";
+    private final String ORIGINAL_ID = "original_id";
 
     public Optional<Integer> getTotalTasksByOperator(int userId) {
         String sql = "SELECT COUNT(ft.task_id) AS total_task_count " +
@@ -341,23 +343,33 @@ public class TasksDataWarehouseRepository {
 
     public Optional<Integer> getTaskReworksByProjectId(String projectId) {
         String sql = """
-                SELECT
-                    COUNT(ft.task_id) AS total
-                FROM dw_dashflow.projects prj
-                LEFT JOIN dw_dashflow.epics ep ON prj.project_id = ep.project_id
-                LEFT JOIN dw_dashflow.stories sto ON ep.epic_id = sto.epic_id
-                LEFT JOIN dw_dashflow.fact_tasks ft ON sto.story_id = ft.story_id
-                LEFT JOIN dw_dashflow.users us ON ft.assignee_id = us.user_id
-                WHERE prj.original_id = :projectId
-                AND prj.is_current = TRUE
-                AND ft.is_current = TRUE
-                AND ft.completed_at IS NULL
-                AND EXISTS (
-                    SELECT 1 FROM dw_dashflow.fact_tasks ft_hist
-                    WHERE ft_hist.original_id = ft.original_id
-                    AND ft_hist.completed_at IS NOT NULL
-                    AND ft_hist.is_current = FALSE
-                )
+                WITH current_tasks AS (
+                                SELECT\s
+                                    ft.original_id,
+                                    ft.task_id,
+                                    ft.completed_at
+                                FROM dw_dashflow.projects prj
+                                JOIN dw_dashflow.epics ep ON prj.project_id = ep.project_id
+                                JOIN dw_dashflow.stories sto ON ep.epic_id = sto.epic_id
+                                JOIN dw_dashflow.fact_tasks ft ON sto.story_id = ft.story_id
+                                WHERE prj.original_id = :projectId
+                                AND prj.is_current = TRUE
+                                AND ft.task_id = (
+                                    SELECT MAX(ft2.task_id)
+                                    FROM dw_dashflow.fact_tasks ft2
+                                    WHERE ft2.original_id = ft.original_id
+                                )
+                            )
+                            SELECT COUNT(*) AS total
+                            FROM current_tasks ct
+                            WHERE ct.completed_at IS NULL
+                            AND EXISTS (
+                                SELECT 1
+                                FROM dw_dashflow.fact_tasks ft_hist
+                                WHERE ft_hist.original_id = ct.original_id
+                                AND ft_hist.task_id < ct.task_id
+                                AND ft_hist.completed_at IS NOT NULL
+                            )
                 """;
 
 
@@ -404,8 +416,8 @@ public class TasksDataWarehouseRepository {
         return jdbcTemplate.query(
                 sql,
                 (rs, rowNum) -> new TaskProjectDto(
-                        rs.getString("project_name"),
-                        rs.getString("original_id"),
+                        rs.getString(PROJECT_NAME),
+                        rs.getString(ORIGINAL_ID),
                         rs.getInt("total_cards")
                 )
         );
@@ -430,8 +442,8 @@ public class TasksDataWarehouseRepository {
                 sql,
                 params,
                 (rs, rowNum) -> new ProjectDto(
-                        rs.getString("user_name"),
-                        rs.getString("user_id")
+                        rs.getString(ORIGINAL_ID),
+                        rs.getString(PROJECT_NAME)
                 )
         );
     }
@@ -459,7 +471,7 @@ public class TasksDataWarehouseRepository {
                 sql,
                 params,
                 (rs, rowNum) -> new UserDto(
-                        rs.getString("original_id"),
+                        rs.getString(ORIGINAL_ID),
                         rs.getString("user_name")
                 )
         );
@@ -512,7 +524,7 @@ public class TasksDataWarehouseRepository {
                         .toolName(rs.getString("tool_name"))
                         .toolId(rs.getObject("tool_id", Integer.class))
                         .projectId(rs.getString("project_id"))
-                        .projectName(rs.getString("project_name"))
+                        .projectName(rs.getString(PROJECT_NAME))
                         .createdAt(rs.getTimestamp("created_at") != null ?
                                 rs.getTimestamp("created_at").toLocalDateTime().toLocalDate() :
                                 null)
@@ -525,5 +537,100 @@ public class TasksDataWarehouseRepository {
 
         Integer count = jdbcTemplate.getJdbcOperations().queryForObject(sql, Integer.class);
         return count != null ? count : 0;
+    }
+    public List<ProjectTableDto> getProjectsPaginated(int page, int pageSize) {
+        String sql = """
+                SELECT
+                    prj.original_id AS project_id,
+                    prj.project_name,
+                    appu.username AS manager_username,
+                    COUNT(DISTINCT regular_users.user_id) AS user_count,
+                    appt.tool_id
+                FROM dashflow_appl.users appu
+                JOIN dashflow_appl.user_roles approle ON appu.user_id = approle.user_id
+                JOIN dashflow_appl.accounts appa ON appu.user_id = appa.user_id
+                JOIN dashflow_appl.tools appt ON appa.tool_id = appt.tool_id
+                JOIN dw_dashflow.projects prj ON appa.project = prj.original_id AND appt.tool_id = prj.tool_id
+                LEFT JOIN (
+                    SELECT approle2.user_id, appa2.project, appa2.tool_id
+                    FROM dashflow_appl.user_roles approle2
+                    JOIN dashflow_appl.accounts appa2 ON approle2.user_id = appa2.user_id
+                    WHERE approle2.role_id = 1
+                ) regular_users ON regular_users.project = prj.original_id AND regular_users.tool_id = prj.tool_id
+                WHERE appu.username <> 'admin'
+                AND approle.role_id = 2
+                GROUP BY
+                    prj.original_id,
+                    prj.project_name,
+                    appu.username,
+                    appt.tool_id
+                ORDER BY prj.project_name ASC
+                 LIMIT :limit OFFSET :offset
+                """;
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("limit", pageSize);
+        params.put("offset", (page - 1) * pageSize);
+
+        return jdbcTemplate.query(
+                sql,
+                params,
+                (rs, rowNum) -> ProjectTableDto.builder()
+                        .projectName(rs.getString(PROJECT_NAME))
+                        .projectId(rs.getString("project_id"))
+                        .managerName(rs.getString("manager_username"))
+                        .operatorCount(rs.getInt("user_count"))
+                        .toolId(rs.getInt("tool_id"))
+                        .build()
+        );
+    }
+
+    public int countAllProjects() {
+        String sql = """
+            SELECT COUNT(DISTINCT prj.original_id)
+            FROM dw_dashflow.projects prj
+            """;
+
+        Integer count = jdbcTemplate.getJdbcOperations().queryForObject(sql, Integer.class);
+        return count != null ? count : 0;
+    }
+  
+      public List<UserProjectDto> getProjectUsersByManagerId(String managerId) {
+        String sql = """
+                SELECT
+                    appu.username,
+                    appu.user_id,
+                    appa.project,
+                    prj.project_name
+                FROM dashflow_appl.users appu
+                JOIN dashflow_appl.user_roles approle ON appu.user_id = approle.user_id
+                JOIN dashflow_appl.accounts appa ON appu.user_id = appa.user_id
+                JOIN dashflow_appl.tools appt ON appa.tool_id = appt.tool_id
+                JOIN dw_dashflow.projects prj ON appa.project = prj.original_id AND appt.tool_id = prj.tool_id
+                WHERE appa.project IN (
+                    SELECT appa_inner.project
+                    FROM dashflow_appl.accounts appa_inner
+                    JOIN dashflow_appl.tools appt_inner ON appa_inner.tool_id = appt_inner.tool_id
+                    JOIN dw_dashflow.projects prj_inner ON appa_inner.project = prj_inner.original_id AND appt_inner.tool_id = prj_inner.tool_id
+                    WHERE appa_inner.user_id = :managerId
+                    AND prj_inner.is_current = TRUE
+                )
+                AND appu.user_id != :managerId  -- Exclude the manager
+                AND prj.is_current = TRUE
+                """;
+
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("managerId", Integer.valueOf(managerId));
+
+        return jdbcTemplate.query(
+                sql,
+                params,
+                (rs, rowNum) -> UserProjectDto.builder()
+                        .projectId(rs.getString("project"))
+                        .projectName(rs.getString(PROJECT_NAME))
+                        .userId(rs.getString("user_id"))
+                        .userName(rs.getString("username")).build()
+        );
     }
 }

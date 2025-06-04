@@ -46,6 +46,8 @@ jobs:
         SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/dashflow
         SPRING_DATASOURCE_USERNAME: ${{ secrets.DB_USERNAME }}
         SPRING_DATASOURCE_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
+        JIRA_TOKEN: ${{ secrets.JIRA_TOKEN }}
         MAVEN_OPTS: "--add-exports=java.base/sun.nio.ch=ALL-UNNAMED"
         
     - name: Verify Spark Installation

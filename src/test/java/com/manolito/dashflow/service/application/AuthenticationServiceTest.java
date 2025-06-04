@@ -21,8 +21,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -30,23 +29,23 @@ import static org.junit.jupiter.api.Assertions.*;
 @ExtendWith(MockitoExtension.class)
 class AuthenticationServiceTest {
 
-   @InjectMocks
-   private AuthenticationService authenticationService;
+    @InjectMocks
+    private AuthenticationService authenticationService;
 
-   @Mock
-   private RoleRepository roleRepository;
+    @Mock
+    private RoleRepository roleRepository;
 
-   @Mock
-   private ApplicationToolRepository applicationToolRepository;
+    @Mock
+    private ApplicationToolRepository applicationToolRepository;
 
-   @Mock
-   private AccountRepository accountRepository;
+    @Mock
+    private AccountRepository accountRepository;
 
-   @Mock
-   private ApplicationUserRepository userRepository;
+    @Mock
+    private ApplicationUserRepository userRepository;
 
-   @Mock
-   private PasswordEncoder passwordEncoder;
+    @Mock
+    private PasswordEncoder passwordEncoder;
 
     @Test
     @DisplayName("Should return new user when signup request is valid")
@@ -58,7 +57,7 @@ class AuthenticationServiceTest {
         request.setRoles(Set.of("ROLE_ADMIN"));
         request.setToolId(1);
         request.setToolUserId("john123");
-        request.setToolProjectId("proj-001");
+        request.setToolProjectIdList(List.of("proj-001", "proj-002"));
 
         Role role = new Role(1, "ROLE_ADMIN", Set.of());
         ApplicationTool tool = new ApplicationTool(1, "Jira");
@@ -90,6 +89,7 @@ class AuthenticationServiceTest {
         assertEquals("john@example.com", result.getEmail());
 
         verify(userRepository).save(any(ApplicationUser.class));
+        verify(accountRepository, times(2)).save(any(Account.class));
     }
 
     @Test
@@ -103,34 +103,45 @@ class AuthenticationServiceTest {
     @ParameterizedTest
     @MethodSource("provideInputAndExpectedValues")
     @DisplayName("Should throw exception when any field in SignupRequestDto is invalid")
-    void validateRequest_shouldThrowException_whenRequestAnyFileIsInvalid(String username, String email, String password, Set<String> roles, String toolUserId, String toolprojectId, Integer toolId)
-    {
-        SignupRequestDto signupRequestDto = new SignupRequestDto(username, email, password, roles, toolUserId, toolprojectId, toolId);
+    void validateRequest_shouldThrowException_whenRequestAnyFileIsInvalid(
+            String username, String email, String password,
+            Set<String> roles, String toolUserId,
+            List<String> toolProjectIdList, Integer toolId) {
+        SignupRequestDto signupRequestDto = SignupRequestDto.builder()
+                .username(username)
+                .email(email)
+                .password(password)
+                .roles(roles)
+                .toolUserId(toolUserId)
+                .toolProjectIdList(toolProjectIdList)
+                .toolId(toolId)
+                .build();
+
         assertThrows(IllegalArgumentException.class, () ->
                 authenticationService.validateRequest(signupRequestDto));
     }
 
-    private static Stream<Arguments> provideInputAndExpectedValues()
-    {
+    private static Stream<Arguments> provideInputAndExpectedValues() {
         return Stream.of(
-                Arguments.of("", "nome1@lp2.com", "123", Set.of("ROLE_OPERATOR"), "789","32432", 1),
-                Arguments.of(null, "nome1@lp2.com", "123", Set.of("ROLE_OPERATOR"), "789","32432", 1),
-                Arguments.of("patolino", "", "123", Set.of("ROLE_OPERATOR"), "789","32432", 1),
-                Arguments.of("patolino", null, "123", Set.of("ROLE_OPERATOR"), "789","32432", 1),
-                Arguments.of("patolino", "nome1@lp2.com", "", Set.of("ROLE_OPERATOR"), "789","32432", 1),
-                Arguments.of("patolino", "nome1@lp2.com", null, Set.of("ROLE_OPERATOR"), "789","32432", 1),
-                Arguments.of("patolino", "nome1@lp2.com", "123", Set.of(), "789","32432", 1),
-                Arguments.of("patolino", "nome1@lp2.com", "123", null, "789","32432", 1),
-                Arguments.of("patolino", "nome1@lp2.com", "123", Set.of("ROLE_OPERATOR"), "","32432", 1),
-                Arguments.of("patolino", "nome1@lp2.com", "123", Set.of("ROLE_OPERATOR"), null,"32432", 1),
-                Arguments.of("patolino", "nome1@lp2.com", "123", Set.of("ROLE_OPERATOR"), "789","32432", null),
-                Arguments.of("patolino", "nome1@lp2.com", "123", Set.of("ROLE_OPERATOR"), "789","", 1),
-                Arguments.of("patolino", "nome1@lp2.com", "123", Set.of("ROLE_OPERATOR"), "789",null, 1)
+                Arguments.of("", "nome1@lp2.com", "123", Set.of("ROLE_OPERATOR"), "789", List.of("32432"), 1),
+                Arguments.of(null, "nome1@lp2.com", "123", Set.of("ROLE_OPERATOR"), "789", List.of("32432"), 1),
+                Arguments.of("patolino", "", "123", Set.of("ROLE_OPERATOR"), "789", List.of("32432"), 1),
+                Arguments.of("patolino", null, "123", Set.of("ROLE_OPERATOR"), "789", List.of("32432"), 1),
+                Arguments.of("patolino", "nome1@lp2.com", "", Set.of("ROLE_OPERATOR"), "789", List.of("32432"), 1),
+                Arguments.of("patolino", "nome1@lp2.com", null, Set.of("ROLE_OPERATOR"), "789", List.of("32432"), 1),
+                Arguments.of("patolino", "nome1@lp2.com", "123", Set.of(), "789", List.of("32432"), 1),
+                Arguments.of("patolino", "nome1@lp2.com", "123", null, "789", List.of("32432"), 1),
+                Arguments.of("patolino", "nome1@lp2.com", "123", Set.of("ROLE_OPERATOR"), "", List.of("32432"), 1),
+                Arguments.of("patolino", "nome1@lp2.com", "123", Set.of("ROLE_OPERATOR"), null, List.of("32432"), 1),
+                Arguments.of("patolino", "nome1@lp2.com", "123", Set.of("ROLE_OPERATOR"), "789", List.of("32432"), null),
+                Arguments.of("patolino", "nome1@lp2.com", "123", Set.of("ROLE_OPERATOR"), "789", List.of(""), 1),
+                Arguments.of("patolino", "nome1@lp2.com", "123", Set.of("ROLE_OPERATOR"), "789", null, 1),
+                Arguments.of("patolino", "nome1@lp2.com", "123", Set.of("ROLE_OPERATOR"), "789", Arrays.asList("32432", null), 1),
+                Arguments.of("patolino", "nome1@lp2.com", "123", Set.of("ROLE_OPERATOR"), "789", Collections.emptyList(), 1)
         );
     }
 
-    private SignupRequestDto getValidRequest()
-    {
+    private SignupRequestDto getValidRequest() {
         SignupRequestDto request = new SignupRequestDto();
         request.setEmail("test@example.com");
         request.setUsername("testuser");
@@ -138,6 +149,7 @@ class AuthenticationServiceTest {
         request.setToolUserId("external-user-id");
         request.setToolId(1);
         request.setRoles(Set.of("ROLE_OPERATOR"));
+        request.setToolProjectIdList(List.of("project-001", "project-002"));
         return request;
     }
 }

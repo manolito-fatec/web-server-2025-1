@@ -2,6 +2,7 @@ package com.manolito.dashflow.dto.application.auth;
 
 import lombok.*;
 
+import java.util.List;
 import java.util.Set;
 
 @Getter
@@ -15,6 +16,6 @@ public class SignupRequestDto {
     private String password;
     private Set<String> roles;
     private String toolUserId;
-    private String toolProjectId;
+    private List<String> toolProjectIdList;
     private Integer toolId;
 }
