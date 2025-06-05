@@ -1,7 +1,7 @@
-CREATE USER dw_dashflow IDENTIFIED BY password
-    DEFAULT TABLESPACE users
-    TEMPORARY TABLESPACE temp
-    QUOTA UNLIMITED ON users;
+-- CREATE USER dw_dashflow IDENTIFIED BY password
+--     DEFAULT TABLESPACE users
+--     TEMPORARY TABLESPACE temp
+--     QUOTA UNLIMITED ON users;
 
 GRANT CONNECT, RESOURCE TO dw_dashflow;
 

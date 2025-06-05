@@ -1,8 +1,8 @@
 -- Create the schema (user) for the application - run as privileged user
-CREATE USER dashflow_appl IDENTIFIED BY password
-    DEFAULT TABLESPACE users
-TEMPORARY TABLESPACE temp
-QUOTA UNLIMITED ON users;
+-- CREATE USER dashflow_appl IDENTIFIED BY password
+--     DEFAULT TABLESPACE users
+-- TEMPORARY TABLESPACE temp
+-- QUOTA UNLIMITED ON users;
 
 GRANT CONNECT, RESOURCE TO dashflow_appl;
 

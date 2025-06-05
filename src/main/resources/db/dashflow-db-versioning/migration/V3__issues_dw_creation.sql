@@ -1,5 +1,3 @@
-
-SELECT username FROM all_users WHERE username = 'DW_DASHFLOW';
 CREATE TABLE DW_DASHFLOW.issue_status (
                                           status_id NUMBER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
                                           seq NUMBER NOT NULL,

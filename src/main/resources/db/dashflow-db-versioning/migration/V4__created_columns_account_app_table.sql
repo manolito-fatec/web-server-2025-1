@@ -31,5 +31,5 @@ END;
 /
 
 -- Add new unique constraint
-ALTER TABLE dashflow_appl.accounts
-    ADD CONSTRAINT uk_account_user_tool UNIQUE (user_id, tool_id);
+-- ALTER TABLE dashflow_appl.accounts
+--     ADD CONSTRAINT uk_account_user_tool UNIQUE (user_id, tool_id);
