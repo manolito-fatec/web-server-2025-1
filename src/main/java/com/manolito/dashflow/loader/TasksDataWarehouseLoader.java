@@ -150,8 +150,8 @@ public class TasksDataWarehouseLoader {
         final String toolName;
 
         ToolMetadata(Row row) {
-            this.toolId = row.getInt(row.fieldIndex("tool_id"));
-            this.toolName = row.getString(row.fieldIndex("tool_name"));
+            this.toolId = row.getDecimal(row.fieldIndex("TOOL_ID")).intValue();
+            this.toolName = row.getString(row.fieldIndex("TOOL_NAME"));
         }
     }
 

@@ -25,8 +25,8 @@ public class User {
     private Integer seq;
 
     @NotNull
+    @Size(max = 255)
     @Column(name = "original_id", nullable = false)
-    @Type(type = "org.hibernate.type.TextType")
     private String originalId;
 
     @NotNull
@@ -45,7 +45,7 @@ public class User {
     private String email;
 
     @Column(name = "description")
-    @Type(type = "org.hibernate.type.TextType")
+    @Size(max = 255)
     private String description;
 
     @NotNull

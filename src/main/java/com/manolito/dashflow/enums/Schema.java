@@ -6,8 +6,8 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum Schema {
-    DATAWAREHOUSE("dw_dashflow"),
-    APPLICATION("dashflow_appl");
+    DATAWAREHOUSE("DW_DASHFLOW"),
+    APPLICATION("DASHFLOW_APPL");
 
     private final String schema;
 }
