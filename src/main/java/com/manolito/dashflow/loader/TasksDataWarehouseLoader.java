@@ -98,6 +98,7 @@ public class TasksDataWarehouseLoader {
 
     public void save(Dataset<Row> data, String tableName) {
         try {
+            data.show();
             List<String> tableColumns = sparkUtils.fetchTableColumns(jdbcUrl, dbUser, dbPassword, tableName);
             Dataset<Row> filteredData = data.select(sparkUtils.getColumns(data, tableColumns));
 

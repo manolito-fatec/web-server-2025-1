@@ -98,13 +98,13 @@ public class SparkUtils {
 
             String query = String.format(
                     "SELECT column_name " +
-                            "FROM information_schema.columns " +
-                            "WHERE table_schema = '" + DATAWAREHOUSE.getSchema() + "' AND table_name = '%s'",
+                            "FROM all_tab_columns " +
+                            "WHERE owner = '" + DATAWAREHOUSE.getSchema() + "' AND table_name = '%s'",
                     tableName);
 
             ResultSet resultSet = statement.executeQuery(query);
             while (resultSet.next()) {
-                String columnName = resultSet.getString("column_name");
+                String columnName = resultSet.getString("COLUMN_NAME");
 
                 // Exclude SCD2-managed columns
                 if (!isScd2ManagedColumn(columnName)) {
