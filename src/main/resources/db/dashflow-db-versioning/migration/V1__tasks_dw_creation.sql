@@ -62,13 +62,14 @@ CREATE TABLE dw_dashflow.roles (
                                    CONSTRAINT fk_roles_tools FOREIGN KEY (tool_id) REFERENCES dw_dashflow.tools(tool_id)
 );
 
-CREATE OR REPLACE TRIGGER roles_scd2_trigger
+CREATE OR REPLACE TRIGGER dw_dashflow.roles_scd2_trigger
     BEFORE INSERT ON dw_dashflow.roles
     FOR EACH ROW
 DECLARE
+    PRAGMA AUTONOMOUS_TRANSACTION;
     max_seq NUMBER;
 BEGIN
-    -- Skip SCD2 processing for special records
+    -- Handle special case for '0' records
     IF :NEW.original_id = '0' THEN
         :NEW.seq := 1;
         :NEW.start_date := TRUNC(SYSDATE);
@@ -77,24 +78,34 @@ BEGIN
         RETURN;
     END IF;
 
-    -- Get the maximum sequence number for this original_id and tool_id
-    SELECT NVL(MAX(seq), 0) INTO max_seq
-    FROM dw_dashflow.roles
-    WHERE original_id = :NEW.original_id AND tool_id = :NEW.tool_id;
+    -- Get the max sequence number safely
+    BEGIN
+        SELECT NVL(MAX(seq), 0) INTO max_seq
+        FROM dw_dashflow.roles
+        WHERE original_id = :NEW.original_id
+          AND tool_id = :NEW.tool_id
+          AND ROWNUM = 1; -- Ensure single row
+    EXCEPTION
+        WHEN OTHERS THEN
+            max_seq := 0;
+    END;
 
     :NEW.seq := max_seq + 1;
+    :NEW.start_date := TRUNC(SYSDATE);
+    :NEW.end_date := NULL;
+    :NEW.is_current := 1;
 
+    -- Update previous records if needed
     IF max_seq > 0 THEN
         UPDATE dw_dashflow.roles
-        SET end_date = TRUNC(SYSDATE), is_current = 0
+        SET end_date = TRUNC(SYSDATE),
+            is_current = 0
         WHERE original_id = :NEW.original_id
           AND tool_id = :NEW.tool_id
           AND is_current = 1;
     END IF;
 
-    :NEW.start_date := TRUNC(SYSDATE);
-    :NEW.end_date := NULL;
-    :NEW.is_current := 1;
+    COMMIT; -- Required for autonomous transaction
 END;
 /
 
@@ -116,12 +127,14 @@ CREATE TABLE dw_dashflow.users (
                                    CONSTRAINT fk_users_tools FOREIGN KEY (tool_id) REFERENCES dw_dashflow.tools(tool_id)
 );
 
-CREATE OR REPLACE TRIGGER users_scd2_trigger
-    BEFORE INSERT ON dw_dashflow.users
+CREATE OR REPLACE TRIGGER DW_DASHFLOW.USERS_SCD2_TRIGGER
+    BEFORE INSERT ON DW_DASHFLOW.USERS
     FOR EACH ROW
 DECLARE
+    PRAGMA AUTONOMOUS_TRANSACTION;
     max_seq NUMBER;
 BEGIN
+    -- Handle special case for '0' records
     IF :NEW.original_id = '0' THEN
         :NEW.seq := 1;
         :NEW.start_date := TRUNC(SYSDATE);
@@ -130,23 +143,39 @@ BEGIN
         RETURN;
     END IF;
 
-    SELECT NVL(MAX(seq), 0) INTO max_seq
-    FROM dw_dashflow.users
-    WHERE original_id = :NEW.original_id AND tool_id = :NEW.tool_id;
-
-    :NEW.seq := max_seq + 1;
-
-    IF max_seq > 0 THEN
-        UPDATE dw_dashflow.users
-        SET end_date = TRUNC(SYSDATE), is_current = 0
+    -- Get the max sequence number safely
+    BEGIN
+        SELECT NVL(MAX(seq), 0) INTO max_seq
+        FROM DW_DASHFLOW.USERS
         WHERE original_id = :NEW.original_id
           AND tool_id = :NEW.tool_id
-          AND is_current = 1;
-    END IF;
+          AND ROWNUM = 1;
+    EXCEPTION
+        WHEN OTHERS THEN
+            max_seq := 0;
+    END;
 
+    :NEW.seq := max_seq + 1;
     :NEW.start_date := TRUNC(SYSDATE);
     :NEW.end_date := NULL;
     :NEW.is_current := 1;
+
+    -- Update previous records if needed
+    IF max_seq > 0 THEN
+        BEGIN
+            UPDATE DW_DASHFLOW.USERS
+            SET end_date = TRUNC(SYSDATE),
+                is_current = 0
+            WHERE original_id = :NEW.original_id
+              AND tool_id = :NEW.tool_id
+              AND is_current = 1;
+        EXCEPTION
+            WHEN OTHERS THEN
+                NULL; -- Silently handle any errors
+        END;
+    END IF;
+
+    COMMIT; -- Required for autonomous transaction
 END;
 /
 

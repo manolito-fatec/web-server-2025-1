@@ -144,9 +144,9 @@ public class SparkUtils {
 
         for (String dbColumn : tableColumns) {
             // Handle the "id" -> "original_id" mapping
-            String dataFrameColumn = dbColumn.equals("id") ? "original_id" : dbColumn;
+            String dataFrameColumn = dbColumn.equalsIgnoreCase("ID") ? "ORIGINAL_ID" : dbColumn;
 
-            if (dataColumns.contains(dataFrameColumn)) {
+            if (dataColumns.contains(dataFrameColumn.toLowerCase())) {
                 columns.add(functions.col(dataFrameColumn).alias(dbColumn)); // Alias to match database column name
             }
         }
