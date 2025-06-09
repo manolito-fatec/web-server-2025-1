@@ -258,7 +258,62 @@ CREATE TABLE dw_dashflow.status (
                                     CONSTRAINT fk_status_projects FOREIGN KEY (project_id) REFERENCES dw_dashflow.projects(project_id)
 );
 
--- [Additional tables continue with same pattern...]
+CREATE OR REPLACE TRIGGER status_scd2_trigger
+    BEFORE INSERT ON dw_dashflow.status
+    FOR EACH ROW
+DECLARE
+    PRAGMA AUTONOMOUS_TRANSACTION;
+BEGIN
+    -- Handle special case for '0' records
+    IF :NEW.original_id = '0' THEN
+        :NEW.seq := 1;
+        :NEW.start_date := TRUNC(SYSDATE);
+        :NEW.end_date := NULL;
+        :NEW.is_current := 1;
+        RETURN;
+    END IF;
+
+    -- Call the equivalent of your manage_scd2 function logic
+    -- This is inline implementation since Oracle doesn't support EXECUTE FUNCTION in triggers
+    DECLARE
+        max_seq NUMBER;
+    BEGIN
+        -- Get the max sequence number safely
+        BEGIN
+            SELECT NVL(MAX(seq), 0) INTO max_seq
+            FROM dw_dashflow.status
+            WHERE original_id = :NEW.original_id
+              AND project_id = :NEW.project_id
+              AND ROWNUM = 1;
+        EXCEPTION
+            WHEN OTHERS THEN
+                max_seq := 0;
+        END;
+
+        :NEW.seq := max_seq + 1;
+
+        -- Update previous records if needed
+        IF max_seq > 0 THEN
+            UPDATE dw_dashflow.status
+            SET end_date = TRUNC(SYSDATE),
+                is_current = 0
+            WHERE original_id = :NEW.original_id
+              AND project_id = :NEW.project_id
+              AND is_current = 1;
+        END IF;
+
+        :NEW.start_date := TRUNC(SYSDATE);
+        :NEW.end_date := NULL;
+        :NEW.is_current := 1;
+    END;
+
+    COMMIT; -- Required for autonomous transaction
+EXCEPTION
+    WHEN OTHERS THEN
+        ROLLBACK;
+        RAISE;
+END;
+/
 
 -- EPICS table with SCD2 handling and epicless trigger
 CREATE TABLE dw_dashflow.epics (
@@ -370,7 +425,62 @@ CREATE TABLE dw_dashflow.stories (
                                      CONSTRAINT fk_stories_epics FOREIGN KEY (epic_id) REFERENCES dw_dashflow.epics(epic_id)
 );
 
--- [Additional tables continue with same pattern...]
+CREATE OR REPLACE TRIGGER stories_scd2_trigger
+    BEFORE INSERT ON dw_dashflow.stories
+    FOR EACH ROW
+DECLARE
+    PRAGMA AUTONOMOUS_TRANSACTION;
+BEGIN
+    -- Handle special case for '0' records
+    IF :NEW.original_id = '0' THEN
+        :NEW.seq := 1;
+        :NEW.start_date := TRUNC(SYSDATE);
+        :NEW.end_date := NULL;
+        :NEW.is_current := 1;
+        RETURN;
+    END IF;
+
+    -- Call the equivalent of your manage_scd2 function logic
+    -- This is inline implementation since Oracle doesn't support EXECUTE FUNCTION in triggers
+    DECLARE
+        max_seq NUMBER;
+    BEGIN
+        -- Get the max sequence number safely
+        BEGIN
+            SELECT NVL(MAX(seq), 0) INTO max_seq
+            FROM dw_dashflow.stories
+            WHERE original_id = :NEW.original_id
+              AND epic_id = :NEW.epic_id
+              AND ROWNUM = 1;
+        EXCEPTION
+            WHEN OTHERS THEN
+                max_seq := 0;
+        END;
+
+        :NEW.seq := max_seq + 1;
+
+        -- Update previous records if needed
+        IF max_seq > 0 THEN
+            UPDATE dw_dashflow.stories
+            SET end_date = TRUNC(SYSDATE),
+                is_current = 0
+            WHERE original_id = :NEW.original_id
+              AND epic_id = :NEW.epic_id
+              AND is_current = 1;
+        END IF;
+
+        :NEW.start_date := TRUNC(SYSDATE);
+        :NEW.end_date := NULL;
+        :NEW.is_current := 1;
+    END;
+
+    COMMIT; -- Required for autonomous transaction
+EXCEPTION
+    WHEN OTHERS THEN
+        ROLLBACK;
+        RAISE;
+END;
+/
 
 -- DATES dimension table
 CREATE TABLE dw_dashflow.dates (
@@ -420,7 +530,62 @@ CREATE TABLE dw_dashflow.tags (
 
                                   CONSTRAINT fk_tags_projects FOREIGN KEY (project_id) REFERENCES dw_dashflow.projects(project_id)
 );
+CREATE OR REPLACE TRIGGER tags_scd2_trigger
+    BEFORE INSERT ON dw_dashflow.tags
+    FOR EACH ROW
+DECLARE
+    PRAGMA AUTONOMOUS_TRANSACTION;
+BEGIN
+    -- Handle special case for '0' records
+    IF :NEW.original_id = '0' THEN
+        :NEW.seq := 1;
+        :NEW.start_date := TRUNC(SYSDATE);
+        :NEW.end_date := NULL;
+        :NEW.is_current := 1;
+        RETURN;
+    END IF;
 
+    -- Call the equivalent of your manage_scd2 function logic
+    -- This is inline implementation since Oracle doesn't support EXECUTE FUNCTION in triggers
+    DECLARE
+        max_seq NUMBER;
+    BEGIN
+        -- Get the max sequence number safely
+        BEGIN
+            SELECT NVL(MAX(seq), 0) INTO max_seq
+            FROM dw_dashflow.tags
+            WHERE original_id = :NEW.original_id
+              AND project_id = :NEW.project_id
+              AND ROWNUM = 1;
+        EXCEPTION
+            WHEN OTHERS THEN
+                max_seq := 0;
+        END;
+
+        :NEW.seq := max_seq + 1;
+
+        -- Update previous records if needed
+        IF max_seq > 0 THEN
+            UPDATE dw_dashflow.tags
+            SET end_date = TRUNC(SYSDATE),
+                is_current = 0
+            WHERE original_id = :NEW.original_id
+              AND project_id = :NEW.project_id
+              AND is_current = 1;
+        END IF;
+
+        :NEW.start_date := TRUNC(SYSDATE);
+        :NEW.end_date := NULL;
+        :NEW.is_current := 1;
+    END;
+
+    COMMIT; -- Required for autonomous transaction
+EXCEPTION
+    WHEN OTHERS THEN
+        ROLLBACK;
+        RAISE;
+END;
+/
 -- FACT_TASKS table
 CREATE TABLE dw_dashflow.fact_tasks (
                                         task_id NUMBER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,

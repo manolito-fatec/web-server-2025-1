@@ -585,7 +585,7 @@ public class TaigaService {
                 dataWarehouseLoader.loadDimension("USERS"),
                 dataWarehouseLoader.loadDimension("STORIES"),
                 dataWarehouseLoader.loadDimensionWithoutIsCurrent("DATES", "taiga"));
-            dataWarehouseLoader.save(transformedFactTask, "FACT_TASK");
+            dataWarehouseLoader.save(transformedFactTask, "FACT_TASKS");
         }
     }
 
