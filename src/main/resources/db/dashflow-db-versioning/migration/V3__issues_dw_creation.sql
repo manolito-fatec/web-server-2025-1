@@ -13,12 +13,12 @@ CREATE TABLE DW_DASHFLOW.issue_status (
 );
 
 CREATE OR REPLACE TRIGGER issue_status_scd2_trigger
-    BEFORE INSERT ON DW_DASHFLOW.issue_status
+    BEFORE INSERT ON dw_dashflow.issue_status
     FOR EACH ROW
 DECLARE
-    max_seq NUMBER;
+    PRAGMA AUTONOMOUS_TRANSACTION;
 BEGIN
-    -- Skip SCD2 processing for special records
+    -- Handle special case for '0' records
     IF :NEW.original_id = '0' THEN
         :NEW.seq := 1;
         :NEW.start_date := TRUNC(SYSDATE);
@@ -27,25 +27,45 @@ BEGIN
         RETURN;
     END IF;
 
-    -- Get the maximum sequence number
-    SELECT NVL(MAX(seq), 0) INTO max_seq
-    FROM DW_DASHFLOW.issue_status
-    WHERE original_id = :NEW.original_id AND project_id = :NEW.project_id;
+    -- Call the equivalent of your manage_scd2 function logic
+    -- This is inline implementation since Oracle doesn't support EXECUTE FUNCTION in triggers
+    DECLARE
+        max_seq NUMBER;
+    BEGIN
+        -- Get the max sequence number safely
+        BEGIN
+            SELECT NVL(MAX(seq), 0) INTO max_seq
+            FROM dw_dashflow.issue_status
+            WHERE original_id = :NEW.original_id
+              AND project_id = :NEW.project_id
+              AND ROWNUM = 1;
+        EXCEPTION
+            WHEN OTHERS THEN
+                max_seq := 0;
+        END;
 
-    :NEW.seq := max_seq + 1;
+        :NEW.seq := max_seq + 1;
 
-    -- Update previous version if exists
-    IF max_seq > 0 THEN
-        UPDATE DW_DASHFLOW.issue_status
-        SET end_date = TRUNC(SYSDATE), is_current = 0
-        WHERE original_id = :NEW.original_id
-          AND project_id = :NEW.project_id
-          AND is_current = 1;
-    END IF;
+        -- Update previous records if needed
+        IF max_seq > 0 THEN
+            UPDATE dw_dashflow.issue_status
+            SET end_date = TRUNC(SYSDATE),
+                is_current = 0
+            WHERE original_id = :NEW.original_id
+              AND project_id = :NEW.project_id
+              AND is_current = 1;
+        END IF;
 
-    :NEW.start_date := TRUNC(SYSDATE);
-    :NEW.end_date := NULL;
-    :NEW.is_current := 1;
+        :NEW.start_date := TRUNC(SYSDATE);
+        :NEW.end_date := NULL;
+        :NEW.is_current := 1;
+    END;
+
+    COMMIT; -- Required for autonomous transaction
+EXCEPTION
+    WHEN OTHERS THEN
+        ROLLBACK;
+        RAISE;
 END;
 /
 
@@ -66,11 +86,12 @@ CREATE TABLE DW_DASHFLOW.issue_type (
 );
 
 CREATE OR REPLACE TRIGGER issue_type_scd2_trigger
-    BEFORE INSERT ON DW_DASHFLOW.issue_type
+    BEFORE INSERT ON dw_dashflow.issue_type
     FOR EACH ROW
 DECLARE
-    max_seq NUMBER;
+    PRAGMA AUTONOMOUS_TRANSACTION;
 BEGIN
+    -- Handle special case for '0' records
     IF :NEW.original_id = '0' THEN
         :NEW.seq := 1;
         :NEW.start_date := TRUNC(SYSDATE);
@@ -79,23 +100,45 @@ BEGIN
         RETURN;
     END IF;
 
-    SELECT NVL(MAX(seq), 0) INTO max_seq
-    FROM DW_DASHFLOW.issue_type
-    WHERE original_id = :NEW.original_id AND project_id = :NEW.project_id;
+    -- Call the equivalent of your manage_scd2 function logic
+    -- This is inline implementation since Oracle doesn't support EXECUTE FUNCTION in triggers
+    DECLARE
+        max_seq NUMBER;
+    BEGIN
+        -- Get the max sequence number safely
+        BEGIN
+            SELECT NVL(MAX(seq), 0) INTO max_seq
+            FROM dw_dashflow.issue_type
+            WHERE original_id = :NEW.original_id
+              AND project_id = :NEW.project_id
+              AND ROWNUM = 1;
+        EXCEPTION
+            WHEN OTHERS THEN
+                max_seq := 0;
+        END;
 
-    :NEW.seq := max_seq + 1;
+        :NEW.seq := max_seq + 1;
 
-    IF max_seq > 0 THEN
-        UPDATE DW_DASHFLOW.issue_type
-        SET end_date = TRUNC(SYSDATE), is_current = 0
-        WHERE original_id = :NEW.original_id
-          AND project_id = :NEW.project_id
-          AND is_current = 1;
-    END IF;
+        -- Update previous records if needed
+        IF max_seq > 0 THEN
+            UPDATE dw_dashflow.issue_type
+            SET end_date = TRUNC(SYSDATE),
+                is_current = 0
+            WHERE original_id = :NEW.original_id
+              AND project_id = :NEW.project_id
+              AND is_current = 1;
+        END IF;
 
-    :NEW.start_date := TRUNC(SYSDATE);
-    :NEW.end_date := NULL;
-    :NEW.is_current := 1;
+        :NEW.start_date := TRUNC(SYSDATE);
+        :NEW.end_date := NULL;
+        :NEW.is_current := 1;
+    END;
+
+    COMMIT; -- Required for autonomous transaction
+EXCEPTION
+    WHEN OTHERS THEN
+        ROLLBACK;
+        RAISE;
 END;
 /
 
@@ -117,11 +160,12 @@ CREATE TABLE DW_DASHFLOW.issue_severity (
 );
 
 CREATE OR REPLACE TRIGGER issue_severity_scd2_trigger
-    BEFORE INSERT ON DW_DASHFLOW.issue_severity
+    BEFORE INSERT ON dw_dashflow.issue_severity
     FOR EACH ROW
 DECLARE
-    max_seq NUMBER;
+    PRAGMA AUTONOMOUS_TRANSACTION;
 BEGIN
+    -- Handle special case for '0' records
     IF :NEW.original_id = '0' THEN
         :NEW.seq := 1;
         :NEW.start_date := TRUNC(SYSDATE);
@@ -130,23 +174,45 @@ BEGIN
         RETURN;
     END IF;
 
-    SELECT NVL(MAX(seq), 0) INTO max_seq
-    FROM DW_DASHFLOW.issue_severity
-    WHERE original_id = :NEW.original_id AND project_id = :NEW.project_id;
+    -- Call the equivalent of your manage_scd2 function logic
+    -- This is inline implementation since Oracle doesn't support EXECUTE FUNCTION in triggers
+    DECLARE
+        max_seq NUMBER;
+    BEGIN
+        -- Get the max sequence number safely
+        BEGIN
+            SELECT NVL(MAX(seq), 0) INTO max_seq
+            FROM dw_dashflow.issue_severity
+            WHERE original_id = :NEW.original_id
+              AND project_id = :NEW.project_id
+              AND ROWNUM = 1;
+        EXCEPTION
+            WHEN OTHERS THEN
+                max_seq := 0;
+        END;
 
-    :NEW.seq := max_seq + 1;
+        :NEW.seq := max_seq + 1;
 
-    IF max_seq > 0 THEN
-        UPDATE DW_DASHFLOW.issue_severity
-        SET end_date = TRUNC(SYSDATE), is_current = 0
-        WHERE original_id = :NEW.original_id
-          AND project_id = :NEW.project_id
-          AND is_current = 1;
-    END IF;
+        -- Update previous records if needed
+        IF max_seq > 0 THEN
+            UPDATE dw_dashflow.issue_severity
+            SET end_date = TRUNC(SYSDATE),
+                is_current = 0
+            WHERE original_id = :NEW.original_id
+              AND project_id = :NEW.project_id
+              AND is_current = 1;
+        END IF;
 
-    :NEW.start_date := TRUNC(SYSDATE);
-    :NEW.end_date := NULL;
-    :NEW.is_current := 1;
+        :NEW.start_date := TRUNC(SYSDATE);
+        :NEW.end_date := NULL;
+        :NEW.is_current := 1;
+    END;
+
+    COMMIT; -- Required for autonomous transaction
+EXCEPTION
+    WHEN OTHERS THEN
+        ROLLBACK;
+        RAISE;
 END;
 /
 
@@ -168,11 +234,12 @@ CREATE TABLE DW_DASHFLOW.issue_priority (
 );
 
 CREATE OR REPLACE TRIGGER issue_priority_scd2_trigger
-    BEFORE INSERT ON DW_DASHFLOW.issue_priority
+    BEFORE INSERT ON dw_dashflow.issue_priority
     FOR EACH ROW
 DECLARE
-    max_seq NUMBER;
+    PRAGMA AUTONOMOUS_TRANSACTION;
 BEGIN
+    -- Handle special case for '0' records
     IF :NEW.original_id = '0' THEN
         :NEW.seq := 1;
         :NEW.start_date := TRUNC(SYSDATE);
@@ -181,23 +248,45 @@ BEGIN
         RETURN;
     END IF;
 
-    SELECT NVL(MAX(seq), 0) INTO max_seq
-    FROM DW_DASHFLOW.issue_priority
-    WHERE original_id = :NEW.original_id AND project_id = :NEW.project_id;
+    -- Call the equivalent of your manage_scd2 function logic
+    -- This is inline implementation since Oracle doesn't support EXECUTE FUNCTION in triggers
+    DECLARE
+        max_seq NUMBER;
+    BEGIN
+        -- Get the max sequence number safely
+        BEGIN
+            SELECT NVL(MAX(seq), 0) INTO max_seq
+            FROM dw_dashflow.issue_priority
+            WHERE original_id = :NEW.original_id
+              AND project_id = :NEW.project_id
+              AND ROWNUM = 1;
+        EXCEPTION
+            WHEN OTHERS THEN
+                max_seq := 0;
+        END;
 
-    :NEW.seq := max_seq + 1;
+        :NEW.seq := max_seq + 1;
 
-    IF max_seq > 0 THEN
-        UPDATE DW_DASHFLOW.issue_priority
-        SET end_date = TRUNC(SYSDATE), is_current = 0
-        WHERE original_id = :NEW.original_id
-          AND project_id = :NEW.project_id
-          AND is_current = 1;
-    END IF;
+        -- Update previous records if needed
+        IF max_seq > 0 THEN
+            UPDATE dw_dashflow.issue_priority
+            SET end_date = TRUNC(SYSDATE),
+                is_current = 0
+            WHERE original_id = :NEW.original_id
+              AND project_id = :NEW.project_id
+              AND is_current = 1;
+        END IF;
 
-    :NEW.start_date := TRUNC(SYSDATE);
-    :NEW.end_date := NULL;
-    :NEW.is_current := 1;
+        :NEW.start_date := TRUNC(SYSDATE);
+        :NEW.end_date := NULL;
+        :NEW.is_current := 1;
+    END;
+
+    COMMIT; -- Required for autonomous transaction
+EXCEPTION
+    WHEN OTHERS THEN
+        ROLLBACK;
+        RAISE;
 END;
 /
 

@@ -658,8 +658,8 @@ public class TaigaService {
                     dataWarehouseLoader.loadDimension("ISSUE_TYPE"),
                     dataWarehouseLoader.loadDimension("ISSUE_SEVERITY"),
                     dataWarehouseLoader.loadDimension("ISSUE_PRIORITY"),
-                    dataWarehouseLoader.loadDimensionWithoutIsCurrent("DATE", "taiga"));
-            dataWarehouseLoader.save(transformedFactIssue, "FACT_TASKS");
+                    dataWarehouseLoader.loadDimensionWithoutIsCurrent("DATES", "taiga"));
+            dataWarehouseLoader.save(transformedFactIssue, "FACT_ISSUES");
         }
     }
 
