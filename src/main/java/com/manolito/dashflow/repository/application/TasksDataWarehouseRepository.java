@@ -114,7 +114,7 @@ public class TasksDataWarehouseRepository {
                     COUNT(DISTINCT CASE WHEN created_date.date_date BETWEEN :start AND :end THEN ft.task_id END) AS created_task_count,
                     COUNT(DISTINCT CASE WHEN completed_date.date_date BETWEEN :start AND :end THEN ft.task_id END) AS completed_task_count
                 FROM dw_dashflow.projects prj
-                LEFT JOIN dw_dashflow.epics ep ON prj.project_id = ep.project_id
+                LEFT JOIN dw_dashflow.epics ep ON prj.project_id = ep.project_id and ep.is_current = 1
                 LEFT JOIN dw_dashflow.stories st ON ep.epic_id = st.epic_id
                 LEFT JOIN dw_dashflow.fact_tasks ft ON st.story_id = ft.story_id
                 LEFT JOIN dw_dashflow.dates created_date ON ft.created_at = created_date.date_id
@@ -526,7 +526,7 @@ public class TasksDataWarehouseRepository {
                 LEFT JOIN dw_dashflow.projects dwp ON dwe.project_id = dwp.project_id AND dwp.is_current = 1
                 WHERE appu.username <> 'admin'
                 GROUP BY
-                    appu.user_id, appu.username, appr.role_name, appt.tool_name,
+                    appu.user_id, appu.username, appr.role_name, appt.tool_name,appu.email,appu.password,
                     appt.tool_id, dwp.original_id, dwp.project_name, appu.created_at
                 ORDER BY appu.username ASC
                 OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY
