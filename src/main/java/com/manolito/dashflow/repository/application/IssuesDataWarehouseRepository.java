@@ -28,9 +28,9 @@ public class IssuesDataWarehouseRepository {
                 JOIN dw_dashflow.issue_priority pri ON fi.priority_id = pri.priority_id
                 JOIN dw_dashflow.issue_type typ ON fi.type_id = typ.type_id
                 WHERE proj.original_id = :projectOriginalId
-                AND sev.is_current = TRUE
-                AND pri.is_current = TRUE
-                AND typ.is_current = TRUE
+                AND sev.is_current = 1
+                AND pri.is_current = 1
+                AND typ.is_current = 1
                 GROUP BY typ.type_name
                 """;
 
@@ -58,9 +58,9 @@ public class IssuesDataWarehouseRepository {
         JOIN dw_dashflow.issue_priority pri ON fi.priority_id = pri.priority_id
         JOIN dw_dashflow.issue_type typ ON fi.type_id = typ.type_id
         WHERE proj.original_id = :projectId
-        AND sev.is_current = TRUE
-        AND pri.is_current = TRUE
-        AND typ.is_current = TRUE
+        AND sev.is_current = 1
+        AND pri.is_current = 1
+        AND typ.is_current = 1
         """);
 
         Map<String, Object> params = new HashMap<>();
