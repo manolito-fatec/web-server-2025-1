@@ -52,3 +52,18 @@ jobs:
         
     - name: Verify Spark Installation
       run: spark-submit --version
+    - name: Build Docker image (Server)
+      run: |
+       cd web-server-2025-1
+       docker build -t web-server:latest .
+  
+       - name: Deploy via SSH (Server)
+         uses: appleboy/ssh-action@v1
+         with:
+           host: ${{ secrets.SSH_HOST }}
+           username: ${{ secrets.SSH_USERNAME }}
+           password: ${{ secrets.SSH_PWSD }}
+           script: |
+           cd /opt/para/projeto
+             docker-compose pull web-server || true
+             docker-compose up -d --build web-server
