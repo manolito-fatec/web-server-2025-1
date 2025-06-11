@@ -61,9 +61,9 @@ jobs:
       - name: Transfer Docker image via SCP
         uses: appleboy/scp-action@v0.1.4
         with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USERNAME }}
-          password: ${{ secrets.SSH_PWSD }}
+          host: ${{ secrets.MANOLITO_VM_IP }}
+          username: ${{ secrets.MANOLITO_VM_USR }}
+          password: ${{ secrets.MANOLITO_VM_PSW }}
           source: "web-server-2025-1/dashflow-server.tar.gz"
           target: "/opt/dashflow_server/"
           strip_components: 1
