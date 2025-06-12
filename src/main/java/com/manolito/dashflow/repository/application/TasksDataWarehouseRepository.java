@@ -562,7 +562,7 @@ public class TasksDataWarehouseRepository {
         Integer count = jdbcTemplate.getJdbcOperations().queryForObject(sql, Integer.class);
         return count != null ? count : 0;
     }
-
+                             
     public List<ProjectTableDto> getProjectsPaginated(int page, int pageSize) {
         String sql = """
                 SELECT
@@ -619,7 +619,7 @@ public class TasksDataWarehouseRepository {
         Integer count = jdbcTemplate.getJdbcOperations().queryForObject(sql, Integer.class);
         return count != null ? count : 0;
     }
-
+                             
     public List<UserProjectDto> getProjectUsersByManagerId(String managerId) {
         String sql = """
                 SELECT

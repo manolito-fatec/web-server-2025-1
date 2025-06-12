@@ -311,7 +311,7 @@ public class JiraService {
         }
     }
 
-    //@PostConstruct
+    @PostConstruct
     private void jiraEtl() {
         try {
             JiraTransformer transformer = new JiraTransformer(spark.emptyDataFrame());

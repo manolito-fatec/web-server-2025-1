@@ -1,4 +1,3 @@
--- Switch to the dw_dashflow schema (implicit in Oracle through schema prefixing)
 
 -- Add the new column with a default value first (since it's NOT NULL)
 ALTER TABLE dw_dashflow.users

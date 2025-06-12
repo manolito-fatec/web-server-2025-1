@@ -52,6 +52,7 @@ jobs:
 
       - name: Verify Spark Installation
         run: spark-submit --version
+        
       - name: Build Docker image (Server)
         run: |
           cd web-server-2025-1
