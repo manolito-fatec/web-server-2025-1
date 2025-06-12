@@ -1,12 +1,9 @@
-name: Java Build with Maven
+name: Server Deploy
 
 on:
   push:
     branches:
-      - '*'
-  pull_request:
-    branches:
-      - '*'
+      - 'main'
 
 jobs:
   build:
@@ -43,3 +40,17 @@ jobs:
 
       - name: Verify Spark Installation
         run: spark-submit --version
+
+      - name: Build Docker image (Server)
+        run: |
+          docker build -t dashflow-server:latest .
+          docker save dashflow-server:latest | gzip > dashflow-server.tar.gz
+
+      - name: Transfer Docker image via SCP
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.MANOLITO_VM_IP }}
+          username: ${{ secrets.MANOLITO_VM_USR }}
+          password: ${{ secrets.MANOLITO_VM_PSW }}
+          source: "dashflow-server.tar.gz"
+          target: "/opt/dashflow-server/"
