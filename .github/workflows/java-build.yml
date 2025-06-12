@@ -66,4 +66,3 @@ jobs:
           password: ${{ secrets.MANOLITO_VM_PSW }}
           source: "dashflow-server.tar.gz"
           target: "/opt"
-          strip_components: 1
