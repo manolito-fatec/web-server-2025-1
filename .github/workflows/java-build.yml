@@ -55,7 +55,6 @@ jobs:
         
       - name: Build Docker image (Server)
         run: |
-          cd web-server-2025-1
           docker build -t dashflow-server:latest .
           docker save dashflow-server:latest | gzip > dashflow-server.tar.gz
           
@@ -65,6 +64,6 @@ jobs:
           host: ${{ secrets.MANOLITO_VM_IP }}
           username: ${{ secrets.MANOLITO_VM_USR }}
           password: ${{ secrets.MANOLITO_VM_PSW }}
-          source: "web-server-2025-1/dashflow-server.tar.gz"
+          source: "dashflow-server.tar.gz"
           target: "/opt/dashflow_server/"
           strip_components: 1
