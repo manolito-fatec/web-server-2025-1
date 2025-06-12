@@ -65,4 +65,4 @@ jobs:
           username: ${{ secrets.MANOLITO_VM_USR }}
           password: ${{ secrets.MANOLITO_VM_PSW }}
           source: "dashflow-server.tar.gz"
-          target: "/opt"
+          target: "/opt/dashflow-server/"
