@@ -512,9 +512,9 @@ public class TaigaService {
             Dataset<Row> transformedRoles = transformer.transformRoles(projectDF);
             Dataset<Row> transformedUsers = transformer.transformedUserProjects(projectDF);
             transformedUsers = joinUtils.joinUserProject(transformedUsers, dataWarehouseLoader.loadDimensionWithoutTool("projects"));
-            dataWarehouseLoader.save(transformedProject, "projects");
-            dataWarehouseLoader.save(transformedRoles, "roles");
-            dataWarehouseLoader.save(transformedUsers, "users");
+            dataWarehouseLoader.save(transformedProject, "PROJECTS");
+            dataWarehouseLoader.save(transformedRoles, "ROLES");
+            dataWarehouseLoader.save(transformedUsers, "USERS");
         }
     }
 
@@ -532,8 +532,8 @@ public class TaigaService {
             Dataset<Row> transformedTags = transformer.transformTags(taskDF);
             transformedTags = joinUtils.joinTagProject(transformedTags, dataWarehouseLoader.loadDimensionWithoutTool("projects"));
 
-            dataWarehouseLoader.save(transformedStatus, "status");
-            dataWarehouseLoader.save(transformedTags, "tags");
+            dataWarehouseLoader.save(transformedStatus, "STATUS");
+            dataWarehouseLoader.save(transformedTags, "TAGS");
         }
     }
 
@@ -548,7 +548,7 @@ public class TaigaService {
         for (Dataset<Row> epicDF : epicsList) {
             Dataset<Row> transformedEpic = transformer.transformEpics(epicDF);
             transformedEpic = joinUtils.joinEpicProject(transformedEpic, dataWarehouseLoader.loadDimensionWithoutTool("projects"));
-            dataWarehouseLoader.save(transformedEpic, "epics");
+            dataWarehouseLoader.save(transformedEpic, "EPICS");
         }
     }
 
@@ -563,10 +563,10 @@ public class TaigaService {
         for (Dataset<Row> storiesDF : storiesList) {
             Dataset<Row> transformedStories = transformer.transformUserStories(storiesDF);
             transformedStories = joinUtils.joinStoryProjectAndEpic(transformedStories,
-                    dataWarehouseLoader.loadDimensionWithoutTool("projects"),
-                    dataWarehouseLoader.loadDimensionWithoutTool("epics")
+                    dataWarehouseLoader.loadDimensionWithoutTool("PROJECTS"),
+                    dataWarehouseLoader.loadDimensionWithoutTool("EPICS")
             );
-            dataWarehouseLoader.save(transformedStories, "stories");
+            dataWarehouseLoader.save(transformedStories, "STORIES");
         }
     }
 
@@ -581,11 +581,11 @@ public class TaigaService {
         for (Dataset<Row> factTaskDF : tasksList) {
             Dataset<Row> transformedFactTask = transformer.transformTasks(factTaskDF);
             transformedFactTask = joinUtils.joinFactTask(transformedFactTask,
-                dataWarehouseLoader.loadDimension("status"),
-                dataWarehouseLoader.loadDimension("users"),
-                dataWarehouseLoader.loadDimension("stories"),
-                dataWarehouseLoader.loadDimensionWithoutIsCurrent("dates", "taiga"));
-            dataWarehouseLoader.save(transformedFactTask, "fact_tasks");
+                dataWarehouseLoader.loadDimension("STATUS"),
+                dataWarehouseLoader.loadDimension("USERS"),
+                dataWarehouseLoader.loadDimension("STORIES"),
+                dataWarehouseLoader.loadDimensionWithoutIsCurrent("DATES", "taiga"));
+            dataWarehouseLoader.save(transformedFactTask, "FACT_TASKS");
         }
     }
 
@@ -600,8 +600,8 @@ public class TaigaService {
         for (Dataset<Row> issueDF : issuesList) {
             Dataset<Row> transformedIssueType = transformer.transformIssueTypes(issueDF);
             transformedIssueType = joinUtils.joinIssueProject(transformedIssueType,
-                    dataWarehouseLoader.loadDimensionWithoutTool("projects"), "type_name");
-            dataWarehouseLoader.save(transformedIssueType, "issue_type");
+                    dataWarehouseLoader.loadDimensionWithoutTool("PROJECTS"), "type_name");
+            dataWarehouseLoader.save(transformedIssueType, "ISSUE_TYPE");
         }
     }
 
@@ -616,8 +616,8 @@ public class TaigaService {
         for (Dataset<Row> issuePriorityDF : issuePriorityList) {
             Dataset<Row> transformedIssuePriority = transformer.transformIssuePriority(issuePriorityDF);
             transformedIssuePriority = joinUtils.joinIssueProject(transformedIssuePriority,
-                    dataWarehouseLoader.loadDimensionWithoutTool("projects"), "priority_name");
-            dataWarehouseLoader.save(transformedIssuePriority, "issue_priority");
+                    dataWarehouseLoader.loadDimensionWithoutTool("PROJECTS"), "priority_name");
+            dataWarehouseLoader.save(transformedIssuePriority, "ISSUE_PRIORITY");
         }
     }
 
@@ -632,8 +632,8 @@ public class TaigaService {
         for (Dataset<Row> issueSeverityDF : issueSeverityList) {
             Dataset<Row> transformedIssueSeverity = transformer.transformIssueSeverity(issueSeverityDF);
             transformedIssueSeverity = joinUtils.joinIssueProject(transformedIssueSeverity,
-                    dataWarehouseLoader.loadDimensionWithoutTool("projects"), "severity_name");
-            dataWarehouseLoader.save(transformedIssueSeverity, "issue_severity");
+                    dataWarehouseLoader.loadDimensionWithoutTool("PROJECTS"), "severity_name");
+            dataWarehouseLoader.save(transformedIssueSeverity, "ISSUE_SEVERITY");
         }
     }
 
@@ -648,18 +648,18 @@ public class TaigaService {
         for (Dataset<Row> factIssueDF : issuesList) {
             Dataset<Row> transformedStatusIssues = transformer.transformStatus(factIssueDF);
             transformedStatusIssues = joinUtils.joinStatusProject(transformedStatusIssues, dataWarehouseLoader.loadDimensionWithoutTool("projects"));
-            dataWarehouseLoader.save(transformedStatusIssues, "issue_status");
+            dataWarehouseLoader.save(transformedStatusIssues, "ISSUE_STATUS");
 
             Dataset<Row> transformedFactIssue = transformer.transformIssues(factIssueDF);
             transformedFactIssue = joinUtils.joinFactIssue(transformedFactIssue,
-                    dataWarehouseLoader.loadDimension("issue_status"),
-                    dataWarehouseLoader.loadDimension("users"),
-                    dataWarehouseLoader.loadDimensionWithoutTool("projects"),
-                    dataWarehouseLoader.loadDimension("issue_type"),
-                    dataWarehouseLoader.loadDimension("issue_severity"),
-                    dataWarehouseLoader.loadDimension("issue_priority"),
-                    dataWarehouseLoader.loadDimensionWithoutIsCurrent("dates", "taiga"));
-            dataWarehouseLoader.save(transformedFactIssue, "fact_issues");
+                    dataWarehouseLoader.loadDimension("ISSUE_STATUS"),
+                    dataWarehouseLoader.loadDimension("USERS"),
+                    dataWarehouseLoader.loadDimensionWithoutTool("PROJECTS"),
+                    dataWarehouseLoader.loadDimension("ISSUE_TYPE"),
+                    dataWarehouseLoader.loadDimension("ISSUE_SEVERITY"),
+                    dataWarehouseLoader.loadDimension("ISSUE_PRIORITY"),
+                    dataWarehouseLoader.loadDimensionWithoutIsCurrent("DATES", "taiga"));
+            dataWarehouseLoader.save(transformedFactIssue, "FACT_ISSUES");
         }
     }
 
@@ -668,13 +668,13 @@ public class TaigaService {
      * Processes and saves user-role and task-tag relationships by purging and then populating the table with new data.
      */
     private void saveRelationshipData() {
-        dataWarehouseLoader.purgeTable("user_role");
-        dataWarehouseLoader.purgeTable("task_tag");
+        dataWarehouseLoader.purgeTable("USER_ROLE");
+        dataWarehouseLoader.purgeTable("TASK_TAG");
 
         Dataset<Row> userRole = saveUserRoleToDatabase();
-        dataWarehouseLoader.save(userRole,"user_role");
+        dataWarehouseLoader.save(userRole,"USER_ROLE");
 
         Dataset<Row> taskTag = saveTaskTagToDatabase();
-        dataWarehouseLoader.save(taskTag,"task_tag");
+        dataWarehouseLoader.save(taskTag,"TASK_TAG");
     }
 }

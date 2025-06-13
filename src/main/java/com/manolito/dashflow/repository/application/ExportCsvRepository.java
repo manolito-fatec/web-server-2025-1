@@ -20,33 +20,34 @@ public class ExportCsvRepository {
     public List<ExportCsvManagerDto> getAllCurrentOperatorProjectAndQuantityOfCard ()
     {
         String sql = """
-                 SELECT 
-                       u.user_name,
-                       p.project_name,
-                       COUNT(ft.task_id) AS total_tasks
-                 FROM 
-                       dashflow_appl.accounts a
-                 JOIN 
-                       dw_dashflow.projects p ON a.project = p.original_id
-                 JOIN 
-                       dw_dashflow.users u ON a.account = u.original_id
-                 JOIN 
-                       dashflow_appl.roles r ON a.role_id = r.role_id
-                 LEFT JOIN 
-                       dw_dashflow.fact_tasks ft ON ft.assignee_id = u.user_id
-                 WHERE 
-                       u.is_current = 'TRUE'
-                       AND 
-                       p.is_current = 'TRUE'
-                 GROUP BY 
-                       u.user_name,
-                       p.project_name;
-                 """;
+                    SELECT
+                          u.user_name,
+                          p.project_name,
+                          COUNT(ft.task_id) AS total_tasks
+                    FROM
+                          dashflow_appl.accounts a
+                    JOIN
+                          dw_dashflow.projects p ON a.project = p.original_id
+                    JOIN
+                          dw_dashflow.users u ON a.account = u.original_id
+                    JOIN
+                          dashflow_appl.roles r ON a.role_id = r.role_id
+                    LEFT JOIN
+                          dw_dashflow.fact_tasks ft ON ft.assignee_id = u.user_id
+                    WHERE
+                          u.is_current = 1
+                          AND
+                          p.is_current = 1
+                    GROUP BY
+                          u.user_name,
+                          p.project_name
+                    """;
 
         List<ExportCsvManagerDto> result = new ArrayList<>();
-        jdbcTemplate.query(sql, rs ->
-        {
-            result.add(new ExportCsvManagerDto(rs.getString("user_name"), rs.getString("project_name"),
+        jdbcTemplate.query(sql, rs -> {
+            result.add(new ExportCsvManagerDto(
+                    rs.getString("user_name"),
+                    rs.getString("project_name"),
                     rs.getInt("total_tasks")));
         });
 
@@ -56,40 +57,40 @@ public class ExportCsvRepository {
     public List<ExportCsvAdminDto> getAllCurrentManagerAndProjectAndQuantityOfOperatorsAndQuantityOfCard ()
     {
         String sql = """
-                    WITH manager AS (
-                        SELECT 
-                            p.original_id AS project_id,
-                            u.user_name AS manager_name
-                        FROM 
-                            dashflow_appl.accounts a
-                        JOIN dw_dashflow.projects p ON a.project = p.original_id
-                        JOIN dw_dashflow.users u ON a.account = u.original_id
-                        JOIN dashflow_appl.roles r ON a.role_id = r.role_id
-                        WHERE 
-                            r.role_name = 'ROLE_MANAGER'
-                            AND u.is_current = 'TRUE'
-                            AND p.is_current = 'TRUE'
-                    )
-                    SELECT 
-                        p.project_name,
-                        g.manager_name,
-                        COUNT(DISTINCT u.user_name) AS total_operators,
-                        COUNT(ft.task_id) AS total_tasks
-                    FROM 
-                        dashflow_appl.accounts a
-                    JOIN 
-                        dw_dashflow.projects p ON a.project = p.original_id
-                    JOIN 
-                        dw_dashflow.users u ON a.account = u.original_id
-                    LEFT JOIN 
-                        dw_dashflow.fact_tasks ft ON ft.assignee_id = u.user_id
-                    JOIN 
-                        manager g ON g.project_id = p.original_id
-                    WHERE 
-                        u.is_current = 'TRUE'
-                        AND p.is_current = 'TRUE'
-                    GROUP BY 
-                        p.project_name, g.manager_name;
+                   WITH manager AS (
+                       SELECT
+                           p.original_id AS project_id,
+                           u.user_name AS manager_name
+                       FROM
+                           dashflow_appl.accounts a
+                       JOIN dw_dashflow.projects p ON a.project = p.original_id
+                       JOIN dw_dashflow.users u ON a.account = u.original_id
+                       JOIN dashflow_appl.roles r ON a.role_id = r.role_id
+                       WHERE
+                           r.role_name = 'ROLE_MANAGER'
+                           AND u.is_current = 1
+                           AND p.is_current = 1
+                   )
+                   SELECT
+                       p.project_name,
+                       g.manager_name,
+                       COUNT(DISTINCT u.user_name) AS total_operators,
+                       COUNT(ft.task_id) AS total_tasks
+                   FROM
+                       dashflow_appl.accounts a
+                   JOIN
+                       dw_dashflow.projects p ON a.project = p.original_id
+                   JOIN
+                       dw_dashflow.users u ON a.account = u.original_id
+                   LEFT JOIN
+                       dw_dashflow.fact_tasks ft ON ft.assignee_id = u.user_id
+                   JOIN
+                       manager g ON g.project_id = p.original_id
+                   WHERE
+                       u.is_current = 1
+                       AND p.is_current = 1
+                   GROUP BY
+                       p.project_name, g.manager_name
                    """;
 
         List<ExportCsvAdminDto> result = new ArrayList<>();

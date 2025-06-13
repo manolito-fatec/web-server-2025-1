@@ -2,10 +2,10 @@ spring:
   application:
     name: dashflow
   datasource:
-    url: jdbc:postgresql://localhost:5432/
-    username: postgres
-    password: postgres
-    driver-class-name: org.postgresql.Driver
+    url: jdbc:oracle:thin:@//oracle:1521/oracle
+    username: system
+    password: oracle
+    driver-class-name: oracle.jdbc.driver.OracleDriver
   jpa:
     hibernate:
       ddl-auto: validate
@@ -16,6 +16,8 @@ spring:
     enabled: true
     baseline-on-migrate: true
     locations: classpath:db/dashflow-db-versioning
+    schemas: DW_DASHFLOW, DASHFLOW_APPL
+    default-schema: DW_DASHFLOW
 
 jira:
   email: ${JIRA_EMAIL}

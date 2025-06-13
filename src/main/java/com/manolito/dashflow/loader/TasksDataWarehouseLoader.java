@@ -98,6 +98,7 @@ public class TasksDataWarehouseLoader {
 
     public void save(Dataset<Row> data, String tableName) {
         try {
+            data.show();
             List<String> tableColumns = sparkUtils.fetchTableColumns(jdbcUrl, dbUser, dbPassword, tableName);
             Dataset<Row> filteredData = data.select(sparkUtils.getColumns(data, tableColumns));
 
@@ -150,8 +151,8 @@ public class TasksDataWarehouseLoader {
         final String toolName;
 
         ToolMetadata(Row row) {
-            this.toolId = row.getInt(row.fieldIndex("tool_id"));
-            this.toolName = row.getString(row.fieldIndex("tool_name"));
+            this.toolId = row.getDecimal(row.fieldIndex("TOOL_ID")).intValue();
+            this.toolName = row.getString(row.fieldIndex("TOOL_NAME"));
         }
     }
 

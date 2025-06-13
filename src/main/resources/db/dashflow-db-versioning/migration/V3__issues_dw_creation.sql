@@ -1,112 +1,320 @@
----- ISSUES DATA WAREHOUSE CREATION ----
+CREATE TABLE DW_DASHFLOW.issue_status (
+                                          status_id NUMBER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+                                          seq NUMBER NOT NULL,
+                                          original_id VARCHAR2(255) NOT NULL,
+                                          project_id NUMBER NOT NULL,
+                                          status_name VARCHAR2(255) NOT NULL,
+                                          description CLOB,
+                                          start_date DATE DEFAULT TRUNC(SYSDATE) NOT NULL,
+                                          end_date DATE,
+                                          is_current NUMBER(1) DEFAULT 1 NOT NULL,
 
-SET search_path TO dw_dashflow;
-
-----------------------------------------
-
-CREATE TABLE IF NOT EXISTS issue_status(
-    status_id SERIAL PRIMARY KEY,
-    seq INT NOT NULL,
-    original_id TEXT NOT NULL,
-    project_id INT NOT NULL,
-    status_name VARCHAR(255) NOT NULL,
-    description TEXT,
-    start_date DATE NOT NULL DEFAULT CURRENT_DATE,
-    end_date DATE DEFAULT NULL,
-    is_current BOOLEAN NOT NULL DEFAULT TRUE,
-
-    CONSTRAINT fk_issue_status_projects FOREIGN KEY (project_id) REFERENCES projects(project_id),
-    CONSTRAINT unique_issues_status_seq UNIQUE (original_id, seq, project_id)
+                                          CONSTRAINT fk_issue_status_projects FOREIGN KEY (project_id) REFERENCES DW_DASHFLOW.projects(project_id)
 );
 
 CREATE OR REPLACE TRIGGER issue_status_scd2_trigger
-    BEFORE INSERT ON issue_status
+    BEFORE INSERT ON dw_dashflow.issue_status
     FOR EACH ROW
-EXECUTE FUNCTION manage_scd2('original_id');
+DECLARE
+    PRAGMA AUTONOMOUS_TRANSACTION;
+BEGIN
+    -- Handle special case for '0' records
+    IF :NEW.original_id = '0' THEN
+        :NEW.seq := 1;
+        :NEW.start_date := TRUNC(SYSDATE);
+        :NEW.end_date := NULL;
+        :NEW.is_current := 1;
+        RETURN;
+    END IF;
 
-CREATE TABLE IF NOT EXISTS issue_type(
-    type_id SERIAL PRIMARY KEY,
-    seq INT NOT NULL,
-    original_id TEXT NOT NULL,
-    project_id INT NOT NULL,
-    type_name VARCHAR(255) NOT NULL,
-    start_date DATE NOT NULL DEFAULT CURRENT_DATE,
-    end_date DATE DEFAULT NULL,
-    is_current BOOLEAN NOT NULL DEFAULT TRUE,
+    -- Call the equivalent of your manage_scd2 function logic
+    -- This is inline implementation since Oracle doesn't support EXECUTE FUNCTION in triggers
+    DECLARE
+        max_seq NUMBER;
+    BEGIN
+        -- Get the max sequence number safely
+        BEGIN
+            SELECT NVL(MAX(seq), 0) INTO max_seq
+            FROM dw_dashflow.issue_status
+            WHERE original_id = :NEW.original_id
+              AND project_id = :NEW.project_id
+              AND ROWNUM = 1;
+        EXCEPTION
+            WHEN OTHERS THEN
+                max_seq := 0;
+        END;
 
-    CONSTRAINT fk_issue_status_projects FOREIGN KEY (project_id) REFERENCES projects(project_id),
-    CONSTRAINT unique_issues_type_seq UNIQUE (original_id, seq, project_id)
+        :NEW.seq := max_seq + 1;
+
+        -- Update previous records if needed
+        IF max_seq > 0 THEN
+            UPDATE dw_dashflow.issue_status
+            SET end_date = TRUNC(SYSDATE),
+                is_current = 0
+            WHERE original_id = :NEW.original_id
+              AND project_id = :NEW.project_id
+              AND is_current = 1;
+        END IF;
+
+        :NEW.start_date := TRUNC(SYSDATE);
+        :NEW.end_date := NULL;
+        :NEW.is_current := 1;
+    END;
+
+    COMMIT; -- Required for autonomous transaction
+EXCEPTION
+    WHEN OTHERS THEN
+        ROLLBACK;
+        RAISE;
+END;
+/
+
+CREATE UNIQUE INDEX uk_issue_status_seq ON DW_DASHFLOW.issue_status(original_id, seq, project_id);
+
+-- ISSUE_TYPE table with SCD2 handling
+CREATE TABLE DW_DASHFLOW.issue_type (
+                                        type_id NUMBER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+                                        seq NUMBER NOT NULL,
+                                        original_id VARCHAR2(255) NOT NULL,
+                                        project_id NUMBER NOT NULL,
+                                        type_name VARCHAR2(255) NOT NULL,
+                                        start_date DATE DEFAULT TRUNC(SYSDATE) NOT NULL,
+                                        end_date DATE,
+                                        is_current NUMBER(1) DEFAULT 1 NOT NULL,
+
+                                        CONSTRAINT fk_issue_type_projects FOREIGN KEY (project_id) REFERENCES DW_DASHFLOW.projects(project_id)
 );
 
 CREATE OR REPLACE TRIGGER issue_type_scd2_trigger
-    BEFORE INSERT ON issue_type
+    BEFORE INSERT ON dw_dashflow.issue_type
     FOR EACH ROW
-EXECUTE FUNCTION manage_scd2('original_id');
+DECLARE
+    PRAGMA AUTONOMOUS_TRANSACTION;
+BEGIN
+    -- Handle special case for '0' records
+    IF :NEW.original_id = '0' THEN
+        :NEW.seq := 1;
+        :NEW.start_date := TRUNC(SYSDATE);
+        :NEW.end_date := NULL;
+        :NEW.is_current := 1;
+        RETURN;
+    END IF;
 
-CREATE TABLE IF NOT EXISTS issue_severity(
-    severity_id SERIAL PRIMARY KEY,
-    seq INT NOT NULL,
-    original_id TEXT NOT NULL,
-    project_id INT NOT NULL,
-    severity_name VARCHAR(255) NOT NULL,
-    description TEXT,
-    start_date DATE NOT NULL DEFAULT CURRENT_DATE,
-    end_date DATE DEFAULT NULL,
-    is_current BOOLEAN NOT NULL DEFAULT TRUE,
+    -- Call the equivalent of your manage_scd2 function logic
+    -- This is inline implementation since Oracle doesn't support EXECUTE FUNCTION in triggers
+    DECLARE
+        max_seq NUMBER;
+    BEGIN
+        -- Get the max sequence number safely
+        BEGIN
+            SELECT NVL(MAX(seq), 0) INTO max_seq
+            FROM dw_dashflow.issue_type
+            WHERE original_id = :NEW.original_id
+              AND project_id = :NEW.project_id
+              AND ROWNUM = 1;
+        EXCEPTION
+            WHEN OTHERS THEN
+                max_seq := 0;
+        END;
 
-    CONSTRAINT fk_issue_status_projects FOREIGN KEY (project_id) REFERENCES projects(project_id),
-    CONSTRAINT unique_issues_severity_seq UNIQUE (original_id, seq, project_id)
+        :NEW.seq := max_seq + 1;
+
+        -- Update previous records if needed
+        IF max_seq > 0 THEN
+            UPDATE dw_dashflow.issue_type
+            SET end_date = TRUNC(SYSDATE),
+                is_current = 0
+            WHERE original_id = :NEW.original_id
+              AND project_id = :NEW.project_id
+              AND is_current = 1;
+        END IF;
+
+        :NEW.start_date := TRUNC(SYSDATE);
+        :NEW.end_date := NULL;
+        :NEW.is_current := 1;
+    END;
+
+    COMMIT; -- Required for autonomous transaction
+EXCEPTION
+    WHEN OTHERS THEN
+        ROLLBACK;
+        RAISE;
+END;
+/
+
+CREATE UNIQUE INDEX uk_issue_type_seq ON DW_DASHFLOW.issue_type(original_id, seq, project_id);
+
+-- ISSUE_SEVERITY table with SCD2 handling
+CREATE TABLE DW_DASHFLOW.issue_severity (
+                                            severity_id NUMBER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+                                            seq NUMBER NOT NULL,
+                                            original_id VARCHAR2(255) NOT NULL,
+                                            project_id NUMBER NOT NULL,
+                                            severity_name VARCHAR2(255) NOT NULL,
+                                            description CLOB,
+                                            start_date DATE DEFAULT TRUNC(SYSDATE) NOT NULL,
+                                            end_date DATE,
+                                            is_current NUMBER(1) DEFAULT 1 NOT NULL,
+
+                                            CONSTRAINT fk_issue_severity_projects FOREIGN KEY (project_id) REFERENCES DW_DASHFLOW.projects(project_id)
 );
 
 CREATE OR REPLACE TRIGGER issue_severity_scd2_trigger
-    BEFORE INSERT ON issue_severity
+    BEFORE INSERT ON dw_dashflow.issue_severity
     FOR EACH ROW
-EXECUTE FUNCTION manage_scd2('original_id');
+DECLARE
+    PRAGMA AUTONOMOUS_TRANSACTION;
+BEGIN
+    -- Handle special case for '0' records
+    IF :NEW.original_id = '0' THEN
+        :NEW.seq := 1;
+        :NEW.start_date := TRUNC(SYSDATE);
+        :NEW.end_date := NULL;
+        :NEW.is_current := 1;
+        RETURN;
+    END IF;
 
-CREATE TABLE IF NOT EXISTS issue_priority(
-     priority_id SERIAL PRIMARY KEY,
-     seq INT NOT NULL,
-     original_id TEXT NOT NULL,
-     project_id INT NOT NULL,
-     priority_name VARCHAR(255) NOT NULL,
-     description TEXT,
-     start_date DATE NOT NULL DEFAULT CURRENT_DATE,
-     end_date DATE DEFAULT NULL,
-     is_current BOOLEAN NOT NULL DEFAULT TRUE,
+    -- Call the equivalent of your manage_scd2 function logic
+    -- This is inline implementation since Oracle doesn't support EXECUTE FUNCTION in triggers
+    DECLARE
+        max_seq NUMBER;
+    BEGIN
+        -- Get the max sequence number safely
+        BEGIN
+            SELECT NVL(MAX(seq), 0) INTO max_seq
+            FROM dw_dashflow.issue_severity
+            WHERE original_id = :NEW.original_id
+              AND project_id = :NEW.project_id
+              AND ROWNUM = 1;
+        EXCEPTION
+            WHEN OTHERS THEN
+                max_seq := 0;
+        END;
 
-     CONSTRAINT fk_issue_status_projects FOREIGN KEY (project_id) REFERENCES projects(project_id),
-     CONSTRAINT unique_issues_priority_seq UNIQUE (original_id, seq, project_id)
+        :NEW.seq := max_seq + 1;
+
+        -- Update previous records if needed
+        IF max_seq > 0 THEN
+            UPDATE dw_dashflow.issue_severity
+            SET end_date = TRUNC(SYSDATE),
+                is_current = 0
+            WHERE original_id = :NEW.original_id
+              AND project_id = :NEW.project_id
+              AND is_current = 1;
+        END IF;
+
+        :NEW.start_date := TRUNC(SYSDATE);
+        :NEW.end_date := NULL;
+        :NEW.is_current := 1;
+    END;
+
+    COMMIT; -- Required for autonomous transaction
+EXCEPTION
+    WHEN OTHERS THEN
+        ROLLBACK;
+        RAISE;
+END;
+/
+
+CREATE UNIQUE INDEX uk_issue_severity_seq ON DW_DASHFLOW.issue_severity(original_id, seq, project_id);
+
+-- ISSUE_PRIORITY table with SCD2 handling
+CREATE TABLE DW_DASHFLOW.issue_priority (
+                                            priority_id NUMBER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+                                            seq NUMBER NOT NULL,
+                                            original_id VARCHAR2(255) NOT NULL,
+                                            project_id NUMBER NOT NULL,
+                                            priority_name VARCHAR2(255) NOT NULL,
+                                            description CLOB,
+                                            start_date DATE DEFAULT TRUNC(SYSDATE) NOT NULL,
+                                            end_date DATE,
+                                            is_current NUMBER(1) DEFAULT 1 NOT NULL,
+
+                                            CONSTRAINT fk_issue_priority_projects FOREIGN KEY (project_id) REFERENCES DW_DASHFLOW.projects(project_id)
 );
 
 CREATE OR REPLACE TRIGGER issue_priority_scd2_trigger
-    BEFORE INSERT ON issue_priority
+    BEFORE INSERT ON dw_dashflow.issue_priority
     FOR EACH ROW
-EXECUTE FUNCTION manage_scd2('original_id');
-----------------------------------------
+DECLARE
+    PRAGMA AUTONOMOUS_TRANSACTION;
+BEGIN
+    -- Handle special case for '0' records
+    IF :NEW.original_id = '0' THEN
+        :NEW.seq := 1;
+        :NEW.start_date := TRUNC(SYSDATE);
+        :NEW.end_date := NULL;
+        :NEW.is_current := 1;
+        RETURN;
+    END IF;
 
-CREATE TABLE IF NOT EXISTS fact_issues(
-    issue_id SERIAL PRIMARY KEY,
-    original_id TEXT NOT NULL,
-    status_id INT NOT NULL,
-    type_id INT NOT NULL,
-    severity_id INT NOT NULL,
-    priority_id INT NOT NULL,
-    assignee_id INT,
-    project_id INT NOT NULL,
+    -- Call the equivalent of your manage_scd2 function logic
+    -- This is inline implementation since Oracle doesn't support EXECUTE FUNCTION in triggers
+    DECLARE
+        max_seq NUMBER;
+    BEGIN
+        -- Get the max sequence number safely
+        BEGIN
+            SELECT NVL(MAX(seq), 0) INTO max_seq
+            FROM dw_dashflow.issue_priority
+            WHERE original_id = :NEW.original_id
+              AND project_id = :NEW.project_id
+              AND ROWNUM = 1;
+        EXCEPTION
+            WHEN OTHERS THEN
+                max_seq := 0;
+        END;
 
-    created_at INT NOT NULL,
-    completed_at INT,
+        :NEW.seq := max_seq + 1;
 
-    issue_name VARCHAR(255) NOT NULL,
+        -- Update previous records if needed
+        IF max_seq > 0 THEN
+            UPDATE dw_dashflow.issue_priority
+            SET end_date = TRUNC(SYSDATE),
+                is_current = 0
+            WHERE original_id = :NEW.original_id
+              AND project_id = :NEW.project_id
+              AND is_current = 1;
+        END IF;
 
-    CONSTRAINT fk_fact_issues_status FOREIGN KEY (status_id) REFERENCES issue_status(status_id),
-    CONSTRAINT fk_fact_issue_type FOREIGN KEY (type_id) REFERENCES issue_type(type_id),
-    CONSTRAINT fk_fact_issue_severity FOREIGN KEY (severity_id) REFERENCES issue_severity(severity_id),
-    CONSTRAINT fk_fact_issue_priority FOREIGN KEY (priority_id) REFERENCES issue_priority(priority_id),
-    CONSTRAINT fk_fact_issues_assignee FOREIGN KEY (assignee_id) REFERENCES users(user_id),
-    CONSTRAINT fk_fact_issues_project FOREIGN KEY (project_id) REFERENCES projects(project_id),
-    CONSTRAINT fk_fact_issues_created_at FOREIGN KEY (created_at) REFERENCES dates(date_id),
-    CONSTRAINT fk_fact_issues_completed_at FOREIGN KEY (completed_at) REFERENCES dates(date_id)
+        :NEW.start_date := TRUNC(SYSDATE);
+        :NEW.end_date := NULL;
+        :NEW.is_current := 1;
+    END;
+
+    COMMIT; -- Required for autonomous transaction
+EXCEPTION
+    WHEN OTHERS THEN
+        ROLLBACK;
+        RAISE;
+END;
+/
+
+CREATE UNIQUE INDEX uk_issue_priority_seq ON DW_DASHFLOW.issue_priority(original_id, seq, project_id);
+
+-- FACT_ISSUES table
+CREATE TABLE DW_DASHFLOW.fact_issues (
+                                         issue_id NUMBER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+                                         original_id VARCHAR2(255) NOT NULL,
+                                         status_id NUMBER NOT NULL,
+                                         type_id NUMBER NOT NULL,
+                                         severity_id NUMBER NOT NULL,
+                                         priority_id NUMBER NOT NULL,
+                                         assignee_id NUMBER,
+                                         project_id NUMBER NOT NULL,
+                                         created_at NUMBER NOT NULL,
+                                         completed_at NUMBER,
+                                         issue_name VARCHAR2(255) NOT NULL,
+
+                                         CONSTRAINT fk_fact_issues_status FOREIGN KEY (status_id) REFERENCES DW_DASHFLOW.issue_status(status_id),
+                                         CONSTRAINT fk_fact_issues_type FOREIGN KEY (type_id) REFERENCES DW_DASHFLOW.issue_type(type_id),
+                                         CONSTRAINT fk_fact_issues_severity FOREIGN KEY (severity_id) REFERENCES DW_DASHFLOW.issue_severity(severity_id),
+                                         CONSTRAINT fk_fact_issues_priority FOREIGN KEY (priority_id) REFERENCES DW_DASHFLOW.issue_priority(priority_id),
+                                         CONSTRAINT fk_fact_issues_assignee FOREIGN KEY (assignee_id) REFERENCES DW_DASHFLOW.users(user_id),
+                                         CONSTRAINT fk_fact_issues_project FOREIGN KEY (project_id) REFERENCES DW_DASHFLOW.projects(project_id),
+                                         CONSTRAINT fk_fact_issues_created_at FOREIGN KEY (created_at) REFERENCES DW_DASHFLOW.dates(date_id),
+                                         CONSTRAINT fk_fact_issues_completed_at FOREIGN KEY (completed_at) REFERENCES DW_DASHFLOW.dates(date_id)
 );
 
-----------------------------------------
+-- Create index on original_id for better performance
+CREATE INDEX idx_fact_issues_original_id ON DW_DASHFLOW.fact_issues(original_id);
