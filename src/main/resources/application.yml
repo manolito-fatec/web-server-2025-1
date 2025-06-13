@@ -2,9 +2,9 @@ spring:
   application:
     name: dashflow
   datasource:
-    url: ${ORACLE_HOST}
-    username: ${ORACLE_USR}
-    password: ${ORACLE_PWD}
+    url: jdbc:oracle:thin:@//oracle:1521/oracle
+    username: system
+    password: oracle
     driver-class-name: oracle.jdbc.driver.OracleDriver
   jpa:
     hibernate:
